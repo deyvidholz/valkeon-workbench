@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;450;500;600;700&family=Geist+Mono:wght@400;500;600&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20,400,0,0&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 760px at 50% -8%, #131319 0%, #050507 62%);font-family:'Geist',-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;color:#ededf0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:22px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#262630;border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:#35353f;background-clip:content-box}
+input,textarea,button{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#56565e}
+input:focus,textarea:focus{outline:none}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(92,201,138,0.5)}70%{box-shadow:0 0 0 6px rgba(92,201,138,0)}100%{box-shadow:0 0 0 0 rgba(92,201,138,0)}}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.mermaid svg{max-width:100%;height:auto}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</helmet>
+<div style="{{ rootStyle }}">
+
+  <div style="height:40px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 12px 0 14px;background:#0c0c0f;border-bottom:1px solid #16161a">
+    <div style="display:flex;align-items:center;gap:11px;min-width:0">
+      <div style="width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--accent,#5b9dd9),var(--accent-hi,#7cb3e6));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,0.10) inset"><span style="font-family:'Material Symbols Rounded';font-size:14px;color:#0a1018">terminal</span></div>
+      <sc-if value="{{ isLauncher }}" hint-placeholder-val="{{ false }}">
+        <span style="font-size:13px;font-weight:600;color:#e4e4ea;letter-spacing:-0.01em">Valkeon Workbench</span>
+      </sc-if>
+      <sc-if value="{{ showShell }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:7px;padding:3px 8px;border-radius:7px;cursor:pointer" style-hover="background:#15151a">
+          <span style="font-size:11px;font-weight:600;color:#73737c;letter-spacing:-0.01em">Valkeon</span>
+          <span style="color:#33333a">/</span>
+          <span style="font-size:13px;font-weight:600;color:#e4e4ea">{{ project.name }}</span>
+          <span style="display:flex;align-items:center;gap:3px;font-family:'Geist Mono', monospace;font-size:10.5px;color:#7a7a83;background:#141419;border:1px solid #222229;padding:1px 6px;border-radius:5px"><span style="font-family:'Material Symbols Rounded';font-size:12px">fork_right</span>{{ project.branch }}</span>
+          <span style="font-family:'Material Symbols Rounded';font-size:16px;color:#56565e">unfold_more</span>
+        </div>
+      </sc-if>
+    </div>
+    <div style="flex:1;display:flex;justify-content:center">
+      <sc-if value="{{ showShell }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:8px;width:340px;max-width:42%;padding:5px 11px;border-radius:8px;background:#0f0f13;border:1px solid #1c1c22;cursor:text" style-hover="border-color:#26262e">
+          <span style="font-family:'Material Symbols Rounded';font-size:15px;color:#5f5f68">search</span>
+          <span style="font-size:12.5px;color:#62626b;flex:1">Search sessions or run a command</span>
+          <span style="font-family:'Geist Mono', monospace;font-size:10.5px;color:#56565e;background:#16161c;padding:1px 5px;border-radius:4px">&#8984;K</span>
+        </div>
+      </sc-if>
+    </div>
+    <div style="display:flex;align-items:center;gap:2px">
+      <span style="display:flex;align-items:center;justify-content:center;width:30px;height:26px;border-radius:6px;color:#6f6f78;cursor:pointer;font-family:'Material Symbols Rounded';font-size:18px" style-hover="background:#16161c;color:#cfcfd6">remove</span>
+      <span style="display:flex;align-items:center;justify-content:center;width:30px;height:26px;border-radius:6px;color:#6f6f78;cursor:pointer;font-family:'Material Symbols Rounded';font-size:15px" style-hover="background:#16161c;color:#cfcfd6">crop_square</span>
+      <span style="display:flex;align-items:center;justify-content:center;width:30px;height:26px;border-radius:6px;color:#6f6f78;cursor:pointer;font-family:'Material Symbols Rounded';font-size:18px" style-hover="background:#e0584e;color:#fff">close</span>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;min-height:0;position:relative">
+
+    <sc-if value="{{ isLauncher }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="Launcher" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:38px;padding:56px;animation:fadein .4s ease;overflow-y:auto">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center">
+          <div style="width:56px;height:56px;border-radius:15px;background:linear-gradient(135deg,var(--accent,#5b9dd9),var(--accent-hi,#7cb3e6));display:flex;align-items:center;justify-content:center;box-shadow:0 12px 36px var(--accent-glow,rgba(91,157,217,0.22)),0 0 0 1px rgba(255,255,255,0.1) inset"><span style="font-family:'Material Symbols Rounded';font-size:30px;color:#0a1018">terminal</span></div>
+          <div>
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.18em;color:var(--accent-hi,#7cb3e6);text-transform:uppercase;margin-bottom:10px">Valkeon Workbench</div>
+            <div style="font-size:29px;font-weight:600;letter-spacing:-0.02em;color:#f1f1f4">Open a project</div>
+            <div style="font-size:14px;color:#8a8a93;margin-top:9px">Every Claude Code session for your repo, in one window.</div>
+          </div>
+          <div style="display:flex;gap:11px;margin-top:6px">
+            <span onClick="{{ openProject }}" style="display:flex;align-items:center;gap:8px;padding:10px 17px;border-radius:9px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:13.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:18px">folder_open</span>Open project folder</span>
+            <span style="display:flex;align-items:center;gap:8px;padding:10px 17px;border-radius:9px;background:#121216;border:1px solid #232329;color:#cfcfd6;font-size:13.5px;font-weight:500;cursor:pointer" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:18px">cloud_download</span>Clone from Git</span>
+          </div>
+        </div>
+        <div style="width:100%;max-width:680px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.09em;color:#62626b;margin-bottom:11px">RECENT PROJECTS</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <sc-for list="{{ recents }}" as="r" hint-placeholder-count="4">
+              <div onClick="{{ r.onOpen }}" style="display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:11px;background:#0d0d10;border:1px solid #1a1a1f;cursor:pointer" style-hover="background:#121217;border-color:#27272f">
+                <div style="width:34px;height:34px;border-radius:9px;background:#16161c;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-family:'Material Symbols Rounded';font-size:19px;color:var(--accent,#5b9dd9)">folder</span></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14px;font-weight:600;color:#e4e4ea">{{ r.name }}</div>
+                  <div style="font-size:11.5px;color:#6b6b74;font-family:'Geist Mono', monospace;margin-top:2px">{{ r.path }}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;flex-shrink:0">
+                  <span style="font-size:11.5px;color:#73737c">{{ r.sessions }} sessions</span>
+                  <span style="display:flex;align-items:center;gap:3px;font-family:'Geist Mono', monospace;font-size:10.5px;color:#6b6b74;background:#141419;border:1px solid #222229;padding:2px 7px;border-radius:5px"><span style="font-family:'Material Symbols Rounded';font-size:12px">fork_right</span>{{ r.branch }}</span>
+                  <span style="font-family:'Material Symbols Rounded';font-size:18px;color:#4d4d55">chevron_right</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showShell }}" hint-placeholder-val="{{ true }}">
+      <div style="width:264px;flex-shrink:0;background:#0a0a0c;border-right:1px solid #16161a;display:flex;flex-direction:column;min-height:0">
+        <div style="padding:10px 12px 6px;position:relative">
+          <div onClick="{{ toggleWsMenu }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;background:#0e0e12;border:1px solid #1c1c22;cursor:pointer" style-hover="border-color:#27272f">
+            <div style="width:26px;height:26px;border-radius:7px;background:var(--accent-soft,rgba(91,157,217,0.13));display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:var(--accent,#5b9dd9)">workspaces</span></div>
+            <div style="flex:1;min-width:0"><div style="font-size:10px;color:#62626b;letter-spacing:0.06em">WORKSPACE</div><div style="font-size:13px;font-weight:600;color:#e4e4ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ workspaceName }}</div></div>
+            <sc-if value="{{ workspaceUsesWorktree }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Material Symbols Rounded';font-size:15px;color:#b89cf0" title="Worktrees enabled">account_tree</span></sc-if>
+            <span style="font-family:'Material Symbols Rounded';font-size:18px;color:#56565e">unfold_more</span>
+          </div>
+          <sc-if value="{{ wsMenuOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:48px;left:12px;right:12px;z-index:30;background:#101014;border:1px solid #25252d;border-radius:11px;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,0.55)">
+              <sc-for list="{{ workspaceList }}" as="w" hint-placeholder-count="2">
+                <div onClick="{{ w.onSelect }}" style="{{ w.rowStyle }}" style-hover="background:#17171c">
+                  <span style="font-family:'Material Symbols Rounded';font-size:17px;color:{{ w.iconColor }}">workspaces</span>
+                  <div style="flex:1;min-width:0"><div style="font-size:13px;color:#e4e4ea;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ w.name }}</div><div style="font-size:10.5px;color:#6b6b74">{{ w.sessionCount }} sessions</div></div>
+                  <sc-if value="{{ w.useWorktree }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Material Symbols Rounded';font-size:14px;color:#b89cf0">account_tree</span></sc-if>
+                  <sc-if value="{{ w.active }}" hint-placeholder-val="{{ true }}"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:var(--accent,#5b9dd9)">check</span></sc-if>
+                </div>
+              </sc-for>
+              <div style="height:1px;background:#1d1d23;margin:5px 8px"></div>
+              <div onClick="{{ openNewWs }}" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;color:#9a9aa3;font-size:13px" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:17px">add</span>New workspace</div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="height:1px;background:#15151a;margin:2px 14px 6px"></div>
+        <div style="padding:4px 12px 8px;display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ nav }}" as="n" hint-placeholder-count="4">
+            <div onClick="{{ n.onClick }}" style="{{ n.st }}">
+              <span style="font-family:'Material Symbols Rounded';font-size:19px;color:{{ n.icoColor }}">{{ n.icon }}</span>
+              <span style="flex:1">{{ n.label }}</span>
+              <sc-if value="{{ n.badge }}" hint-placeholder-val="2"><span style="font-size:10.5px;font-weight:600;color:#9a9aa3;background:#16161d;padding:1px 7px;border-radius:9px;font-family:'Geist Mono', monospace">{{ n.badge }}</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="height:1px;background:#15151a;margin:6px 14px"></div>
+        <div style="flex:1;overflow-y:auto;min-height:0;padding-bottom:8px">
+        <div style="padding:11px 16px 7px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b">ACTIVE SESSIONS</span>
+          <span onClick="{{ newSession }}" style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;color:#6f6f78;cursor:pointer;font-family:'Material Symbols Rounded';font-size:16px" style-hover="background:#16161d;color:#cfcfd6">add</span>
+        </div>
+        <div style="padding:0 8px;display:flex;flex-direction:column;gap:1px">
+          <sc-for list="{{ sidebarSessions }}" as="s" hint-placeholder-count="4">
+            <div onClick="{{ s.onOpen }}" style="{{ s.rowStyle }}" style-hover="background:#121217">
+              <span style="{{ s.dotStyle }};margin-top:5px"></span>
+              <div style="min-width:0;flex:1">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:12.5px;font-weight:500;color:#dcdce2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</span>
+                  <span style="{{ s.modelStyle }}">{{ s.modelShort }}</span>
+                </div>
+                <div style="font-size:11.5px;color:#73737c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">{{ s.task }}</div>
+              </div>
+              <span style="font-size:10.5px;color:#56565e;font-family:'Geist Mono', monospace;margin-top:2px;flex-shrink:0">{{ s.duration }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding:15px 16px 7px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b">TERMINALS</span>
+          <span onClick="{{ newTerminal }}" style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;color:#6f6f78;cursor:pointer;font-family:'Material Symbols Rounded';font-size:16px" style-hover="background:#16161d;color:#cfcfd6">add</span>
+        </div>
+        <div style="padding:0 8px;display:flex;flex-direction:column;gap:1px">
+          <sc-for list="{{ sidebarTerminals }}" as="t" hint-placeholder-count="3">
+            <div onClick="{{ t.onOpen }}" style="display:flex;gap:9px;padding:9px;border-radius:8px;cursor:pointer;align-items:center" style-hover="background:#121217">
+              <span style="font-family:'Material Symbols Rounded';font-size:16px;color:#73737c;flex-shrink:0">terminal</span>
+              <div style="min-width:0;flex:1"><div style="font-size:12.5px;font-weight:500;color:#dcdce2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</div><div style="font-size:11px;color:#73737c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;font-family:'Geist Mono', monospace">{{ t.cwd }}</div></div>
+              <span style="{{ t.dotStyle }}"></span>
+            </div>
+          </sc-for>
+        </div>
+        </div>
+        <div onClick="{{ goSettings }}" style="padding:10px 12px;border-top:1px solid #16161a;display:flex;align-items:center;gap:10px;cursor:pointer" style-hover="background:#0e0e12">
+          <div style="width:26px;height:26px;border-radius:7px;background:#1c1c24;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#b7b7c0;flex-shrink:0">JM</div>
+          <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:500;color:#dcdce2">Jordan M.</div><div style="font-size:10.5px;color:#6b6b74">Pro plan · 3 repos</div></div>
+          <span style="font-family:'Material Symbols Rounded';font-size:17px;color:#5f5f68">settings</span>
+        </div>
+      </div>
+
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0;background:#08080a">
+
+        <sc-if value="{{ isWorkspace }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="Workspace" style="display:flex;flex-direction:column;height:100%;min-height:0">
+            <div style="height:53px;flex-shrink:0;border-bottom:1px solid #16161a;display:flex;align-items:center;justify-content:space-between;padding:0 18px;gap:16px">
+              <div style="display:flex;align-items:center;gap:11px">
+                <span style="font-size:15px;font-weight:600;color:#ededf0">{{ workspaceName }}</span>
+                <span style="font-size:12px;color:#6b6b74">{{ activeCount }} sessions active</span>
+                <sc-if value="{{ worktreesInUse }}" hint-placeholder-val="{{ false }}"><span onClick="{{ goWorktrees }}" style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:7px;background:rgba(184,156,240,0.1);border:1px solid rgba(184,156,240,0.22);color:#b89cf0;font-size:11px;font-family:'Geist Mono', monospace;cursor:pointer" style-hover="background:rgba(184,156,240,0.18)"><span style="font-family:'Material Symbols Rounded';font-size:13px">account_tree</span>{{ worktreesInUse }} worktrees</span></sc-if>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="display:flex;background:#0e0e12;border:1px solid #1c1c22;border-radius:9px;padding:3px;gap:2px">
+                  <sc-for list="{{ layoutOpts }}" as="o" hint-placeholder-count="3">
+                    <span onClick="{{ o.onClick }}" style="{{ o.st }}" title="{{ o.label }}"><span style="font-family:'Material Symbols Rounded';font-size:16px">{{ o.icon }}</span>{{ o.label }}</span>
+                  </sc-for>
+                </div>
+                <span onClick="{{ newSession }}" style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>New session</span>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;overflow:hidden;padding:16px;position:relative">
+
+              <sc-if value="{{ noSessions }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center">
+                  <div style="width:46px;height:46px;border-radius:12px;background:#101015;border:1px solid #1d1d23;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:24px;color:#56565e">grid_view</span></div>
+                  <div><div style="font-size:14px;font-weight:600;color:#cbcbd2">No sessions in {{ workspaceName }}</div><div style="font-size:12px;color:#6b6b74;margin-top:4px">Start a session to begin working in this workspace.</div></div>
+                  <span onClick="{{ newSession }}" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>New session</span>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ layoutGrid }}" hint-placeholder-val="{{ true }}">
+                <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:14px;height:100%">
+                  <sc-for list="{{ gridSessions }}" as="s" hint-placeholder-count="4">
+                    <dc-import name="TerminalCard" session="{{ s }}" style="height:100%;min-height:0" hint-size="100%,100%"></dc-import>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ layoutTabs }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;height:100%;min-height:0;background:#0c0c0f;border:1px solid #1b1b21;border-radius:12px;overflow:hidden">
+                  <div style="display:flex;align-items:center;gap:3px;padding:6px 8px;border-bottom:1px solid #16161a;background:#0e0e12;overflow-x:auto">
+                    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+                      <span onClick="{{ t.onActivate }}" style="{{ t.chipStyle }}"><span style="{{ t.dotStyle }}"></span>{{ t.name }}</span>
+                    </sc-for>
+                    <span style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;color:#6f6f78;cursor:pointer;font-family:'Material Symbols Rounded';font-size:16px;flex-shrink:0" style-hover="background:#16161d;color:#cfcfd6">add</span>
+                  </div>
+                  <div style="flex:1;min-height:0;overflow-y:auto;padding:18px 22px;background:#0a0a0c">
+                    <div style="display:flex;flex-direction:column;gap:3px;max-width:920px">
+                      <sc-for list="{{ active.lines }}" as="line" hint-placeholder-count="6"><div style="{{ line.st }}">{{ line.prefix }}{{ line.text }}</div></sc-for>
+                      <sc-if value="{{ active.running }}" hint-placeholder-val="{{ true }}"><span style="display:inline-block;width:8px;height:15px;background:var(--accent,#5b9dd9);animation:blink 1s steps(1) infinite;margin-top:3px"></span></sc-if>
+                    </div>
+                  </div>
+                  <div style="flex-shrink:0;padding:13px 16px;border-top:1px solid #16161a;background:#0b0b0e">
+                    <div style="background:#0e0e13;border:1px solid #23232b;border-radius:11px;padding:10px 12px 9px;display:flex;flex-direction:column;gap:9px" style-focus-within="border-color:var(--accent-line,rgba(91,157,217,0.32))">
+                      <textarea value="{{ active.draft }}" onChange="{{ active.onChange }}" onKeyDown="{{ active.onKey }}" rows="1" placeholder="Reply to {{ active.name }}, or ask for a change…" style="width:100%;resize:none;background:transparent;border:none;color:#e8e8ee;font-size:13.5px;line-height:1.5;font-family:'Geist', sans-serif;min-height:22px"></textarea>
+                      <div style="display:flex;align-items:center;justify-content:space-between">
+                        <div style="display:flex;align-items:center;gap:7px">
+                          <span style="display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:7px;background:#16161d;border:1px solid #24242c;font-size:11.5px;color:#9a9aa3;cursor:pointer"><span style="font-family:'Material Symbols Rounded';font-size:14px">memory</span>{{ active.model }}</span>
+                          <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;color:#74747d;cursor:pointer;font-family:'Material Symbols Rounded';font-size:17px" style-hover="background:#16161d;color:#cfcfd6">attach_file</span>
+                        </div>
+                        <span onClick="{{ active.onSend }}" style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)">Send<span style="font-family:'Material Symbols Rounded';font-size:15px">arrow_upward</span></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ layoutSplit }}" hint-placeholder-val="{{ true }}">
+                <div ref="{{ setSplitEl }}" style="display:flex;height:100%;min-height:0">
+                  <dc-import name="TerminalCard" session="{{ splitLeft }}" style="{{ leftStyle }}" hint-size="55%,100%"></dc-import>
+                  <div onMouseDown="{{ startDrag }}" style="width:10px;flex-shrink:0;cursor:col-resize;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(91,157,217,0.05)">
+                    <span style="width:3px;height:34px;border-radius:3px;background:#26262e"></span>
+                  </div>
+                  <dc-import name="TerminalCard" session="{{ splitRight }}" style="flex:1;min-width:0;height:100%" hint-size="45%,100%"></dc-import>
+                </div>
+              </sc-if>
+
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSession }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="Session" style="display:flex;flex-direction:column;height:100%;min-height:0">
+            <div style="height:53px;flex-shrink:0;border-bottom:1px solid #16161a;display:flex;align-items:center;gap:11px;padding:0 16px">
+              <span onClick="{{ backToWorkspace }}" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;color:#8a8a93;cursor:pointer;font-family:'Material Symbols Rounded';font-size:19px" style-hover="background:#16161d;color:#e4e4ea">arrow_back</span>
+              <span style="{{ active.dotStyle }}"></span>
+              <span style="font-size:15px;font-weight:600;color:#ededf0">{{ active.name }}</span>
+              <span style="{{ active.modelStyle }}">{{ active.model }}</span>
+              <span style="display:flex;align-items:center;gap:3px;font-family:'Geist Mono', monospace;font-size:10.5px;color:#7a7a83;background:#141419;border:1px solid #222229;padding:1px 6px;border-radius:5px"><span style="font-family:'Material Symbols Rounded';font-size:12px">fork_right</span>{{ active.branch }}</span>
+              <div style="flex:1"></div>
+              <span style="display:flex;align-items:center;gap:5px;padding:6px 11px;border-radius:8px;background:#121216;border:1px solid #232329;color:#cbcbd2;font-size:12px;font-weight:500;cursor:pointer" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:15px">stop_circle</span>Stop</span>
+              <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;color:#8a8a93;cursor:pointer;font-family:'Material Symbols Rounded';font-size:18px" style-hover="background:#16161d;color:#e4e4ea">restart_alt</span>
+              <span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;color:#8a8a93;cursor:pointer;font-family:'Material Symbols Rounded';font-size:18px" style-hover="background:#16161d;color:#e4e4ea">more_horiz</span>
+            </div>
+            <div style="flex:1;min-height:0;display:flex">
+              <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+                <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;background:#0a0a0c">
+                  <div style="display:flex;flex-direction:column;gap:3px;max-width:880px">
+                    <sc-for list="{{ active.lines }}" as="line" hint-placeholder-count="8"><div style="{{ line.st }}">{{ line.prefix }}{{ line.text }}</div></sc-for>
+                    <sc-if value="{{ active.running }}" hint-placeholder-val="{{ true }}"><span style="display:inline-block;width:8px;height:16px;background:var(--accent,#5b9dd9);animation:blink 1s steps(1) infinite;margin-top:3px"></span></sc-if>
+                  </div>
+                </div>
+                <div style="flex-shrink:0;padding:14px 20px 18px;border-top:1px solid #16161a;background:#0b0b0e">
+                  <div style="background:#0e0e13;border:1px solid #23232b;border-radius:12px;padding:11px 13px 10px;display:flex;flex-direction:column;gap:10px" style-focus-within="border-color:var(--accent-line,rgba(91,157,217,0.32))">
+                    <textarea value="{{ active.draft }}" onChange="{{ active.onChange }}" onKeyDown="{{ active.onKey }}" rows="1" placeholder="Reply to {{ active.name }}, or ask for a change…" style="width:100%;resize:none;background:transparent;border:none;color:#e8e8ee;font-size:14px;line-height:1.5;font-family:'Geist', sans-serif;min-height:24px"></textarea>
+                    <div style="display:flex;align-items:center;justify-content:space-between">
+                      <div style="display:flex;align-items:center;gap:7px">
+                        <span style="display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;background:#16161d;border:1px solid #24242c;font-size:11.5px;color:#9a9aa3;cursor:pointer"><span style="font-family:'Material Symbols Rounded';font-size:14px">memory</span>{{ active.model }}</span>
+                        <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;color:#74747d;cursor:pointer;font-family:'Material Symbols Rounded';font-size:17px" style-hover="background:#16161d;color:#cfcfd6">attach_file</span>
+                      </div>
+                      <span onClick="{{ active.onSend }}" style="display:flex;align-items:center;gap:6px;padding:8px 15px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:13px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)">Send<span style="font-family:'Material Symbols Rounded';font-size:16px">arrow_upward</span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="width:300px;flex-shrink:0;border-left:1px solid #16161a;background:#0a0a0c;overflow-y:auto;padding:18px 18px 28px">
+                <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b;margin-bottom:12px">DETAILS</div>
+                <div style="display:flex;flex-direction:column;gap:11px">
+                  <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:#73737c">Status</span><span style="font-size:12px;color:#cbcbd2;display:flex;align-items:center;gap:6px"><span style="{{ active.dotStyle }}"></span>{{ active.statusLabel }}</span></div>
+                  <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:#73737c">Model</span><span style="{{ active.modelStyle }}">{{ active.model }}</span></div>
+                  <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:#73737c">Branch</span><span style="font-size:11.5px;color:#cbcbd2;font-family:'Geist Mono', monospace">{{ active.branch }}</span></div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><span style="font-size:12px;color:#73737c;flex-shrink:0">Worktree</span><span style="font-size:11.5px;color:{{ active.worktreeColor }};font-family:'Geist Mono', monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ active.worktreeLabel }}</span></div>
+                  <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:#73737c">Running for</span><span style="font-size:11.5px;color:#cbcbd2;font-family:'Geist Mono', monospace">{{ active.duration }}</span></div>
+                </div>
+                <div style="height:1px;background:#15151a;margin:16px 0"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b">CONTEXT</span><span style="font-size:11px;color:#56565e;font-family:'Geist Mono', monospace">{{ active.tokenLabel }}</span></div>
+                <div style="height:5px;border-radius:4px;background:#16161c;overflow:hidden;margin-bottom:16px"><div style="{{ active.tokenBarStyle }}"></div></div>
+                <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b;margin-bottom:10px">FILES TOUCHED</div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <sc-for list="{{ active.files }}" as="f" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <span style="font-family:'Material Symbols Rounded';font-size:15px;color:#5f5f68">description</span>
+                      <span style="flex:1;min-width:0;font-size:11.5px;color:#b7b7c0;font-family:'Geist Mono', monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ f.p }}</span>
+                      <span style="font-size:10.5px;color:#5cc98a;font-family:'Geist Mono', monospace">{{ f.c }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="History" style="display:flex;flex-direction:column;height:100%;min-height:0">
+            <div style="padding:20px 24px 13px;border-bottom:1px solid #16161a;flex-shrink:0">
+              <div style="display:flex;align-items:flex-end;justify-content:space-between">
+                <div>
+                  <div style="font-size:18px;font-weight:600;color:#ededf0;letter-spacing:-0.01em">History</div>
+                  <div style="font-size:12.5px;color:#73737c;margin-top:3px">All sessions in {{ project.name }}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;width:240px;padding:6px 11px;border-radius:8px;background:#0f0f13;border:1px solid #1c1c22">
+                  <span style="font-family:'Material Symbols Rounded';font-size:15px;color:#5f5f68">search</span>
+                  <span style="font-size:12px;color:#56565e">Filter history</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:15px">
+                <sc-for list="{{ historyFilters }}" as="f" hint-placeholder-count="4"><span onClick="{{ f.onClick }}" style="{{ f.st }}">{{ f.label }}</span></sc-for>
+              </div>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:6px 24px 28px;min-height:0">
+              <sc-for list="{{ historyGroups }}" as="g" hint-placeholder-count="3">
+                <div style="margin-top:16px">
+                  <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b;padding:0 12px 4px">{{ g.label }}</div>
+                  <sc-for list="{{ g.items }}" as="h" hint-placeholder-count="3">
+                    <div onClick="{{ h.onOpen }}" style="display:flex;align-items:center;gap:14px;padding:12px;border-radius:9px;cursor:pointer" style-hover="background:#101015">
+                      <span style="{{ h.dotStyle }}"></span>
+                      <div style="width:172px;flex-shrink:0">
+                        <div style="font-size:13px;font-weight:500;color:#dcdce2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.name }}</div>
+                        <div style="font-size:10.5px;color:#6b6b74;font-family:'Geist Mono', monospace;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.branch }}</div>
+                      </div>
+                      <div style="flex:1;min-width:0;font-size:12.5px;color:#8a8a93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.task }}</div>
+                      <span style="{{ h.modelStyle }}">{{ h.model }}</span>
+                      <span style="font-size:11px;color:#6b6b74;font-family:'Geist Mono', monospace;width:54px;text-align:right">{{ h.duration }}</span>
+                      <span style="font-size:11px;color:#56565e;font-family:'Geist Mono', monospace;width:56px;text-align:right">{{ h.time }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSkills }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="Skills" style="display:flex;height:100%;min-height:0">
+            <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+              <div style="padding:20px 24px 14px;border-bottom:1px solid #16161a;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between">
+                <div>
+                  <div style="font-size:18px;font-weight:600;color:#ededf0;letter-spacing:-0.01em">Skills</div>
+                  <div style="font-size:12.5px;color:#73737c;margin-top:3px;font-family:'Geist Mono', monospace">.claude/skills · {{ skillsEnabledCount }} enabled</div>
+                </div>
+                <span style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;background:#121216;border:1px solid #232329;color:#cbcbd2;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>New skill</span>
+              </div>
+              <div style="flex:1;overflow-y:auto;padding:16px 18px;min-height:0">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start">
+                  <sc-for list="{{ skills }}" as="sk" hint-placeholder-count="6">
+                    <div onClick="{{ sk.onSelect }}" style="{{ sk.cardStyle }}" style-hover="border-color:#2c2c35">
+                      <div style="display:flex;align-items:flex-start;justify-content:space-between">
+                        <div style="width:34px;height:34px;border-radius:9px;background:#15151b;display:flex;align-items:center;justify-content:center"><span style="font-family:'Material Symbols Rounded';font-size:19px;color:var(--accent,#5b9dd9)">{{ sk.icon }}</span></div>
+                        <span onClick="{{ sk.onToggle }}" style="{{ sk.toggleStyle }}"><span style="{{ sk.knobStyle }}"></span></span>
+                      </div>
+                      <div style="margin-top:11px">
+                        <div style="font-size:13.5px;font-weight:600;color:#e4e4ea">{{ sk.name }}</div>
+                        <div style="font-size:11.5px;color:#73737c;line-height:1.45;margin-top:4px">{{ sk.desc }}</div>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+                        <span style="{{ sk.tagStyle }}">{{ sk.tag }}</span>
+                        <span style="font-size:10.5px;color:#5f5f68;font-family:'Geist Mono', monospace">{{ sk.triggerLabel }}</span>
+                        <div style="flex:1"></div>
+                        <span style="font-size:10.5px;color:#56565e;font-family:'Geist Mono', monospace">{{ sk.invocations }} runs</span>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="width:344px;flex-shrink:0;border-left:1px solid #16161a;background:#0a0a0c;overflow-y:auto;min-height:0">
+              <div style="padding:22px 20px 30px">
+                <div style="width:42px;height:42px;border-radius:11px;background:#15151b;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><span style="font-family:'Material Symbols Rounded';font-size:23px;color:var(--accent,#5b9dd9)">{{ selectedSkill.icon }}</span></div>
+                <div style="font-size:17px;font-weight:600;color:#ededf0">{{ selectedSkill.name }}</div>
+                <div style="font-size:12.5px;color:#8a8a93;line-height:1.5;margin-top:6px">{{ selectedSkill.desc }}</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding:11px 13px;border-radius:9px;background:#0e0e12;border:1px solid #1c1c22">
+                  <span style="font-size:12.5px;color:#cbcbd2;font-weight:500">{{ selectedSkill.enabledLabel }}</span>
+                  <span onClick="{{ selectedSkill.onToggle }}" style="{{ selectedSkill.toggleStyle }}"><span style="{{ selectedSkill.knobStyle }}"></span></span>
+                </div>
+                <div style="display:flex;gap:18px;margin-top:18px">
+                  <div><div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:4px">TRIGGER</div><div style="font-size:12.5px;color:#cbcbd2">{{ selectedSkill.triggerLabel }}</div></div>
+                  <div><div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:4px">RUNS</div><div style="font-size:12.5px;color:#cbcbd2;font-family:'Geist Mono', monospace">{{ selectedSkill.invocations }}</div></div>
+                  <div><div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:4px">TYPE</div><div style="font-size:12.5px;color:#cbcbd2">{{ selectedSkill.tag }}</div></div>
+                </div>
+                <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin:20px 0 8px">TOUCHES</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px">
+                  <sc-for list="{{ selectedSkill.touches }}" as="t" hint-placeholder-count="2"><span style="font-size:11px;color:#9a9aa3;font-family:'Geist Mono', monospace;background:#121217;border:1px solid #222229;padding:3px 8px;border-radius:6px">{{ t }}</span></sc-for>
+                </div>
+                <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin:20px 0 8px">INSTRUCTIONS</div>
+                <div style="font-size:11.5px;color:#a4a4ad;line-height:1.6;font-family:'Geist Mono', monospace;background:#0c0c0f;border:1px solid #1a1a1f;border-radius:9px;padding:13px">{{ selectedSkill.instructions }}</div>
+                <div style="display:flex;gap:9px;margin-top:18px">
+                  <span style="flex:1;text-align:center;padding:9px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)">Run now</span>
+                  <span style="flex:1;text-align:center;padding:9px;border-radius:8px;background:#121216;border:1px solid #232329;color:#cbcbd2;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#17171c">Edit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="Settings" style="flex:1;overflow-y:auto;min-height:0">
+            <div style="max-width:680px;margin:0 auto;padding:34px 32px 60px">
+              <div style="font-size:20px;font-weight:600;color:#ededf0;letter-spacing:-0.01em;margin-bottom:26px">Settings</div>
+
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b;margin-bottom:13px">APPEARANCE</div>
+              <div style="background:#0c0c0f;border:1px solid #1a1a1f;border-radius:12px;padding:18px;margin-bottom:26px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div><div style="font-size:13px;color:#e4e4ea;font-weight:500">Accent color</div><div style="font-size:11.5px;color:#6b6b74;margin-top:2px">Used across highlights and actions</div></div>
+                  <div style="display:flex;gap:8px">
+                    <sc-for list="{{ accentSwatches }}" as="a" hint-placeholder-count="5"><span onClick="{{ a.onClick }}" style="{{ a.st }}"></span></sc-for>
+                  </div>
+                </div>
+                <div style="height:1px;background:#16161a;margin:15px 0"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div><div style="font-size:13px;color:#e4e4ea;font-weight:500">Terminal font size</div><div style="font-size:11.5px;color:#6b6b74;margin-top:2px">{{ fontVal }}px</div></div>
+                  <input type="range" min="11" max="15" step="1" value="{{ fontVal }}" onChange="{{ setFont }}" style="width:160px;accent-color:var(--accent,#5b9dd9)" />
+                </div>
+              </div>
+
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b;margin-bottom:13px">GENERAL</div>
+              <div style="background:#0c0c0f;border:1px solid #1a1a1f;border-radius:12px;padding:4px 18px;margin-bottom:26px">
+                <sc-for list="{{ settingsToggles }}" as="t" hint-placeholder-count="3">
+                  <div style="{{ t.rowStyle }}">
+                    <div><div style="font-size:13px;color:#e4e4ea;font-weight:500">{{ t.label }}</div><div style="font-size:11.5px;color:#6b6b74;margin-top:2px">{{ t.desc }}</div></div>
+                    <span onClick="{{ t.onClick }}" style="{{ t.toggleStyle }}"><span style="{{ t.knobStyle }}"></span></span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b;margin-bottom:13px">MODELS</div>
+              <div style="background:#0c0c0f;border:1px solid #1a1a1f;border-radius:12px;padding:18px;margin-bottom:26px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div><div style="font-size:13px;color:#e4e4ea;font-weight:500">Default model</div><div style="font-size:11.5px;color:#6b6b74;margin-top:2px">New sessions start with this</div></div>
+                  <div style="display:flex;background:#0e0e12;border:1px solid #1c1c22;border-radius:9px;padding:3px;gap:2px">
+                    <sc-for list="{{ modelOpts }}" as="m" hint-placeholder-count="3"><span onClick="{{ m.onClick }}" style="{{ m.st }}">{{ m.label }}</span></sc-for>
+                  </div>
+                </div>
+              </div>
+
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b;margin-bottom:13px">KEYBOARD</div>
+              <div style="background:#0c0c0f;border:1px solid #1a1a1f;border-radius:12px;padding:4px 18px">
+                <sc-for list="{{ shortcuts }}" as="s" hint-placeholder-count="4">
+                  <div style="{{ s.rowStyle }}">
+                    <span style="font-size:13px;color:#cbcbd2">{{ s.label }}</span>
+                    <span style="font-family:'Geist Mono', monospace;font-size:11px;color:#9a9aa3;background:#15151b;border:1px solid #232330;padding:3px 8px;border-radius:6px">{{ s.keys }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isBoard }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="Board" style="display:flex;flex-direction:column;height:100%;min-height:0">
+            <div style="flex-shrink:0;border-bottom:1px solid #16161a;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+              <div style="display:flex;align-items:center;gap:14px;position:relative">
+                <span onClick="{{ toggleBoardMenu }}" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:6px 11px;border-radius:9px;background:#0e0e12;border:1px solid #1c1c22" style-hover="border-color:#27272f">
+                  <span style="font-family:'Material Symbols Rounded';font-size:18px;color:var(--accent,#5b9dd9)">view_kanban</span>
+                  <span style="font-size:15px;font-weight:600;color:#ededf0">{{ board.name }}</span>
+                  <span style="font-size:10px;color:#6b6b74;font-family:'Geist Mono', monospace;background:#141419;border:1px solid #222229;padding:1px 6px;border-radius:5px">{{ board.scope }}</span>
+                  <span style="font-family:'Material Symbols Rounded';font-size:18px;color:#56565e">expand_more</span>
+                </span>
+                <sc-if value="{{ boardMenuOpen }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;top:48px;left:0;z-index:30;width:288px;background:#101014;border:1px solid #25252d;border-radius:11px;padding:6px;box-shadow:0 20px 54px rgba(0,0,0,0.55)">
+                    <sc-for list="{{ boards }}" as="b" hint-placeholder-count="3">
+                      <div onClick="{{ b.onSelect }}" style="{{ b.rowStyle }}" style-hover="background:#17171c">
+                        <span style="font-family:'Material Symbols Rounded';font-size:17px;color:{{ b.iconColor }}">view_kanban</span>
+                        <div style="flex:1;min-width:0"><div style="font-size:13px;color:#e4e4ea;font-weight:500">{{ b.name }}</div><div style="font-size:10.5px;color:#6b6b74">{{ b.meta }}</div></div>
+                        <sc-if value="{{ b.active }}" hint-placeholder-val="{{ true }}"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:var(--accent,#5b9dd9)">check</span></sc-if>
+                      </div>
+                    </sc-for>
+                    <div style="height:1px;background:#1d1d23;margin:5px 8px"></div>
+                    <div onClick="{{ openNewBoard }}" style="display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;color:#9a9aa3;font-size:13px" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:17px">add</span>New board</div>
+                  </div>
+                </sc-if>
+                <span style="font-size:12px;color:#6b6b74">{{ board.cardCount }} cards · base <span style="font-family:'Geist Mono', monospace;color:#8a8a93">{{ board.base }}</span></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px">
+                <span onClick="{{ openLabelMgr }}" style="display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:8px;background:#121216;border:1px solid #232329;color:#cbcbd2;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:16px">label</span>Labels</span>
+                <span onClick="{{ openGen }}" style="display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:8px;background:var(--accent-soft,rgba(91,157,217,0.13));border:1px solid var(--accent-line,rgba(91,157,217,0.34));color:var(--accent-hi,#7cb3e6);font-size:12.5px;font-weight:600;cursor:pointer" style-hover="background:var(--accent,#5b9dd9);color:#0a1018"><span style="font-family:'Material Symbols Rounded';font-size:16px">auto_awesome</span>Generate cards</span>
+                <span onClick="{{ board.onAddCard }}" style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;background:#121216;border:1px solid #232329;color:#cbcbd2;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>New card</span>
+              </div>
+            </div>
+            <div style="flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;padding:16px">
+              <div style="display:flex;gap:14px;height:100%;align-items:stretch">
+                <sc-for list="{{ boardCols }}" as="col" hint-placeholder-count="5">
+                  <div style="width:264px;flex-shrink:0;display:flex;flex-direction:column;min-height:0;background:#0a0a0d;border:1px solid #15151a;border-radius:12px">
+                    <div style="flex-shrink:0;display:flex;align-items:center;gap:8px;padding:12px 13px 10px">
+                      <span style="{{ col.dotStyle }}"></span>
+                      <span style="font-size:12.5px;font-weight:600;color:#cbcbd2">{{ col.name }}</span>
+                      <span style="font-size:11px;color:#62626b;font-family:'Geist Mono', monospace">{{ col.count }}</span>
+                      <div style="flex:1"></div>
+                      <span onClick="{{ col.onAdd }}" style="font-family:'Material Symbols Rounded';font-size:16px;color:#56565e;cursor:pointer" style-hover="color:#cfcfd6">add</span>
+                    </div>
+                    <div style="flex:1;min-height:0;overflow-y:auto;padding:2px 10px 12px;display:flex;flex-direction:column;gap:9px">
+                      <sc-for list="{{ col.cards }}" as="c" hint-placeholder-count="2">
+                        <div onClick="{{ c.onOpen }}" style="background:#0e0e13;border:1px solid #1d1d23;border-radius:10px;padding:11px 12px;cursor:pointer;display:flex;flex-direction:column;gap:8px;animation:fadein .25s ease" style-hover="border-color:#2c2c35">
+                          <div style="display:flex;align-items:center;gap:6px">
+                            <sc-for list="{{ c.labels }}" as="l" hint-placeholder-count="1"><span style="{{ l.st }}">{{ l.text }}</span></sc-for>
+                            <div style="flex:1"></div>
+                            <sc-if value="{{ c.hasAttach }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:2px;font-size:10px;color:#6b6b74;font-family:'Geist Mono', monospace"><span style="font-family:'Material Symbols Rounded';font-size:13px">attach_file</span>{{ c.attachCount }}</span></sc-if>
+                            <span style="font-size:10px;color:#56565e;font-family:'Geist Mono', monospace">{{ c.code }}</span>
+                          </div>
+                          <div style="font-size:13px;font-weight:600;color:#e4e4ea;line-height:1.35">{{ c.title }}</div>
+                          <sc-if value="{{ c.excerpt }}" hint-placeholder-val="x"><div style="font-size:11.5px;color:#73737c;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{ c.excerpt }}</div></sc-if>
+                          <sc-if value="{{ c.hasLinked }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:flex;flex-wrap:wrap;gap:5px">
+                              <span style="display:flex;align-items:center;gap:4px;font-family:'Geist Mono', monospace;font-size:10px;color:#8a8a93;background:#141419;border:1px solid #222229;padding:2px 6px;border-radius:5px"><span style="font-family:'Material Symbols Rounded';font-size:12px">fork_right</span>{{ c.branch }}</span>
+                              <sc-if value="{{ c.worktree }}" hint-placeholder-val="x"><span style="display:flex;align-items:center;gap:4px;font-family:'Geist Mono', monospace;font-size:10px;color:#b89cf0;background:rgba(184,156,240,0.1);border:1px solid rgba(184,156,240,0.22);padding:2px 6px;border-radius:5px"><span style="font-family:'Material Symbols Rounded';font-size:12px">account_tree</span>{{ c.worktree }}</span></sc-if>
+                            </div>
+                          </sc-if>
+                          <sc-if value="{{ c.agentWorking }}" hint-placeholder-val="{{ false }}">
+                            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#7fae86"><span style="width:6px;height:6px;border-radius:50%;background:#5cc98a;animation:pulse 2s infinite;flex-shrink:0"></span>Claude is working · {{ c.sessionName }}</div>
+                          </sc-if>
+                          <sc-if value="{{ c.action }}" hint-placeholder-val="{{ false }}">
+                            <span onClick="{{ c.onAction }}" style="{{ c.actionStyle }}"><span style="font-family:'Material Symbols Rounded';font-size:14px">{{ c.actionIcon }}</span>{{ c.actionLabel }}</span>
+                          </sc-if>
+                        </div>
+                      </sc-for>
+                      <sc-if value="{{ col.empty }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:#3f3f47;text-align:center;padding:16px 0;border:1px dashed #1c1c22;border-radius:9px">No cards</div></sc-if>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isWorktrees }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="Worktrees" style="display:flex;flex-direction:column;height:100%;min-height:0">
+            <div style="padding:20px 24px 16px;border-bottom:1px solid #16161a;flex-shrink:0;display:flex;align-items:flex-end;justify-content:space-between">
+              <div>
+                <div style="display:flex;align-items:center;gap:10px"><div style="font-size:18px;font-weight:600;color:#ededf0;letter-spacing:-0.01em">Worktrees</div><span style="font-size:10.5px;color:#7aa0c4;font-family:'Geist Mono', monospace;background:var(--accent-soft,rgba(91,157,217,0.13));border:1px solid var(--accent-line,rgba(91,157,217,0.34));padding:2px 8px;border-radius:6px">optional · {{ worktreeCount }} active</span></div>
+                <div style="font-size:12.5px;color:#73737c;margin-top:4px">Isolated checkouts so sessions can work in parallel without colliding</div>
+              </div>
+              <span style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;background:#121216;border:1px solid #232329;color:#cbcbd2;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>New worktree</span>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:16px 24px 28px;min-height:0">
+              <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:11px;background:#0c0c0f;border:1px solid #1c1c22;margin-bottom:16px">
+                <span style="font-family:'Material Symbols Rounded';font-size:20px;color:#8a8a93">home_storage</span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#e4e4ea">main checkout</div><div style="font-size:11px;color:#6b6b74;font-family:'Geist Mono', monospace;margin-top:2px">~/code/acme-platform</div></div>
+                <span style="font-family:'Geist Mono', monospace;font-size:11px;color:#9a9aa3">main</span>
+                <span style="font-size:11px;color:#5cc98a;font-family:'Geist Mono', monospace;width:92px;text-align:right">clean</span>
+              </div>
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#62626b;padding:0 4px 6px">LINKED WORKTREES</div>
+              <sc-for list="{{ worktreesList }}" as="w" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:14px;padding:13px 12px;border-radius:9px" style-hover="background:#101015">
+                  <span style="font-family:'Material Symbols Rounded';font-size:18px;color:var(--accent,#5b9dd9)">account_tree</span>
+                  <div style="width:184px;flex-shrink:0"><div style="font-size:12.5px;font-weight:500;color:#dcdce2;font-family:'Geist Mono', monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ w.branch }}</div><div style="font-size:10.5px;color:#6b6b74;font-family:'Geist Mono', monospace;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ w.path }}</div></div>
+                  <div style="flex:1;min-width:0">
+                    <sc-if value="{{ w.session }}" hint-placeholder-val="x"><span onClick="{{ w.onOpen }}" style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:#9a9aa3;cursor:pointer" style-hover="color:#cfcfd6"><span style="{{ w.dotStyle }}"></span>{{ w.session }}</span></sc-if>
+                    <sc-if value="{{ w.noSession }}" hint-placeholder-val="x"><span style="font-size:11.5px;color:#56565e">no active session</span></sc-if>
+                  </div>
+                  <span style="{{ w.statusStyle }}">{{ w.status }}</span>
+                  <span style="font-size:11px;color:#56565e;font-family:'Geist Mono', monospace;width:38px;text-align:right">{{ w.last }}</span>
+                  <span style="font-family:'Material Symbols Rounded';font-size:17px;color:#5f5f68;cursor:pointer" style-hover="color:#cfcfd6">folder_open</span>
+                  <span onClick="{{ w.onDelete }}" style="font-family:'Material Symbols Rounded';font-size:17px;color:#5f5f68;cursor:pointer" style-hover="color:#e07a6e">delete_outline</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isTerminals }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="Terminals" style="display:flex;flex-direction:column;height:100%;min-height:0">
+            <div style="height:53px;flex-shrink:0;border-bottom:1px solid #16161a;display:flex;align-items:center;justify-content:space-between;padding:0 18px;gap:16px">
+              <div style="display:flex;align-items:baseline;gap:11px">
+                <span style="font-size:15px;font-weight:600;color:#ededf0">Terminals</span>
+                <span style="font-size:12px;color:#6b6b74">Plain shells — separate from AI sessions</span>
+              </div>
+              <span onClick="{{ newTerminal }}" style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:8px;background:#121216;border:1px solid #232329;color:#cbcbd2;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>New terminal</span>
+            </div>
+            <div style="flex:1;min-height:0;overflow-y:auto;padding:16px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                <sc-for list="{{ terminals }}" as="t" hint-placeholder-count="3">
+                  <div style="background:#0c0c0f;border:1px solid #1b1b21;border-radius:12px;display:flex;flex-direction:column;height:300px;overflow:hidden">
+                    <div style="height:38px;flex-shrink:0;display:flex;align-items:center;gap:9px;padding:0 11px;border-bottom:1px solid #16161a;background:#0e0e12">
+                      <span style="font-family:'Material Symbols Rounded';font-size:15px;color:#8a8a93">terminal</span>
+                      <span style="font-size:12.5px;font-weight:600;color:#e4e4ea">{{ t.name }}</span>
+                      <span style="font-size:10px;color:#6b6b74;font-family:'Geist Mono', monospace;background:#141419;border:1px solid #222229;padding:1px 6px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">{{ t.cwd }}</span>
+                      <div style="flex:1"></div>
+                      <span style="{{ t.dotStyle }}"></span>
+                      <span style="font-size:10px;color:#6b6b74;font-family:'Geist Mono', monospace">{{ t.statusLabel }}</span>
+                      <span onClick="{{ t.onClose }}" style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;color:#6f6f78;cursor:pointer;font-family:'Material Symbols Rounded';font-size:16px" style-hover="background:#191920;color:#e07a6e">close</span>
+                    </div>
+                    <div style="flex:1;min-height:0;overflow-y:auto;padding:11px 12px;background:#0a0a0c">
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <sc-for list="{{ t.lines }}" as="line" hint-placeholder-count="4"><div style="{{ line.st }}">{{ line.prefix }}{{ line.text }}</div></sc-for>
+                        <sc-if value="{{ t.running }}" hint-placeholder-val="{{ true }}"><span style="display:inline-block;width:7px;height:13px;background:#5cc98a;animation:blink 1s steps(1) infinite;margin-top:2px"></span></sc-if>
+                      </div>
+                    </div>
+                    <div style="flex-shrink:0;border-top:1px solid #16161a;background:#0c0c0f;padding:7px 10px;display:flex;align-items:center;gap:8px">
+                      <span style="color:#5cc98a;font-family:'Geist Mono', monospace;font-size:13px;font-weight:600">$</span>
+                      <input value="{{ t.draft }}" onChange="{{ t.onChange }}" onKeyDown="{{ t.onKey }}" placeholder="Run a command…" style="flex:1;min-width:0;background:transparent;border:none;color:#e4e4ea;font-size:12.5px;font-family:'Geist Mono', monospace" />
+                      <span onClick="{{ t.onSend }}" style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:#15151b;color:#9a9aa3;cursor:pointer;font-family:'Material Symbols Rounded';font-size:16px" style-hover="background:#1d1d24;color:#e4e4ea">keyboard_return</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+    </sc-if>
+
+  </div>
+
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(4,4,6,0.6);padding:32px">
+      <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0"></div>
+      <div style="position:relative;width:720px;max-height:90%;background:#0b0b0e;border:1px solid #25252d;border-radius:14px;display:flex;flex-direction:column;animation:fadein .2s ease;box-shadow:0 30px 90px rgba(0,0,0,0.6);overflow:hidden">
+        <div style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #16161a">
+          <span style="font-size:11px;color:#56565e;font-family:'Geist Mono', monospace">{{ drawerCard.code }}</span>
+          <span style="{{ drawerCard.colBadgeStyle }}">{{ drawerCard.colName }}</span>
+          <div style="flex:1"></div>
+          <span onClick="{{ drawerCard.onDelete }}" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;font-family:'Material Symbols Rounded';font-size:18px;color:#6f6f78;cursor:pointer;border-radius:7px" style-hover="background:#1a1216;color:#e07a6e">delete_outline</span>
+          <span onClick="{{ closeDrawer }}" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;font-family:'Material Symbols Rounded';font-size:19px;color:#6f6f78;cursor:pointer;border-radius:7px" style-hover="background:#16161c;color:#cfcfd6">close</span>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:18px 18px 26px">
+          <input value="{{ drawerCard.title }}" onChange="{{ drawerCard.onTitle }}" style="width:100%;background:transparent;border:none;color:#f1f1f4;font-size:18px;font-weight:600;font-family:'Geist', sans-serif;margin-bottom:12px" />
+          <div style="position:relative;margin-bottom:18px">
+            <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+              <sc-for list="{{ drawerCard.labels }}" as="l" hint-placeholder-count="2"><span style="{{ l.st }}">{{ l.text }}<span onClick="{{ l.onRemove }}" style="font-family:'Material Symbols Rounded';font-size:12px;cursor:pointer;margin-left:1px;opacity:0.65" style-hover="opacity:1">close</span></span></sc-for>
+              <span onClick="{{ openLabelMenu }}" style="display:inline-flex;align-items:center;gap:3px;height:18px;box-sizing:border-box;font-size:9.5px;font-weight:600;color:#8a8a93;background:#141419;border:1px dashed #2a2a32;padding:0 7px;border-radius:5px;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em" style-hover="border-color:#3a3a44;color:#cbcbd2"><span style="font-family:'Material Symbols Rounded';font-size:12px">add</span>Label</span>
+            </div>
+            <sc-if value="{{ labelMenuOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:30px;left:0;z-index:20;width:230px;background:#101014;border:1px solid #25252d;border-radius:10px;padding:6px;box-shadow:0 16px 44px rgba(0,0,0,0.5)">
+                <sc-for list="{{ availLabels }}" as="a" hint-placeholder-count="3">
+                  <div onClick="{{ a.onToggle }}" style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;cursor:pointer" style-hover="background:#17171c">
+                    <span style="width:9px;height:9px;border-radius:3px;background:{{ a.color }};flex-shrink:0"></span>
+                    <span style="flex:1;font-size:12px;color:#cbcbd2;text-transform:capitalize">{{ a.name }}</span>
+                    <sc-if value="{{ a.applied }}" hint-placeholder-val="{{ true }}"><span style="font-family:'Material Symbols Rounded';font-size:15px;color:var(--accent,#5b9dd9)">check</span></sc-if>
+                  </div>
+                </sc-for>
+                <div style="height:1px;background:#1d1d23;margin:4px 6px"></div>
+                <div onClick="{{ openLabelMgr }}" style="display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;cursor:pointer;color:#9a9aa3;font-size:12px" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:15px">settings</span>Manage labels</div>
+              </div>
+            </sc-if>
+          </div>
+          <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:8px">COLUMN</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px">
+            <sc-for list="{{ drawerCard.colOpts }}" as="o" hint-placeholder-count="5"><span onClick="{{ o.onClick }}" style="{{ o.st }}">{{ o.name }}</span></sc-for>
+          </div>
+          <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:8px">LINKED WORK</div>
+          <sc-if value="{{ drawerCard.hasLinked }}" hint-placeholder-val="{{ true }}">
+            <div style="background:#0e0e12;border:1px solid #1c1c22;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+              <div style="display:flex;align-items:center;gap:9px"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:#8a8a93">fork_right</span><span style="font-size:12px;color:#73737c;width:70px">Branch</span><span style="font-size:11.5px;color:#cbcbd2;font-family:'Geist Mono', monospace">{{ drawerCard.branch }}</span></div>
+              <sc-if value="{{ drawerCard.worktree }}" hint-placeholder-val="x"><div style="display:flex;align-items:center;gap:9px"><span style="font-family:'Material Symbols Rounded';font-size:16px;color:#b89cf0">account_tree</span><span style="font-size:12px;color:#73737c;width:70px">Worktree</span><span style="font-size:11.5px;color:#cbcbd2;font-family:'Geist Mono', monospace;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ drawerCard.worktree }}</span></div></sc-if>
+              <sc-if value="{{ drawerCard.sessionName }}" hint-placeholder-val="x"><div onClick="{{ drawerCard.onOpenSession }}" style="display:flex;align-items:center;gap:9px;cursor:pointer"><span style="{{ drawerCard.sessionDot }}"></span><span style="font-size:12px;color:#73737c;width:70px">Session</span><span style="font-size:11.5px;color:var(--accent-hi,#7cb3e6);font-family:'Geist Mono', monospace">{{ drawerCard.sessionName }}</span></div></sc-if>
+            </div>
+          </sc-if>
+          <sc-if value="{{ drawerCard.notLinked }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-bottom:20px">
+              <span onClick="{{ drawerCard.onStart }}" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border-radius:9px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:13px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:17px">rocket_launch</span>Start task</span>
+              <div style="font-size:11px;color:#56565e;margin-top:7px;text-align:center">Creates a branch + worktree and hands the card to Claude</div>
+            </div>
+          </sc-if>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:10.5px;color:#62626b;letter-spacing:0.06em">DESCRIPTION</span>
+            <div style="display:flex;background:#0e0e12;border:1px solid #1c1c22;border-radius:7px;padding:2px;gap:2px">
+              <span onClick="{{ drawerCard.onEditTab }}" style="{{ drawerCard.editTabStyle }}">Write</span>
+              <span onClick="{{ drawerCard.onPreviewTab }}" style="{{ drawerCard.previewTabStyle }}">Preview</span>
+            </div>
+          </div>
+          <sc-if value="{{ drawerCard.isEdit }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:1px;padding:5px 6px;background:#0c0c0f;border:1px solid #1c1c22;border-bottom:none;border-radius:9px 9px 0 0">
+              <sc-for list="{{ drawerCard.mdTools }}" as="tool" hint-placeholder-count="10">
+                <span onClick="{{ tool.onClick }}" title="{{ tool.title }}" style="display:flex;align-items:center;justify-content:center;min-width:27px;height:27px;border-radius:6px;color:#9a9aa3;cursor:pointer" style-hover="background:#1a1a20;color:#e4e4ea">
+                  <sc-if value="{{ tool.icon }}" hint-placeholder-val="x"><span style="font-family:'Material Symbols Rounded';font-size:17px">{{ tool.icon }}</span></sc-if>
+                  <sc-if value="{{ tool.text }}" hint-placeholder-val="x"><span style="font-size:11px;font-weight:700;font-family:'Geist Mono', monospace">{{ tool.text }}</span></sc-if>
+                </span>
+              </sc-for>
+            </div>
+            <textarea value="{{ drawerCard.body }}" onChange="{{ drawerCard.onBody }}" ref="{{ setMdRef }}" placeholder="Write the task in markdown…  **bold**  *italic*  - [ ] todo  ```mermaid …" style="width:100%;min-height:200px;resize:vertical;background:#0c0c0f;border:1px solid #1c1c22;border-radius:0 0 9px 9px;padding:12px;color:#cdd3da;font-size:12.5px;line-height:1.6;font-family:'Geist Mono', monospace" style-focus="border-color:var(--accent-line,rgba(91,157,217,0.34))"></textarea>
+          </sc-if>
+          <sc-if value="{{ drawerCard.isPreview }}" hint-placeholder-val="{{ false }}">
+            <div style="min-height:200px;background:#0c0c0f;border:1px solid #1c1c22;border-radius:9px;padding:14px">{{ drawerCard.preview }}</div>
+          </sc-if>
+          <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin:22px 0 9px">ATTACHMENTS</div>
+          <sc-if value="{{ drawerCard.attachments }}" hint-placeholder-val="x">
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+              <sc-for list="{{ drawerCard.attachments }}" as="at" hint-placeholder-count="1">
+                <div style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;background:#0e0e12;border:1px solid #1c1c22">
+                  <span style="font-family:'Material Symbols Rounded';font-size:17px;color:#8a8a93">description</span>
+                  <span style="flex:1;min-width:0;font-size:12px;color:#cbcbd2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ at.name }}</span>
+                  <span style="font-size:10.5px;color:#56565e;font-family:'Geist Mono', monospace">{{ at.size }}</span>
+                  <span onClick="{{ at.onRemove }}" style="font-family:'Material Symbols Rounded';font-size:16px;color:#5f5f68;cursor:pointer" style-hover="color:#e07a6e">close</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <label style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;background:#121216;border:1px solid #232329;color:#cbcbd2;font-size:12px;font-weight:500;cursor:pointer" style-hover="background:#17171c"><span style="font-family:'Material Symbols Rounded';font-size:16px">attach_file</span>Add attachment<input type="file" multiple onChange="{{ drawerCard.onAttach }}" style="display:none" /></label>
+          <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin:22px 0 11px">ACTIVITY</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ drawerCard.activity }}" as="a" hint-placeholder-count="2">
+              <div style="display:flex;gap:9px;align-items:flex-start">
+                <span style="font-family:'Material Symbols Rounded';font-size:15px;color:{{ a.color }};margin-top:1px">{{ a.icon }}</span>
+                <div style="flex:1"><div style="font-size:12px;color:#b7b7c0;line-height:1.4">{{ a.text }}</div><div style="font-size:10.5px;color:#56565e;margin-top:1px">{{ a.time }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ labelMgrOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;background:rgba(4,4,6,0.6)">
+      <div onClick="{{ closeLabelMgr }}" style="position:absolute;inset:0"></div>
+      <div style="position:relative;width:440px;max-height:82%;background:#0d0d11;border:1px solid #25252d;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fadein .2s ease;display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:15px 18px;border-bottom:1px solid #16161a;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:19px;color:var(--accent,#5b9dd9)">label</span><span style="font-size:15px;font-weight:600;color:#ededf0">Labels</span><span style="font-size:11px;color:#6b6b74">{{ board.name }}</span></div>
+          <span onClick="{{ closeLabelMgr }}" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-family:'Material Symbols Rounded';font-size:19px;color:#6f6f78;cursor:pointer;border-radius:6px" style-hover="background:#16161c;color:#cfcfd6">close</span>
+        </div>
+        <div style="flex:1;min-height:0;overflow-y:auto;padding:12px 18px">
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <sc-for list="{{ mgrLabels }}" as="m" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:11px;padding:8px 9px;border-radius:8px" style-hover="background:#141419">
+                <span onClick="{{ m.onCycle }}" title="Click to change color" style="width:14px;height:14px;border-radius:4px;background:{{ m.color }};cursor:pointer;flex-shrink:0;box-shadow:0 0 0 1px rgba(255,255,255,0.1) inset"></span>
+                <span style="{{ m.chipStyle }}">{{ m.name }}</span>
+                <div style="flex:1"></div>
+                <span style="font-size:10.5px;color:#56565e;font-family:'Geist Mono', monospace">{{ m.usage }}</span>
+                <span onClick="{{ m.onDelete }}" style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-family:'Material Symbols Rounded';font-size:16px;color:#5f5f68;cursor:pointer" style-hover="background:#1a1216;color:#e07a6e">delete_outline</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex-shrink:0;border-top:1px solid #16161a;background:#0b0b0e;padding:14px 18px">
+          <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:9px">NEW LABEL</div>
+          <input value="{{ newLabelName }}" onChange="{{ setNewLabelName }}" onKeyDown="{{ onNewLabelKey }}" placeholder="Label name" style="width:100%;background:#0a0a0d;border:1px solid #1d1d23;border-radius:8px;padding:9px 11px;color:#e8e8ee;font-size:12.5px;margin-bottom:11px" style-focus="border-color:var(--accent-line,rgba(91,157,217,0.34))" />
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:14px">
+            <sc-for list="{{ labelPalette }}" as="p" hint-placeholder-count="6"><span onClick="{{ p.onPick }}" style="{{ p.st }}"></span></sc-for>
+          </div>
+          <span onClick="{{ addBoardLabel }}" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>Add label</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ genOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(4,4,6,0.6)">
+      <div onClick="{{ closeGen }}" style="position:absolute;inset:0"></div>
+      <div style="position:relative;width:520px;background:#0d0d11;border:1px solid #25252d;border-radius:14px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fadein .2s ease">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:var(--accent,#5b9dd9)">auto_awesome</span><span style="font-size:15px;font-weight:600;color:#ededf0">Generate cards with Claude</span></div>
+        <div style="font-size:12.5px;color:#73737c;margin-bottom:14px">Describe a feature or paste a spec. Claude drafts task cards into <span style="color:#9a9aa3">{{ board.name }}</span> · Backlog.</div>
+        <textarea value="{{ genText }}" onChange="{{ setGenText }}" placeholder="e.g. Add SSO with Google and Okta, including session handling and an admin toggle…" style="width:100%;min-height:108px;resize:vertical;background:#0a0a0d;border:1px solid #1d1d23;border-radius:10px;padding:13px;color:#e8e8ee;font-size:13px;line-height:1.55;font-family:'Geist', sans-serif" style-focus="border-color:var(--accent-line,rgba(91,157,217,0.34))"></textarea>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:9px;margin-top:14px">
+          <span onClick="{{ closeGen }}" style="padding:8px 14px;border-radius:8px;color:#9a9aa3;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#16161c">Cancel</span>
+          <span onClick="{{ doGenerate }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:16px">auto_awesome</span>Generate cards</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ newBoardOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;background:rgba(4,4,6,0.6)">
+      <div onClick="{{ closeNewBoard }}" style="position:absolute;inset:0"></div>
+      <div style="position:relative;width:460px;background:#0d0d11;border:1px solid #25252d;border-radius:14px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fadein .2s ease">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:var(--accent,#5b9dd9)">view_kanban</span><span style="font-size:15px;font-weight:600;color:#ededf0">New board</span></div>
+        <div style="font-size:12.5px;color:#73737c;margin-bottom:16px">A board scopes a Kanban to a project, feature, or release.</div>
+        <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:8px">NAME</div>
+        <input value="{{ newBoardName }}" onChange="{{ setNewBoardName }}" placeholder="e.g. Notifications revamp" style="width:100%;background:#0a0a0d;border:1px solid #1d1d23;border-radius:8px;padding:9px 11px;color:#e8e8ee;font-size:12.5px;margin-bottom:16px" style-focus="border-color:var(--accent-line,rgba(91,157,217,0.34))" />
+        <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:8px">SCOPE</div>
+        <div style="display:flex;gap:6px;margin-bottom:20px">
+          <sc-for list="{{ boardScopeOpts }}" as="o" hint-placeholder-count="4"><span onClick="{{ o.onClick }}" style="{{ o.st }}">{{ o.label }}</span></sc-for>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:9px">
+          <span onClick="{{ closeNewBoard }}" style="padding:8px 14px;border-radius:8px;color:#9a9aa3;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#16161c">Cancel</span>
+          <span onClick="{{ createBoard }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>Create board</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ newSessionOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:56;display:flex;align-items:center;justify-content:center;background:rgba(4,4,6,0.6)">
+      <div onClick="{{ closeNewSession }}" style="position:absolute;inset:0"></div>
+      <div style="position:relative;width:480px;background:#0d0d11;border:1px solid #25252d;border-radius:14px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fadein .2s ease">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:var(--accent,#5b9dd9)">add_circle</span><span style="font-size:15px;font-weight:600;color:#ededf0">New session</span></div>
+        <div style="font-size:12.5px;color:#73737c;margin-bottom:16px">Starts a Claude Code session in <span style="color:#9a9aa3">{{ workspaceName }}</span>.</div>
+        <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:8px">NAME</div>
+        <input value="{{ newSessionName }}" onChange="{{ setNewSessionName }}" placeholder="e.g. refactor-billing" style="width:100%;background:#0a0a0d;border:1px solid #1d1d23;border-radius:8px;padding:9px 11px;color:#e8e8ee;font-size:12.5px;margin-bottom:16px" style-focus="border-color:var(--accent-line,rgba(91,157,217,0.34))" />
+        <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:8px">MODEL</div>
+        <div style="display:flex;gap:6px;margin-bottom:18px">
+          <sc-for list="{{ newSessionModelOpts }}" as="o" hint-placeholder-count="3"><span onClick="{{ o.onClick }}" style="{{ o.st }}">{{ o.label }}</span></sc-for>
+        </div>
+        <div onClick="{{ toggleNewSessionWt }}" style="display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:10px;background:#0e0e12;border:1px solid #1c1c22;cursor:pointer;margin-bottom:20px">
+          <span style="font-family:'Material Symbols Rounded';font-size:19px;color:#b89cf0">account_tree</span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;color:#e4e4ea;font-weight:500">Use a git worktree</div><div style="font-size:11px;color:#6b6b74;margin-top:2px">Isolated checkout so this session won't collide with others</div></div>
+          <span style="{{ newSessionWtStyle }}"><span style="{{ newSessionWtKnob }}"></span></span>
+        </div>
+        <div onClick="{{ toggleSkipPerms }}" style="display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:10px;background:#100c0c;border:1px solid #2a1a1a;cursor:pointer;margin-bottom:20px">
+          <span style="font-family:'Material Symbols Rounded';font-size:19px;color:#e0a05b">gpp_maybe</span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;color:#e4e4ea;font-weight:500">Skip permission prompts</div><div style="font-size:11px;color:#8a7a5e;margin-top:2px;font-family:'Geist Mono', monospace">--dangerously-skip-permissions</div></div>
+          <span style="{{ skipPermsStyle }}"><span style="{{ skipPermsKnob }}"></span></span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:9px">
+          <span onClick="{{ closeNewSession }}" style="padding:8px 14px;border-radius:8px;color:#9a9aa3;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#16161c">Cancel</span>
+          <span onClick="{{ createSession }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>Start session</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ newWsOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:56;display:flex;align-items:center;justify-content:center;background:rgba(4,4,6,0.6)">
+      <div onClick="{{ closeNewWs }}" style="position:absolute;inset:0"></div>
+      <div style="position:relative;width:480px;background:#0d0d11;border:1px solid #25252d;border-radius:14px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fadein .2s ease">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><span style="font-family:'Material Symbols Rounded';font-size:20px;color:var(--accent,#5b9dd9)">workspaces</span><span style="font-size:15px;font-weight:600;color:#ededf0">New workspace</span></div>
+        <div style="font-size:12.5px;color:#73737c;margin-bottom:16px">A workspace groups its own sessions, terminals, boards, and worktrees.</div>
+        <div style="font-size:10.5px;color:#62626b;letter-spacing:0.06em;margin-bottom:8px">NAME</div>
+        <input value="{{ newWsName }}" onChange="{{ setNewWsName }}" placeholder="e.g. Search revamp" style="width:100%;background:#0a0a0d;border:1px solid #1d1d23;border-radius:8px;padding:9px 11px;color:#e8e8ee;font-size:12.5px;margin-bottom:18px" style-focus="border-color:var(--accent-line,rgba(91,157,217,0.34))" />
+        <div onClick="{{ toggleNewWsWt }}" style="display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:10px;background:#0e0e12;border:1px solid #1c1c22;cursor:pointer;margin-bottom:20px">
+          <span style="font-family:'Material Symbols Rounded';font-size:19px;color:#b89cf0">account_tree</span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;color:#e4e4ea;font-weight:500">Use worktrees by default</div><div style="font-size:11px;color:#6b6b74;margin-top:2px">New sessions here pre-select an isolated worktree</div></div>
+          <span style="{{ newWsWtStyle }}"><span style="{{ newWsWtKnob }}"></span></span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:9px">
+          <span onClick="{{ closeNewWs }}" style="padding:8px 14px;border-radius:8px;color:#9a9aa3;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#16161c">Cancel</span>
+          <span onClick="{{ createWorkspace }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:16px">add</span>Create workspace</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ tableOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,4,6,0.62)">
+      <div onClick="{{ closeTable }}" style="position:absolute;inset:0"></div>
+      <div style="position:relative;width:600px;max-height:84%;background:#0d0d11;border:1px solid #25252d;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fadein .2s ease;display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:15px 18px;border-bottom:1px solid #16161a;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:19px;color:var(--accent,#5b9dd9)">table_chart</span><span style="font-size:15px;font-weight:600;color:#ededf0">Table builder</span></div>
+          <span onClick="{{ closeTable }}" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-family:'Material Symbols Rounded';font-size:19px;color:#6f6f78;cursor:pointer;border-radius:6px" style-hover="background:#16161c;color:#cfcfd6">close</span>
+        </div>
+        <div style="flex:1;min-height:0;overflow:auto;padding:16px 18px">
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:max-content">
+            <div style="display:flex;gap:6px;align-items:center">
+              <sc-for list="{{ tableHeaders }}" as="h" hint-placeholder-count="2">
+                <div style="display:flex;flex-direction:column;gap:3px;width:150px">
+                  <input value="{{ h.val }}" onChange="{{ h.onChange }}" placeholder="Header" style="width:100%;background:#121217;border:1px solid #232330;border-radius:7px;padding:7px 9px;color:#e8e8ee;font-size:12px;font-weight:600" style-focus="border-color:var(--accent-line,rgba(91,157,217,0.34))" />
+                  <span onClick="{{ h.onDel }}" style="text-align:center;font-family:'Material Symbols Rounded';font-size:14px;color:#56565e;cursor:pointer" style-hover="color:#e07a6e">delete_outline</span>
+                </div>
+              </sc-for>
+              <span onClick="{{ tableAddCol }}" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;background:#16161d;border:1px solid #232329;color:#9a9aa3;cursor:pointer;font-family:'Material Symbols Rounded';font-size:17px;align-self:flex-start" style-hover="background:#1c1c24;color:#e4e4ea" title="Add column">add</span>
+            </div>
+            <sc-for list="{{ tableRows }}" as="r" hint-placeholder-count="2">
+              <div style="display:flex;gap:6px;align-items:center">
+                <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="2">
+                  <input value="{{ c.val }}" onChange="{{ c.onChange }}" placeholder="Cell" style="width:150px;background:#0a0a0d;border:1px solid #1d1d23;border-radius:7px;padding:7px 9px;color:#cdd3da;font-size:12px" style-focus="border-color:var(--accent-line,rgba(91,157,217,0.34))" />
+                </sc-for>
+                <span onClick="{{ r.onDel }}" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;color:#56565e;cursor:pointer;font-family:'Material Symbols Rounded';font-size:16px" style-hover="background:#1a1216;color:#e07a6e" title="Delete row">delete_outline</span>
+              </div>
+            </sc-for>
+            <span onClick="{{ tableAddRow }}" style="display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:7px;background:#16161d;border:1px solid #232329;color:#9a9aa3;cursor:pointer;font-size:12px;font-weight:500;align-self:flex-start;margin-top:2px" style-hover="background:#1c1c24;color:#e4e4ea"><span style="font-family:'Material Symbols Rounded';font-size:15px">add</span>Add row</span>
+          </div>
+        </div>
+        <div style="flex-shrink:0;border-top:1px solid #16161a;background:#0b0b0e;padding:13px 18px;display:flex;align-items:center;justify-content:flex-end;gap:9px">
+          <span onClick="{{ closeTable }}" style="padding:8px 14px;border-radius:8px;color:#9a9aa3;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#16161c">Cancel</span>
+          <span onClick="{{ insertTable }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:16px">check</span>Insert table</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ diagOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(4,4,6,0.62)">
+      <div onClick="{{ closeDiag }}" style="position:absolute;inset:0"></div>
+      <div style="position:relative;width:760px;max-height:86%;background:#0d0d11;border:1px solid #25252d;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,0.6);animation:fadein .2s ease;display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:15px 18px;border-bottom:1px solid #16161a;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'Material Symbols Rounded';font-size:19px;color:var(--accent,#5b9dd9)">schema</span><span style="font-size:15px;font-weight:600;color:#ededf0">Diagram builder</span></div>
+          <span onClick="{{ closeDiag }}" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;font-family:'Material Symbols Rounded';font-size:19px;color:#6f6f78;cursor:pointer;border-radius:6px" style-hover="background:#16161c;color:#cfcfd6">close</span>
+        </div>
+        <div style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:11px 18px;border-bottom:1px solid #16161a"><span style="font-size:11px;color:#62626b;margin-right:2px">Templates:</span>
+          <sc-for list="{{ diagTemplates }}" as="t" hint-placeholder-count="3"><span onClick="{{ t.onClick }}" style="padding:5px 11px;border-radius:7px;background:#141419;border:1px solid #232329;color:#cbcbd2;font-size:11.5px;font-weight:500;cursor:pointer" style-hover="background:#1a1a20;border-color:#2c2c35">{{ t.label }}</span></sc-for>
+        </div>
+        <div style="flex:1;min-height:0;display:flex">
+          <div style="width:300px;flex-shrink:0;border-right:1px solid #16161a;display:flex;flex-direction:column;min-height:0">
+            <div style="padding:9px 14px;font-size:10.5px;color:#62626b;letter-spacing:0.06em;border-bottom:1px solid #141418">MERMAID SOURCE</div>
+            <textarea value="{{ diagText }}" onChange="{{ setDiagText }}" style="flex:1;min-height:0;resize:none;background:#0a0a0d;border:none;padding:13px;color:#cdd3da;font-size:12px;line-height:1.6;font-family:'Geist Mono', monospace" style-focus="outline:none"></textarea>
+          </div>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;background:#0a0a0c">
+            <div style="padding:9px 14px;font-size:10.5px;color:#62626b;letter-spacing:0.06em;border-bottom:1px solid #141418">PREVIEW</div>
+            <div style="flex:1;min-height:0;overflow:auto;padding:16px;display:flex;align-items:center;justify-content:center">{{ diagPreview }}</div>
+          </div>
+        </div>
+        <div style="flex-shrink:0;border-top:1px solid #16161a;background:#0b0b0e;padding:13px 18px;display:flex;align-items:center;justify-content:flex-end;gap:9px">
+          <span onClick="{{ closeDiag }}" style="padding:8px 14px;border-radius:8px;color:#9a9aa3;font-size:12.5px;font-weight:500;cursor:pointer" style-hover="background:#16161c">Cancel</span>
+          <span onClick="{{ insertDiagram }}" style="display:flex;align-items:center;gap:7px;padding:8px 15px;border-radius:8px;background:var(--accent,#5b9dd9);color:#0a1018;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)"><span style="font-family:'Material Symbols Rounded';font-size:16px">check</span>Insert diagram</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;background:rgba(4,4,6,0.66)">
+      <div onClick="{{ confirm.onCancel }}" style="position:absolute;inset:0"></div>
+      <div style="position:relative;width:384px;background:#0d0d11;border:1px solid #25252d;border-radius:13px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,0.65);animation:fadein .15s ease">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:11px"><span style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:rgba(224,122,110,0.13);color:#e07a6e;font-family:'Material Symbols Rounded';font-size:19px">warning</span><span style="font-size:15px;font-weight:600;color:#ededf0">{{ confirm.title }}</span></div>
+        <div style="font-size:12.5px;color:#9a9aa3;line-height:1.55;margin-bottom:18px">{{ confirm.message }}</div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:9px">
+          <span onClick="{{ confirm.onCancel }}" style="padding:8px 14px;border-radius:8px;color:#cbcbd2;font-size:12.5px;font-weight:500;cursor:pointer;background:#16161c;border:1px solid #232329" style-hover="background:#1c1c22">Cancel</span>
+          <span onClick="{{ confirm.onConfirm }}" style="padding:8px 15px;border-radius:8px;background:#e0574d;color:#fff;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="filter:brightness(1.08)">{{ confirm.confirmLabel }}</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1448,&quot;height&quot;:948},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5b9dd9&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;,&quot;options&quot;:[&quot;#5b9dd9&quot;,&quot;#d97757&quot;,&quot;#7dd99a&quot;,&quot;#b89cf0&quot;]},&quot;terminalFontSize&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:12,&quot;min&quot;:11,&quot;max&quot;:15,&quot;step&quot;:1,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Appearance&quot;}}">
+class Component extends DCLogic {
+  state = {
+    view: 'launcher',
+    layout: 'grid',
+    activeId: 'auth-refactor',
+    selectedSkillId: 'run-tests',
+    historyFilter: 'all',
+    defaultModel: 'Sonnet',
+    splitRatio: 0.55,
+    drafts: {},
+    accentOverride: null,
+    fontOverride: null,
+    sessions: this.initSessionsWs(),
+    skills: this.initSkills(),
+    toggles: { restore: true, confirm: true, launch: false },
+    boards: this.initBoardsWs(),
+    activeBoardId: 'auth',
+    drawerCardId: null,
+    drawerTab: 'edit',
+    boardMenuOpen: false,
+    genOpen: false,
+    genText: '',
+    boardLabels: this.initLabels(),
+    labelMenuOpen: false,
+    labelMgrOpen: false,
+    newLabelName: '',
+    newLabelColor: '#5b9dd9',
+    terminals: this.initTerminalsWs(),
+    termDrafts: {},
+    worktrees: this.initWorktreesWs(),
+    confirm: null,
+    newBoardOpen: false,
+    newBoardName: '',
+    newBoardScope: 'Feature',
+    workspaces: this.initWorkspaces(),
+    activeWorkspaceId: 'ws1',
+    wsMenuOpen: false,
+    newSessionOpen: false,
+    newSessionName: '',
+    newSessionModel: 'Sonnet',
+    newSessionWorktree: true,
+    newSessionSkipPerms: false,
+    newWsOpen: false,
+    newWsName: '',
+    newWsWorktree: true,
+    table: null,
+    tableOpen: false,
+    diagOpen: false,
+    diagText: '',
+  };
+
+  hexToRgb(h){h=(h||'').replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return{r:(n>>16)&255,g:(n>>8)&255,b:n&255};}
+  rgba(h,a){const{r,g,b}=this.hexToRgb(h);return`rgba(${r},${g},${b},${a})`;}
+  lighten(h,a){const{r,g,b}=this.hexToRgb(h);const m=c=>Math.round(c+(255-c)*a);return`rgb(${m(r)},${m(g)},${m(b)})`;}
+
+  initWorkspaces(){return [{id:'ws1',name:'Platform',useWorktree:true},{id:'ws2',name:'Billing',useWorktree:false}];}
+  initSessionsWs(){const wt={'auth-refactor':'../acme.wt/auth-sessions','ui-polish':'../acme.wt/dashboard'};const base=this.initSessions().map(s=>({...s,wsId:(s.id==='api-tests'?'ws2':'ws1'),worktree:wt[s.id]||null}));const extra=[{id:'pay-webhooks',wsId:'ws2',name:'pay-webhooks',status:'running',model:'Opus 4.6',branch:'feat/webhooks',duration:'8m',task:'Verifying Stripe webhook signatures',worktree:'../acme.wt/webhooks',tokens:{used:72,limit:200},files:[{p:'src/billing/webhooks.ts',c:'+64 −8'}],lines:[{type:'user',text:'verify stripe webhook signatures and reject replays'},{type:'tool',text:'Read   src/billing/webhooks.ts'},{type:'text',text:'Adding signature verification with a 5-minute tolerance window.'},{type:'tool',text:'Edit   src/billing/webhooks.ts   +64 −8'}]},{id:'invoice-pdf',wsId:'ws2',name:'invoice-pdf',status:'idle',model:'Sonnet 4.6',branch:'feat/invoices',duration:'2m',task:'Invoice PDF layout tweaks',worktree:null,tokens:{used:30,limit:200},files:[],lines:[{type:'user',text:'nudge the invoice totals into the right column'},{type:'ok',text:'Updated the invoice template'},{type:'sys',text:'Idle — finished 4 minutes ago'}]}];return [...base,...extra];}
+  initTerminalsWs(){return [...this.initTerminals().map(t=>({...t,wsId:'ws1'})),{id:'tb1',wsId:'ws2',name:'billing logs',cwd:'~/code/payments-svc',running:true,lines:[{type:'out',text:'[12:10:02] charge.succeeded   cus_8821  $49.00'},{type:'out',text:'[12:10:09] invoice.paid      in_5520   $49.00'},{type:'out',text:'[12:10:15] customer.updated  cus_8821'}]}];}
+  initBoardsWs(){return this.initBoards().map(b=>({...b,wsId:(b.id==='billing'?'ws2':'ws1')}));}
+  initWorktreesWs(){const m={'feat/auth-sessions':'ws1','feat/dashboard':'ws1','feat/argon2':'ws1','feat/billing':'ws2'};return this.initWorktrees().map(w=>({...w,wsId:m[w.branch]||'ws1'})).concat([{branch:'feat/webhooks',path:'../acme.wt/webhooks',sessionId:'pay-webhooks',status:'clean',kind:'clean',last:'8m',wsId:'ws2'}]);}
+  historyFor(wsId){if(wsId==='ws2')return [{label:'TODAY',items:[{name:'pay-webhooks',branch:'feat/webhooks',task:'Verifying Stripe webhook signatures',model:'Opus 4.6',status:'running',duration:'8m',time:'now',id:'pay-webhooks'},{name:'api-tests',branch:'main',task:'Integration tests for the payments endpoint',model:'Opus 4.6',status:'waiting',duration:'3m',time:'2m',id:'api-tests'},{name:'invoice-pdf',branch:'feat/invoices',task:'Invoice PDF layout tweaks',model:'Sonnet 4.6',status:'done',duration:'19m',time:'8:40',id:'invoice-pdf'}]},{label:'YESTERDAY',items:[{name:'proration-calc',branch:'feat/proration',task:'Proration on mid-cycle plan change',model:'Opus 4.6',status:'done',duration:'52m',time:'16:10',id:'api-tests'},{name:'tax-rounding',branch:'fix/tax',task:'Fixed rounding on multi-currency tax',model:'Sonnet 4.6',status:'done',duration:'12m',time:'11:02',id:'api-tests'}]}];return this.initHistory();}
+  ws(){return this.state.workspaces.find(w=>w.id===this.state.activeWorkspaceId)||this.state.workspaces[0];}
+  switchWorkspace(id){this.setState(st=>{const sess=(st.sessions||[]).filter(s=>s.wsId===id);const brd=(st.boards||[]).filter(b=>b.wsId===id);return {activeWorkspaceId:id,wsMenuOpen:false,view:(st.view==='launcher'?'workspace':st.view),activeId:(sess[0]&&sess[0].id)||null,activeBoardId:(brd[0]&&brd[0].id)||null,drawerCardId:null};});}
+  newSessionSubmit(){const nm=(this.state.newSessionName||'').trim()||'new-session';const slug=nm.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,22)||'session';const id='s'+Date.now();const useWt=this.state.newSessionWorktree;const wt=useWt?('../acme.wt/'+slug):null;this.setState(st=>({newSessionOpen:false,view:'workspace',activeId:id,sessions:[...st.sessions,{id,wsId:st.activeWorkspaceId,name:nm,status:'running',model:this.state.newSessionModel+' 4.6',branch:'feat/'+slug,duration:'0m',task:'Starting…',worktree:wt,tokens:{used:0,limit:200},files:[],lines:[{type:'sys',text:'Session started on '+(useWt?('worktree '+wt):'main checkout')+(this.state.newSessionSkipPerms?'  ·  --dangerously-skip-permissions':'')}]}],worktrees:useWt?[...st.worktrees,{branch:'feat/'+slug,path:wt,sessionId:id,status:'clean',kind:'clean',last:'now',wsId:st.activeWorkspaceId}]:st.worktrees}));}
+  createWorkspace(){const nm=(this.state.newWsName||'').trim();if(!nm)return;const id='ws'+Date.now();this.setState(st=>({newWsOpen:false,activeWorkspaceId:id,view:'workspace',activeId:null,activeBoardId:null,workspaces:[...st.workspaces,{id,name:nm,useWorktree:this.state.newWsWorktree}]}));}
+  insertBlockToCard(text){const id=this.state.drawerCardId;if(!id)return;const b=this.state.boards.find(x=>x.id===this.state.activeBoardId);const card=b&&b.cards.find(c=>c.id===id);const cur=(card&&card.body)||'';const body=cur?(cur.replace(/\s+$/,'')+'\n\n'+text):text;this.updateCard(id,{body});}
+  tableSet(kind,r,c,val){this.setState(st=>{const t=JSON.parse(JSON.stringify(st.table));if(kind==='h')t.headers[c]=val;else t.rows[r][c]=val;return {table:t};});}
+  tableAddCol(){this.setState(st=>{const t=JSON.parse(JSON.stringify(st.table));t.headers.push('Column '+(t.headers.length+1));t.rows.forEach(r=>r.push(''));return {table:t};});}
+  tableAddRow(){this.setState(st=>{const t=JSON.parse(JSON.stringify(st.table));t.rows.push(t.headers.map(()=>''));return {table:t};});}
+  tableDelCol(c){this.setState(st=>{const t=JSON.parse(JSON.stringify(st.table));if(t.headers.length<=1)return {};t.headers.splice(c,1);t.rows.forEach(r=>r.splice(c,1));return {table:t};});}
+  tableDelRow(r){this.setState(st=>{const t=JSON.parse(JSON.stringify(st.table));if(t.rows.length<=1)return {};t.rows.splice(r,1);return {table:t};});}
+  insertTable(){const t=this.state.table;if(!t)return;const line=(cells)=>'| '+cells.join(' | ')+' |';const md=[line(t.headers.map(h=>h||' ')),line(t.headers.map(()=>'---')),...t.rows.map(r=>line(r.map(x=>x||' ')))].join('\n');this.insertBlockToCard(md);this.setState({tableOpen:false});}
+  insertDiagram(){const md='```mermaid\n'+(this.state.diagText||'').trim()+'\n```';this.insertBlockToCard(md);this.setState({diagOpen:false});}
+  renderDiag(){if(!window.mermaid||!this._diagEl)return;try{if(!this._mmInit){window.mermaid.initialize({startOnLoad:false,theme:'dark',securityLevel:'loose',fontFamily:'Geist Mono, monospace'});this._mmInit=true;}const n=this._diagEl.querySelector('.mermaid');if(n&&!n.getAttribute('data-processed'))window.mermaid.run({nodes:[n]});}catch(_){}}
+
+  initSessions(){return [
+    {id:'auth-refactor',name:'auth-refactor',status:'running',model:'Sonnet 4.6',branch:'feat/auth-sessions',duration:'12m',task:'Refactoring auth to server sessions',tokens:{used:128,limit:200},
+     files:[{p:'src/auth/session.ts',c:'+48 −12'},{p:'src/middleware/auth.ts',c:'+9 −31'},{p:'src/auth/jwt.ts',c:'−74'}],
+     lines:[
+      {type:'user',text:'refactor the auth flow to use server sessions instead of jwt'},
+      {type:'text',text:'Mapping the current auth surface before making changes.'},
+      {type:'tool',text:'Read   src/auth/jwt.ts'},
+      {type:'tool',text:'Read   src/middleware/auth.ts'},
+      {type:'text',text:'Found 3 entry points. Replacing token verification with session lookups.'},
+      {type:'tool',text:'Edit   src/auth/session.ts   +48 −12'},
+      {type:'tool',text:'Edit   src/middleware/auth.ts   +9 −31'},
+      {type:'ok',text:'Type-check passed'},
+      {type:'text',text:'Running the auth test suite to confirm nothing regressed.'},
+      {type:'tool',text:'Bash   npm run test:auth'},
+    ]},
+    {id:'api-tests',name:'api-tests',status:'waiting',model:'Opus 4.6',branch:'main',duration:'3m',task:'Needs approval to run migration',tokens:{used:54,limit:200},
+     files:[{p:'tests/payments.spec.ts',c:'+120'}],
+     lines:[
+      {type:'user',text:'add integration tests for the payments endpoint'},
+      {type:'text',text:'Drafted 6 test cases covering the success and failure paths.'},
+      {type:'tool',text:'Edit   tests/payments.spec.ts   +120'},
+      {type:'text',text:'The fixtures need a new table. I can run the migration for you.'},
+      {type:'sys',text:'Waiting for approval to run:  npx prisma migrate dev --name test_fixtures'},
+    ]},
+    {id:'ui-polish',name:'ui-polish',status:'running',model:'Sonnet 4.6',branch:'feat/dashboard',duration:'27m',task:'Tightening dashboard spacing + tokens',tokens:{used:96,limit:200},
+     files:[{p:'src/components/Dashboard.tsx',c:'+31 −31'},{p:'src/styles/tokens.css',c:'+8'}],
+     lines:[
+      {type:'user',text:'tighten the dashboard spacing and use the new tokens'},
+      {type:'tool',text:'Read   src/components/Dashboard.tsx'},
+      {type:'text',text:'Replacing hard-coded paddings with spacing tokens.'},
+      {type:'tool',text:'Edit   src/components/Dashboard.tsx   +31 −31'},
+      {type:'tool',text:'Edit   src/styles/tokens.css   +8'},
+      {type:'text',text:'Updating the card grid gap and header rhythm.'},
+    ]},
+    {id:'docs-gen',name:'docs-gen',status:'idle',model:'Haiku 4.6',branch:'docs',duration:'1m',task:'Finished generating API reference',tokens:{used:38,limit:200},
+     files:[{p:'docs/api-reference.md',c:'+860'}],
+     lines:[
+      {type:'user',text:'generate the API reference from the OpenAPI spec'},
+      {type:'text',text:'Parsed 42 endpoints from openapi.yaml.'},
+      {type:'tool',text:'Write   docs/api-reference.md   +860'},
+      {type:'ok',text:'Generated reference for 42 endpoints'},
+      {type:'sys',text:'Idle — finished 2 minutes ago'},
+    ]},
+  ];}
+
+  initSkills(){return [
+    {id:'run-tests',name:'Run Tests',desc:'Runs the project test suite and summarizes failures inline.',tag:'bash',trigger:'auto',enabled:true,invocations:48,icon:'play_circle',touches:['package.json','**/*.spec.ts'],instructions:'When the user asks to test, or after edits to source files, run `npm test`. Parse the reporter output, surface only failing cases with file:line, and propose a fix for each.'},
+    {id:'pr-desc',name:'PR Description',desc:'Drafts a pull request description from the current diff.',tag:'git',trigger:'manual',enabled:true,invocations:12,icon:'merge',touches:['.git'],instructions:'Read the staged and unstaged diff against the base branch. Produce a title, a summary, a bulleted list of changes grouped by area, and a short test plan.'},
+    {id:'migrate-db',name:'Migrate DB',desc:'Generates and applies Prisma migrations with a safety check.',tag:'db',trigger:'manual',enabled:false,invocations:5,icon:'database',touches:['prisma/schema.prisma','prisma/migrations/'],instructions:'Diff the schema, generate a migration, and ALWAYS ask for confirmation before applying to any non-local database.'},
+    {id:'scaffold',name:'Component Scaffold',desc:'Creates a React component with tests and a story.',tag:'react',trigger:'auto',enabled:true,invocations:23,icon:'widgets',touches:['src/components/'],instructions:'Given a component name, create the .tsx, a colocated .spec.tsx, and a .stories.tsx using the conventions in src/components/_template.'},
+    {id:'changelog',name:'Changelog',desc:'Updates CHANGELOG.md from merged commits.',tag:'docs',trigger:'manual',enabled:true,invocations:7,icon:'description',touches:['CHANGELOG.md'],instructions:'Collect commits since the last release tag, group them by Conventional Commit type, and prepend a new dated section.'},
+    {id:'lint-fix',name:'Lint Fix',desc:'Runs eslint --fix and reports what remains.',tag:'lint',trigger:'auto',enabled:true,invocations:31,icon:'rule',touches:['.eslintrc','src/'],instructions:'Run eslint with --fix, then report any errors that could not be auto-fixed, grouped by rule.'},
+  ];}
+
+  initRecents(){return [
+    {name:'acme-platform',path:'~/code/acme-platform',sessions:14,branch:'main'},
+    {name:'payments-svc',path:'~/code/payments-svc',sessions:6,branch:'main'},
+    {name:'marketing-site',path:'~/work/marketing-site',sessions:2,branch:'feat/redesign'},
+    {name:'design-system',path:'~/code/design-system',sessions:9,branch:'main'},
+  ];}
+
+  initHistory(){return [
+    {label:'TODAY',items:[
+      {name:'auth-refactor',branch:'feat/auth-sessions',task:'Refactoring auth to server sessions',model:'Sonnet 4.6',status:'running',duration:'12m',time:'now',id:'auth-refactor'},
+      {name:'ui-polish',branch:'feat/dashboard',task:'Tightening dashboard spacing + tokens',model:'Sonnet 4.6',status:'running',duration:'27m',time:'now',id:'ui-polish'},
+      {name:'api-tests',branch:'main',task:'Integration tests for the payments endpoint',model:'Opus 4.6',status:'waiting',duration:'3m',time:'2m',id:'api-tests'},
+      {name:'dark-mode',branch:'feat/theme',task:'Added theme switching + persistence',model:'Sonnet 4.6',status:'done',duration:'32m',time:'9:14',id:'auth-refactor'},
+      {name:'stripe-webhooks',branch:'feat/billing',task:'Implemented webhook signature verification',model:'Opus 4.6',status:'done',duration:'18m',time:'8:02',id:'auth-refactor'},
+    ]},
+    {label:'YESTERDAY',items:[
+      {name:'flaky-test-fix',branch:'fix/upload',task:'Fixed race condition in the upload test',model:'Sonnet 4.6',status:'done',duration:'41m',time:'18:20',id:'auth-refactor'},
+      {name:'onboarding-copy',branch:'feat/onboarding',task:'Rewrote onboarding microcopy',model:'Haiku 4.6',status:'done',duration:'8m',time:'15:51',id:'auth-refactor'},
+    ]},
+    {label:'EARLIER THIS WEEK',items:[
+      {name:'db-index-tuning',branch:'perf/db',task:'Added composite indexes for slow queries',model:'Opus 4.6',status:'done',duration:'1h 4m',time:'Mon',id:'auth-refactor'},
+      {name:'logging-cleanup',branch:'chore/logging',task:'Structured logging migration',model:'Sonnet 4.6',status:'done',duration:'22m',time:'Mon',id:'auth-refactor'},
+    ]},
+  ];}
+
+  initBoards(){
+    const cols=[{id:'backlog',name:'Backlog'},{id:'todo',name:'To Do'},{id:'inprogress',name:'In Progress'},{id:'review',name:'In Review'},{id:'done',name:'Done'}];
+    return [
+      {id:'auth',name:'Auth Overhaul',scope:'Feature',base:'main',columns:cols,cards:[
+        {id:'c21',code:'#21',col:'backlog',title:'Sliding session expiry + refresh',labels:['auth'],body:'Keep active users signed in with a sliding window.\n\n- Refresh on activity\n- Hard cap at 30 days\n- Revoke on password change'},
+        {id:'c22',code:'#22',col:'backlog',title:'Audit log for auth events',labels:['auth','security'],body:'Record sign-in, sign-out, and failed attempts to an append-only table.'},
+        {id:'c18',code:'#18',col:'todo',title:'Rate-limit login attempts',labels:['security'],body:'Throttle by IP and account.\n\n- 5 attempts / 15 min\n- Exponential backoff\n- `429` with `Retry-After`'},
+        {id:'c19',code:'#19',col:'todo',title:'Password reset via magic link',labels:['auth'],body:'Email a single-use, 15-minute signed link instead of a code.'},
+        {id:'c14',code:'#14',col:'inprogress',title:'Move auth to server sessions',labels:['auth','backend'],body:'## Goal\nReplace JWT verification with server-side sessions.\n\n- [x] Map the auth entry points\n- [x] Add the session store\n- [ ] Update middleware\n- [ ] Migrate the test suite',linked:{branch:'feat/auth-sessions',worktree:'../acme.wt/auth-sessions',sessionId:'auth-refactor'},agent:true,activity:[{icon:'auto_awesome',text:'Claude moved this to In Progress',time:'12m ago',c:'#7cb3e6'},{icon:'account_tree',text:'Created worktree on feat/auth-sessions',time:'12m ago',c:'#b89cf0'},{icon:'add',text:'You created this card',time:'1h ago',c:'#5f5f68'}]},
+        {id:'c12',code:'#12',col:'review',title:'Replace bcrypt with argon2id',labels:['security'],body:'Swap the hasher and add transparent rehash-on-login.',linked:{branch:'feat/argon2',worktree:'../acme.wt/argon2',sessionId:null},activity:[{icon:'auto_awesome',text:'Claude moved this to In Review — diff ready',time:'40m ago',c:'#7cb3e6'},{icon:'check',text:'All tests passing',time:'42m ago',c:'#5cc98a'}]},
+        {id:'c08',code:'#08',col:'done',title:'Email verification flow',labels:['auth'],body:'Double opt-in on signup with a resend cooldown.',linked:{branch:'feat/email-verify',worktree:null,sessionId:null}},
+        {id:'c05',code:'#05',col:'done',title:'OAuth provider cleanup',labels:['auth'],body:'Consolidated three provider adapters into one interface.'},
+      ]},
+      {id:'billing',name:'Q3 Billing',scope:'Epic',base:'main',columns:cols,cards:[
+        {id:'b31',code:'#31',col:'todo',title:'Proration on plan change',labels:['billing'],body:'Charge or credit the difference on mid-cycle up/downgrade.'},
+        {id:'b14',code:'#14',col:'inprogress',title:'Payments endpoint integration tests',labels:['billing','backend'],body:'Cover success and failure paths.\n\n- [x] Draft 6 cases\n- [ ] Run the fixtures migration',linked:{branch:'main',worktree:null,sessionId:'api-tests'},agent:true,activity:[{icon:'pending',text:'Waiting on your approval to run the migration',time:'3m ago',c:'#e0b15e'}]},
+        {id:'b09',code:'#09',col:'review',title:'Stripe webhook signatures',labels:['billing','security'],body:'Verify webhook signatures and reject replays.',linked:{branch:'feat/billing',worktree:'../acme.wt/billing',sessionId:null}},
+        {id:'b02',code:'#02',col:'done',title:'Invoice PDF generation',labels:['billing'],body:'Render branded invoice PDFs on payment success.'},
+      ]},
+      {id:'platform',name:'Platform Cleanup',scope:'Chore',base:'main',columns:cols,cards:[
+        {id:'p41',code:'#41',col:'backlog',title:'Adopt spacing tokens everywhere',labels:['frontend'],body:'Replace hard-coded paddings with the token scale.'},
+        {id:'p27',code:'#27',col:'inprogress',title:'Tighten dashboard spacing',labels:['frontend'],body:'Apply the new tokens to the dashboard grid.',linked:{branch:'feat/dashboard',worktree:'../acme.wt/dashboard',sessionId:'ui-polish'},agent:true,activity:[{icon:'auto_awesome',text:'Claude moved this to In Progress',time:'27m ago',c:'#7cb3e6'}]},
+        {id:'p15',code:'#15',col:'done',title:'Generate API reference',labels:['docs'],body:'Auto-generate the reference from the OpenAPI spec.',linked:{branch:'docs',worktree:null,sessionId:'docs-gen'}},
+      ]},
+    ];
+  }
+  colDot(id){return ({backlog:'#6b6b74',todo:'#8a8a93',inprogress:'#5cc98a',review:'#e0b15e',done:'#5b9dd9'})[id]||'#6b6b74';}
+  labelColor(t){return ({auth:'#5b9dd9',security:'#e07a6e',backend:'#b89cf0',frontend:'#7dd99a',billing:'#e0b15e',docs:'#5fb4ad',ai:'#9b8cf0'})[t]||'#9a9aa3';}
+  labelStyle(t){const c=this.labelColor(t);return {fontSize:'9.5px',fontWeight:600,fontFamily:"'Geist Mono', monospace",letterSpacing:'0.04em',textTransform:'uppercase',padding:'2px 6px',borderRadius:'5px',color:c,background:this.rgba(c,0.13)};}
+  segTab(a){return {padding:'4px 11px',borderRadius:'6px',fontSize:'11.5px',fontWeight:500,cursor:'pointer',color:a?'#ededf0':'#8a8a93',background:a?'#1a1a20':'transparent'};}
+  excerpt(b){return (b||'').replace(/```[\s\S]*?```/g,'').replace(/[#>*`]/g,'').replace(/- \[[ xX]\]/g,'').replace(/\n+/g,' ').replace(/\s+/g,' ').trim().slice(0,96);}
+  md(src){
+    if(!src)return '<div style="color:#56565e;font-size:12.5px">No description yet.</div>';
+    const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const inl=t=>{let x=esc(t);
+      x=x.replace(/`([^`]+)`/g,'<code style="font-family:Geist Mono,monospace;font-size:11.5px;background:#16161d;border:1px solid #232330;padding:1px 5px;border-radius:5px;color:#cdd6e0">$1</code>');
+      x=x.replace(/\*\*([^*]+)\*\*/g,'<strong style="color:#e8e8ee;font-weight:600">$1</strong>');
+      x=x.replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em style="color:#dcdce2">$2</em>');
+      x=x.replace(/~~([^~]+)~~/g,'<span style="text-decoration:line-through;color:#73737c">$1</span>');
+      x=x.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" style="color:var(--accent,#5b9dd9);text-decoration:none">$1</a>');
+      return x;};
+    const lines=src.split('\n');let html='';let inUl=false,inOl=false,inCode=false,code='',lang='';
+    const flush=()=>{if(inUl){html+='</ul>';inUl=false;}if(inOl){html+='</ol>';inOl=false;}};
+    for(let i=0;i<lines.length;i++){
+      const raw=lines[i];
+      if(raw.trim().indexOf('```')===0){
+        if(inCode){if(lang==='mermaid'){html+='<div class="mermaid" style="background:#0a0a0d;border:1px solid #1c1c22;border-radius:8px;padding:12px;margin:8px 0;display:flex;justify-content:center;overflow-x:auto">'+esc(code)+'</div>';}else{html+='<pre style="background:#0a0a0d;border:1px solid #1c1c22;border-radius:8px;padding:10px;font-family:Geist Mono,monospace;font-size:11.5px;color:#a9b2bd;overflow-x:auto;margin:6px 0">'+esc(code)+'</pre>';}inCode=false;code='';lang='';}
+        else{flush();inCode=true;lang=(raw.trim().match(/^```(\w*)/)||[])[1]||'';code='';}
+        continue;}
+      if(inCode){code+=raw+'\n';continue;}
+      if(/^\s*\|(.+)\|\s*$/.test(raw)&&i+1<lines.length&&/-/.test(lines[i+1])&&/^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i+1])){
+        flush();const pr=(r)=>r.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>c.trim());
+        const hd=pr(raw);i++;const rows=[];
+        while(i+1<lines.length&&/^\s*\|(.+)\|\s*$/.test(lines[i+1])){i++;rows.push(pr(lines[i]));}
+        html+='<table style="border-collapse:collapse;width:100%;margin:8px 0;font-size:12px"><thead><tr>'+hd.map(h=>'<th style="text-align:left;padding:6px 9px;border:1px solid #232330;background:#121217;color:#cbcbd2;font-weight:600">'+inl(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+hd.map((h,ci)=>'<td style="padding:6px 9px;border:1px solid #1d1d23;color:#a4a4ad">'+inl(r[ci]||'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+        continue;}
+      const l=raw.trim();let m;
+      if(!l){flush();continue;}
+      if(m=l.match(/^(#{1,3})\s+(.*)/)){flush();const sz=m[1].length===1?16:m[1].length===2?14:13;html+='<div style="font-weight:600;color:#e8e8ee;font-size:'+sz+'px;margin:10px 0 5px">'+inl(m[2])+'</div>';continue;}
+      if(m=l.match(/^>\s+(.*)/)){flush();html+='<div style="border-left:2px solid #2c2c35;padding:2px 0 2px 11px;margin:6px 0;color:#9a9aa3;font-size:12.5px">'+inl(m[1])+'</div>';continue;}
+      if(m=l.match(/^- \[([ xX])\]\s+(.*)/)){flush();const ck=m[1].toLowerCase()==='x';html+='<div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;font-size:12.5px"><span style="font-family:Material Symbols Rounded;font-size:16px;line-height:1.3;color:'+(ck?'var(--accent,#5b9dd9)':'#56565e')+'">'+(ck?'check_box':'check_box_outline_blank')+'</span><span style="'+(ck?'text-decoration:line-through;color:#6b6b74':'color:#b7b7c0')+'">'+inl(m[2])+'</span></div>';continue;}
+      if(m=l.match(/^\d+\.\s+(.*)/)){if(!inOl){flush();html+='<ol style="margin:5px 0;padding-left:20px;color:#b7b7c0;font-size:12.5px;display:flex;flex-direction:column;gap:3px">';inOl=true;}html+='<li>'+inl(m[1])+'</li>';continue;}
+      if(m=l.match(/^[-*]\s+(.*)/)){if(!inUl){flush();html+='<ul style="margin:5px 0;padding-left:18px;color:#b7b7c0;font-size:12.5px;display:flex;flex-direction:column;gap:3px">';inUl=true;}html+='<li>'+inl(m[1])+'</li>';continue;}
+      flush();html+='<div style="color:#b7b7c0;font-size:12.5px;line-height:1.6;margin:5px 0">'+inl(l)+'</div>';
+    }
+    flush();if(inCode){html+='<pre style="background:#0a0a0d;border:1px solid #1c1c22;border-radius:8px;padding:10px;font-family:Geist Mono,monospace;font-size:11.5px;color:#a9b2bd;margin:6px 0">'+esc(code)+'</pre>';}
+    return html;
+  }
+  openCard(id){this.setState({drawerCardId:id,drawerTab:'edit'});}
+  updateCard(id,patch){this.setState(st=>({boards:st.boards.map(b=>b.id===st.activeBoardId?{...b,cards:b.cards.map(c=>c.id===id?{...c,...patch}:c)}:b)}));}
+  moveCard(id,col){this.setState(st=>({boards:st.boards.map(b=>{if(b.id!==st.activeBoardId)return b;return {...b,cards:b.cards.map(c=>{if(c.id!==id)return c;const nm=(b.columns.find(x=>x.id===col)||{}).name;return {...c,col,activity:[{icon:'arrow_forward',text:'Moved to '+nm,time:'just now',c:'#9a9aa3'},...(c.activity||[])]};})};})}));}
+  startTask(id){this.setState(st=>({drawerCardId:st.drawerCardId,boards:st.boards.map(b=>{if(b.id!==st.activeBoardId)return b;return {...b,cards:b.cards.map(c=>{if(c.id!==id)return c;const slug=(c.title||'task').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,22)||'task';const wt='../acme.wt/'+slug;return {...c,col:'inprogress',agent:true,linked:{branch:'feat/'+slug,worktree:wt,sessionId:null},activity:[{icon:'rocket_launch',text:'Started — created feat/'+slug+' + worktree',time:'just now',c:'#5cc98a'},{icon:'auto_awesome',text:'Handed to Claude · session starting',time:'just now',c:'#7cb3e6'},...(c.activity||[])]};})};})}));}
+  deleteCard(id){this.setState(st=>({drawerCardId:null,boards:st.boards.map(b=>b.id===st.activeBoardId?{...b,cards:b.cards.filter(c=>c.id!==id)}:b)}));}
+  addCardTo(col){const id='n'+Date.now();this.setState(st=>({drawerCardId:id,drawerTab:'edit',boards:st.boards.map(b=>b.id===st.activeBoardId?{...b,cards:[...b.cards,{id,code:'#'+(90+b.cards.length),col,title:'Untitled task',labels:[],body:'',activity:[{icon:'add',text:'You created this card',time:'just now',c:'#5f5f68'}]}]}:b)}));}
+  doGenerate(){const t=(this.state.genText||'').trim();const kw=t?t.split(/\s+/).slice(0,5).join(' '):'the feature';const defs=[{title:'Design data model for '+kw,body:'Define the schema and migrations.'},{title:'Implement '+kw,body:'Build the core logic and API surface.'},{title:'Tests + docs for '+kw,body:'Cover the happy path and edge cases; update docs.'}];this.setState(st=>({genOpen:false,boards:st.boards.map(b=>{if(b.id!==st.activeBoardId)return b;const n=b.cards.length;const add=defs.map((x,i)=>({id:'g'+Date.now()+i,code:'#'+(90+n+i),col:'backlog',title:x.title,labels:['ai'],body:x.body,activity:[{icon:'auto_awesome',text:'Drafted by Claude',time:'just now',c:'#7cb3e6'}]}));return {...b,cards:[...add,...b.cards]};})}));}
+
+  initTerminals(){return [
+    {id:'t1',name:'zsh',cwd:'~/code/acme-platform',running:false,lines:[
+      {type:'cmd',text:'git status'},
+      {type:'out',text:'On branch main'},
+      {type:'out',text:"Your branch is up to date with 'origin/main'."},
+      {type:'out',text:'nothing to commit, working tree clean'},
+    ]},
+    {id:'t2',name:'dev server',cwd:'~/code/acme-platform',running:true,lines:[
+      {type:'cmd',text:'npm run dev'},
+      {type:'out',text:'  VITE v5.2.0  ready in 412 ms'},
+      {type:'ok',text:'  ➜  Local:   http://localhost:5173/'},
+      {type:'out',text:'  ➜  Network: http://192.168.1.24:5173/'},
+      {type:'out',text:'  waiting for file changes…'},
+    ]},
+    {id:'t3',name:'server logs',cwd:'~/code/acme-platform',running:true,lines:[
+      {type:'out',text:'[12:04:11] GET   /api/health      200  4ms'},
+      {type:'out',text:'[12:04:13] GET   /api/users       200  22ms'},
+      {type:'out',text:'[12:04:15] POST  /api/auth/login  200  88ms'},
+      {type:'err',text:'[12:04:18] GET   /api/orders/9    404  3ms'},
+    ]},
+  ];}
+  mapTerminal(t,font){const id=t.id;return {...t,statusLabel:t.running?'running':'idle',dotStyle:t.running?{width:'7px',height:'7px',borderRadius:'50%',background:'#5cc98a',animation:'pulse 2s infinite',display:'inline-block',flexShrink:0}:{width:'7px',height:'7px',borderRadius:'50%',background:'#56565e',display:'inline-block',flexShrink:0},lines:t.lines.map(ln=>({st:this.lineStyle(ln.type,font),prefix:this.prefixFor(ln.type),text:ln.text})),draft:this.state.termDrafts[id]||'',onChange:(e)=>this.setTermDraft(id,e.target.value),onKey:(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this.sendTerm(id);}},onSend:()=>this.sendTerm(id),onClose:()=>this.askConfirm({title:'Close terminal',message:'Close “'+t.name+'”? Any running process is terminated.',confirmLabel:'Close terminal',onConfirm:()=>this.closeTerminal(id)})};}
+  setTermDraft(id,v){this.setState(st=>({termDrafts:{...st.termDrafts,[id]:v}}));}
+  sendTerm(id){const d=(this.state.termDrafts[id]||'').trim();if(!d)return;this.setState(st=>{const terminals=st.terminals.map(t=>t.id===id?{...t,running:true,lines:[...t.lines,{type:'cmd',text:d},{type:'out',text:'…'}]}:t);const td={...st.termDrafts};delete td[id];return {terminals,termDrafts:td};});}
+  newTerminal(){const id='t'+Date.now();this.setState(st=>({view:'terminals',terminals:[...st.terminals,{id,name:'zsh',cwd:'~/code/acme-platform',running:false,lines:[{type:'out',text:'New shell · ~/code/acme-platform'}]}]}));}
+  initLabels(){return {auth:[{name:'auth',color:'#5b9dd9'},{name:'security',color:'#e07a6e'},{name:'backend',color:'#b89cf0'}],billing:[{name:'billing',color:'#e0b15e'},{name:'backend',color:'#b89cf0'},{name:'security',color:'#e07a6e'}],platform:[{name:'frontend',color:'#7dd99a'},{name:'docs',color:'#5fb4ad'}]};}
+  _palette(){return ['#5b9dd9','#e07a6e','#b89cf0','#7dd99a','#e0b15e','#5fb4ad','#9b8cf0','#d98cc0','#6cc0e0','#e8a15b','#8ad0a0','#c98ce0','#e07a9e'];}
+  toggleCardLabel(id,name){this.setState(st=>({boards:st.boards.map(b=>b.id===st.activeBoardId?{...b,cards:b.cards.map(c=>{if(c.id!==id)return c;const has=(c.labels||[]).indexOf(name)>=0;return {...c,labels:has?(c.labels||[]).filter(x=>x!==name):[...(c.labels||[]),name]};})}:b)}));}
+  addBoardLabel(){const name=(this.state.newLabelName||'').trim().toLowerCase();if(!name)return;this.setState(st=>{const cur=st.boardLabels[st.activeBoardId]||[];if(cur.some(l=>l.name===name))return {newLabelName:''};return {newLabelName:'',boardLabels:{...st.boardLabels,[st.activeBoardId]:[...cur,{name,color:st.newLabelColor}]}};});}
+  deleteBoardLabel(name){this.setState(st=>({boardLabels:{...st.boardLabels,[st.activeBoardId]:(st.boardLabels[st.activeBoardId]||[]).filter(l=>l.name!==name)},boards:st.boards.map(b=>b.id===st.activeBoardId?{...b,cards:b.cards.map(c=>({...c,labels:(c.labels||[]).filter(x=>x!==name)}))}:b)}));}
+  cycleLabelColor(name){const pal=this._palette();this.setState(st=>({boardLabels:{...st.boardLabels,[st.activeBoardId]:(st.boardLabels[st.activeBoardId]||[]).map(l=>{if(l.name!==name)return l;const i=pal.indexOf(l.color);return {...l,color:pal[(i+1)%pal.length]};})}}));}
+
+  initWorktrees(){return [{branch:'feat/auth-sessions',path:'../acme.wt/auth-sessions',sessionId:'auth-refactor',status:'3 uncommitted',kind:'dirty',last:'12m'},{branch:'feat/dashboard',path:'../acme.wt/dashboard',sessionId:'ui-polish',status:'clean',kind:'clean',last:'27m'},{branch:'feat/argon2',path:'../acme.wt/argon2',sessionId:null,status:'ahead 2',kind:'ahead',last:'1h'},{branch:'feat/billing',path:'../acme.wt/billing',sessionId:null,status:'clean',kind:'clean',last:'3h'}];}
+  fmtSize(b){if(b==null)return '';if(b<1024)return b+' B';if(b<1048576)return (b/1024).toFixed(0)+' KB';return (b/1048576).toFixed(1)+' MB';}
+  setMdRef(el){this._mdTextarea=el;}
+  applyMd(kind){const ta=this._mdTextarea;const id=this.state.drawerCardId;if(!ta||!id)return;const v=ta.value,s=ta.selectionStart||0,e=ta.selectionEnd||0,sel=v.slice(s,e);let full,ss,se;
+    const wrap=(a,b,ph)=>{const inner=sel||ph;full=v.slice(0,s)+a+inner+b+v.slice(e);ss=s+a.length;se=s+a.length+inner.length;};
+    const ls=v.lastIndexOf('\n',s-1)+1;let le=v.indexOf('\n',e);if(le<0)le=v.length;
+    const lineFn=(fn)=>{const seg=v.slice(ls,le);const out=seg.split('\n').map((l,i)=>fn(l,i)).join('\n');full=v.slice(0,ls)+out+v.slice(le);ss=ls;se=ls+out.length;};
+    const block=(txt)=>{const pre=(s>0&&v[s-1]!=='\n')?'\n':'';full=v.slice(0,s)+pre+txt+v.slice(e);ss=s+pre.length;se=ss+txt.length;};
+    switch(kind){
+      case 'bold':wrap('**','**','bold');break;
+      case 'italic':wrap('*','*','italic');break;
+      case 'strike':wrap('~~','~~','text');break;
+      case 'code':wrap('`','`','code');break;
+      case 'link':{const inner=sel||'text';full=v.slice(0,s)+'['+inner+'](https://)'+v.slice(e);ss=s+1;se=s+1+inner.length;break;}
+      case 'h1':lineFn(l=>'# '+l.replace(/^#+\s*/,''));break;
+      case 'h2':lineFn(l=>'## '+l.replace(/^#+\s*/,''));break;
+      case 'h3':lineFn(l=>'### '+l.replace(/^#+\s*/,''));break;
+      case 'ul':lineFn(l=>'- '+l.replace(/^[-*]\s*/,''));break;
+      case 'ol':lineFn((l,i)=>(i+1)+'. '+l.replace(/^\d+\.\s*/,''));break;
+      case 'check':lineFn(l=>'- [ ] '+l.replace(/^- \[[ xX]\]\s*/,''));break;
+      case 'quote':lineFn(l=>'> '+l.replace(/^>\s*/,''));break;
+      case 'codeblock':block('```\ncode\n```');break;
+      case 'table':block('| Column | Column |\n| --- | --- |\n| Cell | Cell |\n| Cell | Cell |');break;
+      case 'mermaid':block('```mermaid\nflowchart TD\n  A[Start] --> B{Decision}\n  B -->|Yes| C[Ship it]\n  B -->|No| D[Iterate]\n```');break;
+      default:return;
+    }
+    this.updateCard(id,{body:full});
+    setTimeout(()=>{try{ta.focus();ta.setSelectionRange(ss,se);}catch(_){}},0);
+  }
+  renderMermaid(){if(!window.mermaid||!this._previewEl)return;try{if(!this._mmInit){window.mermaid.initialize({startOnLoad:false,theme:'dark',securityLevel:'loose',fontFamily:'Geist Mono, monospace'});this._mmInit=true;}const nodes=[...this._previewEl.querySelectorAll('.mermaid')].filter(n=>!n.getAttribute('data-processed'));if(nodes.length)window.mermaid.run({nodes});}catch(_){}}
+  componentDidUpdate(){if(this.state.drawerCardId&&this.state.drawerTab==='preview')this.renderMermaid();if(this.state.diagOpen)this.renderDiag();}
+  askConfirm(opts){this.setState({confirm:opts});}
+  removeWorktree(branch){this.setState(st=>({worktrees:(st.worktrees||[]).filter(w=>w.branch!==branch)}));}
+  closeTerminal(id){this.setState(st=>({terminals:st.terminals.filter(t=>t.id!==id)}));}
+  addAttachment(id,files){if(!files||!files.length)return;const arr=[...files].map(f=>({name:f.name,size:f.size}));this.setState(st=>({boards:st.boards.map(b=>b.id===st.activeBoardId?{...b,cards:b.cards.map(c=>c.id===id?{...c,attachments:[...(c.attachments||[]),...arr]}:c)}:b)}));}
+  removeAttachment(id,idx){this.setState(st=>({boards:st.boards.map(b=>b.id===st.activeBoardId?{...b,cards:b.cards.map(c=>c.id===id?{...c,attachments:(c.attachments||[]).filter((_,i)=>i!==idx)}:c)}:b)}));}
+  createBoard(){const name=(this.state.newBoardName||'').trim();if(!name)return;const id='bd'+Date.now();const cols=[{id:'backlog',name:'Backlog'},{id:'todo',name:'To Do'},{id:'inprogress',name:'In Progress'},{id:'review',name:'In Review'},{id:'done',name:'Done'}];this.setState(st=>({newBoardOpen:false,newBoardName:'',activeBoardId:id,boardMenuOpen:false,boards:[...st.boards,{id,name,scope:st.newBoardScope,base:'main',columns:cols,cards:[]}],boardLabels:{...st.boardLabels,[id]:[]}}));}
+
+  statusMeta(s){return ({running:{c:'#5cc98a',l:'Running'},waiting:{c:'#e0b15e',l:'Waiting'},idle:{c:'#6b6b74',l:'Idle'},done:{c:'#5b9dd9',l:'Done'}})[s];}
+
+  dotStyle(status){const c=this.statusMeta(status).c;const base={width:'7px',height:'7px',borderRadius:'50%',background:c,flexShrink:0,display:'inline-block'};if(status==='running'){base.animation='pulse 2s infinite';}return base;}
+
+  modelStyle(){return {fontFamily:"'Geist Mono', monospace",fontSize:'10px',fontWeight:500,padding:'2px 6px',borderRadius:'5px',background:'#16161d',color:'#9a9aa3',border:'1px solid #232330',letterSpacing:'0.02em',whiteSpace:'nowrap',flexShrink:0};}
+
+  lineStyle(type,font){
+    const colors={user:'var(--accent-hi,#7cb3e6)',text:'#c2c2cb',sys:'#6b6b74',tool:'#88b2da',ok:'#5cc98a',err:'#e07a6e',file:'#8a8a93',cmd:'#d6dce3',out:'#8a8a93'};
+    return {fontFamily:"'Geist Mono', ui-monospace, monospace",fontSize:font+'px',lineHeight:'1.65',whiteSpace:'pre-wrap',wordBreak:'break-word',color:colors[type]||'#c2c2cb',fontWeight:(type==='user'||type==='cmd')?500:400,fontStyle:type==='sys'?'italic':'normal'};
+  }
+  prefixFor(t){return ({user:'› ',tool:'↳ ',ok:'✓ ',err:'✗ ',cmd:'$ '})[t]||'';}
+
+  mapSession(s,font){
+    const id=s.id;
+    const wt=s.worktree||null;
+    return {
+      ...s,
+      worktreeLabel: wt||'main checkout',
+      worktreeColor: wt?'#b89cf0':'#73737c',
+      modelShort: s.model.split(' ')[0],
+      statusLabel: this.statusMeta(s.status).l,
+      running: s.status==='running',
+      dotStyle: this.dotStyle(s.status),
+      modelStyle: this.modelStyle(),
+      rowStyle: {display:'flex',gap:'9px',padding:'9px',borderRadius:'8px',cursor:'pointer',alignItems:'flex-start',background: this.state.activeId===id?'#101015':'transparent'},
+      lines: s.lines.map(ln=>({...ln, st:this.lineStyle(ln.type,font), prefix:this.prefixFor(ln.type)})),
+      tokenLabel: s.tokens.used+'K / '+s.tokens.limit+'K',
+      tokenBarStyle: {width:Math.round(s.tokens.used/s.tokens.limit*100)+'%',height:'100%',borderRadius:'4px',background:'linear-gradient(90deg,var(--accent,#5b9dd9),var(--accent-hi,#7cb3e6))'},
+      draft: this.state.drafts[id]||'',
+      onChange:(e)=>this.setDraft(id,e.target.value),
+      onKey:(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this.send(id);}},
+      onSend:()=>this.send(id),
+      onOpen:()=>this.setState({activeId:id,view:'session'}),
+    };
+  }
+
+  setDraft(id,v){this.setState(st=>({drafts:{...st.drafts,[id]:v}}));}
+  send(id){const d=(this.state.drafts[id]||'').trim();if(!d)return;this.setState(st=>{const sessions=st.sessions.map(s=>{if(s.id!==id)return s;return {...s,status:'running',lines:[...s.lines,{type:'user',text:d},{type:'sys',text:'Thinking…'}]};});const drafts={...st.drafts};delete drafts[id];return {sessions,drafts};});}
+
+  go(v){this.setState({view:v,drawerCardId:null,boardMenuOpen:false,labelMenuOpen:false,labelMgrOpen:false});}
+  setLayout(l){this.setState({layout:l});}
+  toggleSkill(id){this.setState(st=>({skills:st.skills.map(s=>s.id===id?{...s,enabled:!s.enabled}:s)}));}
+  toggleSetting(k){this.setState(st=>({toggles:{...st.toggles,[k]:!st.toggles[k]}}));}
+
+  startDrag(e){e.preventDefault();const move=(ev)=>{if(!this._splitEl)return;const r=this._splitEl.getBoundingClientRect();let ratio=(ev.clientX-r.left)/r.width;ratio=Math.max(0.28,Math.min(0.72,ratio));this.setState({splitRatio:ratio});};const up=()=>{document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);};document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);}
+
+  toggleStyle(on){return {width:'34px',height:'20px',borderRadius:'11px',background:on?'var(--accent,#5b9dd9)':'#26262d',position:'relative',cursor:'pointer',transition:'background .15s',flexShrink:0,display:'inline-block'};}
+  knobStyle(on){return {position:'absolute',top:'2px',left:on?'16px':'2px',width:'16px',height:'16px',borderRadius:'50%',background:'#fff',transition:'left .15s',boxShadow:'0 1px 2px rgba(0,0,0,0.4)'};}
+
+  renderVals(){
+    const accent=this.state.accentOverride||this.props.accentColor||'#5b9dd9';
+    const font=this.state.fontOverride||this.props.terminalFontSize||12;
+    const view=this.state.view, layout=this.state.layout;
+    const rootStyle={position:'relative',width:'1400px',height:'900px',background:'#0b0b0d',borderRadius:'14px',border:'1px solid #1e1e24',boxShadow:'0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.02) inset',display:'flex',flexDirection:'column',overflow:'hidden',
+      '--accent':accent,'--accent-hi':this.lighten(accent,0.26),'--accent-soft':this.rgba(accent,0.13),'--accent-line':this.rgba(accent,0.34),'--accent-glow':this.rgba(accent,0.24)};
+
+    const wsId=this.state.activeWorkspaceId;
+    const wsActive=this.ws();
+    const wsBoards=(this.state.boards||[]).filter(b=>b.wsId===wsId);
+    const sessions=(this.state.sessions||[]).filter(s=>s.wsId===wsId).map(s=>this.mapSession(s,font));
+    const active=sessions.find(s=>s.id===this.state.activeId)||sessions[0]||{lines:[],files:[]};
+    const terminals=(this.state.terminals||[]).filter(t=>t.wsId===wsId).map(t=>this.mapTerminal(t,font));
+    const sidebarTerminals=terminals.map(t=>({...t,onOpen:()=>this.go('terminals')}));
+    const worktreesInUse=(this.state.sessions||[]).filter(s=>s.wsId===wsId&&s.worktree).length;
+
+    const _ab=wsBoards.find(b=>b.id===this.state.activeBoardId)||wsBoards[0]||{cards:[]};
+    const _inProg=(_ab.cards||[]).filter(c=>c.col==='inprogress').length;
+    const navDefs=[{id:'board',icon:'view_kanban',label:'Board',badge:_inProg||null},{id:'workspace',icon:'grid_view',label:'Sessions',badge:sessions.filter(s=>s.status==='running'||s.status==='waiting').length},{id:'terminals',icon:'terminal',label:'Terminals',badge:(this.state.terminals||[]).filter(t=>t.running).length||null},{id:'worktrees',icon:'account_tree',label:'Worktrees'},{id:'history',icon:'history',label:'History'},{id:'skills',icon:'auto_awesome',label:'Skills'},{id:'settings',icon:'tune',label:'Settings'}];
+    const nav=navDefs.map(n=>{const act=view===n.id||(n.id==='workspace'&&view==='session');return {...n,active:act,icoColor:act?'var(--accent,#5b9dd9)':'#74747d',onClick:()=>this.go(n.id),st:{display:'flex',alignItems:'center',gap:'11px',padding:'8px 11px',borderRadius:'8px',cursor:'pointer',fontSize:'13px',fontWeight:act?500:450,color:act?'#ededf0':'#9a9aa3',background:act?'#141419':'transparent'}};});
+
+    const layoutDefs=[{id:'grid',icon:'grid_view',label:'Grid'},{id:'tabs',icon:'tab',label:'Tabs'},{id:'split',icon:'splitscreen',label:'Split'}];
+    const segStyle=(a)=>({display:'flex',alignItems:'center',gap:'6px',padding:'5px 11px',borderRadius:'7px',cursor:'pointer',fontSize:'12px',fontWeight:500,color:a?'#0a1018':'#8a8a93',background:a?'var(--accent,#5b9dd9)':'transparent'});
+    const layoutOpts=layoutDefs.map(o=>({...o,onClick:()=>this.setLayout(o.id),st:segStyle(layout===o.id)}));
+
+    const tabs=sessions.map(s=>({id:s.id,name:s.name,dotStyle:s.dotStyle,onActivate:()=>this.setState({activeId:s.id}),chipStyle:{display:'flex',alignItems:'center',gap:'7px',padding:'6px 11px',borderRadius:'8px',cursor:'pointer',fontSize:'12.5px',fontWeight:500,whiteSpace:'nowrap',flexShrink:0,color:this.state.activeId===s.id?'#ededf0':'#9a9aa3',background:this.state.activeId===s.id?'#15151b':'transparent',border:this.state.activeId===s.id?'1px solid #24242c':'1px solid transparent'}}));
+
+    const splitLeft=active;
+    const splitRight=sessions.find(s=>s.id!==active.id)||sessions[0];
+    const leftStyle={width:(this.state.splitRatio*100)+'%',height:'100%',minHeight:0,flexShrink:0};
+
+    const filters=[{id:'all',label:'All'},{id:'running',label:'Running'},{id:'waiting',label:'Waiting'},{id:'done',label:'Done'}];
+    const ftStyle=(a)=>({padding:'6px 12px',borderRadius:'7px',fontSize:'12.5px',fontWeight:500,cursor:'pointer',color:a?'#ededf0':'#8a8a93',background:a?'#16161c':'transparent',border:a?'1px solid #24242c':'1px solid transparent'});
+    const historyFilters=filters.map(f=>({...f,st:ftStyle(this.state.historyFilter===f.id),onClick:()=>this.setState({historyFilter:f.id})}));
+    let historyGroups=this.historyFor(this.state.activeWorkspaceId).map(g=>({label:g.label,items:g.items.map(h=>({...h,dotStyle:this.dotStyle(h.status),modelStyle:this.modelStyle(),onOpen:()=>this.setState({activeId:h.id,view:'session'})}))}));
+    if(this.state.historyFilter!=='all'){historyGroups=historyGroups.map(g=>({...g,items:g.items.filter(h=>h.status===this.state.historyFilter)})).filter(g=>g.items.length);}
+
+    const tagColors={bash:'#88b2da',git:'#e0b15e',db:'#b89cf0',react:'#7dd99a',docs:'#5b9dd9',lint:'#e07a6e'};
+    const skills=(this.state.skills||[]).map(sk=>{const sel=sk.id===this.state.selectedSkillId;const tc=tagColors[sk.tag]||'#9a9aa3';return {...sk,selected:sel,triggerLabel:sk.trigger==='auto'?'Auto-invoked':'Manual',onSelect:()=>this.setState({selectedSkillId:sk.id}),onToggle:(e)=>{e.stopPropagation();this.toggleSkill(sk.id);},toggleStyle:this.toggleStyle(sk.enabled),knobStyle:this.knobStyle(sk.enabled),cardStyle:{background:'#0c0c0f',border:'1px solid '+(sel?'var(--accent-line,rgba(91,157,217,0.34))':'#1b1b21'),borderRadius:'11px',padding:'14px',cursor:'pointer',display:'flex',flexDirection:'column'},tagStyle:{fontSize:'10px',fontWeight:600,fontFamily:"'Geist Mono', monospace",padding:'2px 7px',borderRadius:'5px',color:tc,background:this.rgba((tagColors[sk.tag]||'#9a9aa3'),0.13),letterSpacing:'0.02em'}};});
+    const selSrc=(this.state.skills||[]).find(s=>s.id===this.state.selectedSkillId)||(this.state.skills||[])[0]||{touches:[]};
+    const selectedSkill={...selSrc,enabledLabel:selSrc.enabled?'Enabled':'Disabled',triggerLabel:selSrc.trigger==='auto'?'Auto-invoked':'Manual',onToggle:()=>this.toggleSkill(selSrc.id),toggleStyle:this.toggleStyle(selSrc.enabled),knobStyle:this.knobStyle(selSrc.enabled)};
+
+    const accentSwatches=['#5b9dd9','#d97757','#7dd99a','#b89cf0','#e0b15e'].map(c=>({onClick:()=>this.setState({accentOverride:c}),st:{width:'24px',height:'24px',borderRadius:'7px',background:c,cursor:'pointer',boxShadow:(c===accent?'0 0 0 2px #0c0c0f, 0 0 0 4px '+c:'0 0 0 1px rgba(255,255,255,0.08) inset')}}));
+
+    const tdefs=[{k:'restore',label:'Restore sessions on open',desc:'Reopen the sessions that were active when you last closed the project'},{k:'confirm',label:'Confirm before closing a running session',desc:'Ask before terminating a session that is still working'},{k:'launch',label:'Launch at login',desc:'Open the app automatically when you sign in'}];
+    const settingsToggles=tdefs.map((t,i)=>({...t,on:this.state.toggles[t.k],onClick:()=>this.toggleSetting(t.k),toggleStyle:this.toggleStyle(this.state.toggles[t.k]),knobStyle:this.knobStyle(this.state.toggles[t.k]),rowStyle:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 0',borderTop:i?'1px solid #16161a':'none'}}));
+
+    const modelOpts=['Opus','Sonnet','Haiku'].map(m=>({label:m,onClick:()=>this.setState({defaultModel:m}),st:segStyle(this.state.defaultModel===m)}));
+
+    const shortcuts=[{label:'New session',keys:'⌘ N'},{label:'Command palette',keys:'⌘ K'},{label:'Cycle sessions',keys:'⌘ ⇥'},{label:'Toggle layout',keys:'⌘ \\'},{label:'Focus composer',keys:'⌘ L'}].map((s,i)=>({...s,rowStyle:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0',borderTop:i?'1px solid #16161a':'none'}}));
+
+    // ---- Board / Kanban ----
+    const accSoftBtn={display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'6px 8px',borderRadius:'7px',background:'var(--accent-soft,rgba(91,157,217,0.13))',color:'var(--accent-hi,#7cb3e6)',fontSize:'11.5px',fontWeight:600,cursor:'pointer',marginTop:'1px'};
+    const ghostBtn={display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'6px 8px',borderRadius:'7px',background:'#141419',border:'1px solid #232329',color:'#cbcbd2',fontSize:'11.5px',fontWeight:600,cursor:'pointer',marginTop:'1px'};
+    const labelDefs=this.state.boardLabels[this.state.activeBoardId]||[];
+    const labelMap={};labelDefs.forEach(l=>{labelMap[l.name]=l.color;});
+    const lblStyle=(name)=>{const c=labelMap[name]||this.labelColor(name);return {display:'inline-flex',alignItems:'center',gap:'3px',height:'18px',boxSizing:'border-box',fontSize:'9.5px',fontWeight:600,fontFamily:"'Geist Mono', monospace",letterSpacing:'0.04em',textTransform:'uppercase',padding:'0 6px',borderRadius:'5px',color:c,background:this.rgba(c,0.13)};};
+    const mapCard=(c)=>{
+      const linked=c.linked;
+      const sess=(linked&&linked.sessionId)?sessions.find(s=>s.id===linked.sessionId):null;
+      let action=false,actionLabel='',actionIcon='',actionStyle=ghostBtn,onAction=(e)=>{e.stopPropagation();};
+      if(c.col==='backlog'||c.col==='todo'){action=true;actionLabel='Start task';actionIcon='rocket_launch';actionStyle=accSoftBtn;onAction=(e)=>{e.stopPropagation();this.startTask(c.id);};}
+      else if(c.col==='inprogress'&&sess){action=true;actionLabel='Open session';actionIcon='open_in_full';actionStyle=ghostBtn;onAction=(e)=>{e.stopPropagation();this.setState({activeId:sess.id,view:'session'});};}
+      else if(c.col==='review'){action=true;actionLabel='Review diff';actionIcon='difference';actionStyle=ghostBtn;onAction=(e)=>{e.stopPropagation();this.openCard(c.id);};}
+      return {id:c.id,code:c.code,title:c.title,excerpt:this.excerpt(c.body),
+        labels:(c.labels||[]).map(t=>({text:t,st:lblStyle(t)})),
+        hasAttach:(c.attachments||[]).length>0,attachCount:(c.attachments||[]).length,
+        hasLinked:!!(linked&&linked.branch),branch:linked&&linked.branch,
+        worktree:(linked&&linked.worktree)?linked.worktree.split('/').pop():null,
+        agentWorking:!!c.agent&&c.col==='inprogress',
+        sessionName:sess?sess.name:(c.agent?'session starting…':''),
+        onOpen:()=>this.openCard(c.id),
+        action,actionLabel,actionIcon,actionStyle,onAction};
+    };
+    const _defCols=[{id:'backlog',name:'Backlog'},{id:'todo',name:'To Do'},{id:'inprogress',name:'In Progress'},{id:'review',name:'In Review'},{id:'done',name:'Done'}];
+    const _board=wsBoards.find(b=>b.id===this.state.activeBoardId)||wsBoards[0]||{id:null,name:'No board yet',scope:'',base:'main',columns:_defCols,cards:[]};
+    const board={name:_board.name,scope:_board.scope,base:_board.base,cardCount:(_board.cards||[]).length,hasBoard:!!_board.id,onAddCard:()=>{if(_board.id)this.addCardTo('backlog');else this.setState({newBoardOpen:true,newBoardName:''});}};
+    const boardCols=_board.columns.map(col=>{const cs=_board.cards.filter(c=>c.col===col.id);return {id:col.id,name:col.name,count:cs.length,empty:cs.length===0,dotStyle:{width:'7px',height:'7px',borderRadius:'50%',background:this.colDot(col.id),display:'inline-block',flexShrink:0},onAdd:()=>this.addCardTo(col.id),cards:cs.map(mapCard)};});
+    const boardsMenu=wsBoards.map(b=>({onSelect:()=>this.setState({activeBoardId:b.id,boardMenuOpen:false}),name:b.name,meta:b.cards.length+' cards · '+b.scope,active:b.id===this.state.activeBoardId,iconColor:b.id===this.state.activeBoardId?'var(--accent,#5b9dd9)':'#74747d',rowStyle:{display:'flex',alignItems:'center',gap:'10px',padding:'9px 10px',borderRadius:'8px',cursor:'pointer',background:b.id===this.state.activeBoardId?'#15151b':'transparent'}}));
+    const _dc=this.state.drawerCardId?_board.cards.find(c=>c.id===this.state.drawerCardId):null;
+    let drawerCard=null;
+    if(_dc){const linked=_dc.linked;const sess=(linked&&linked.sessionId)?sessions.find(s=>s.id===linked.sessionId):null;const tab=this.state.drawerTab;
+      drawerCard={code:_dc.code,colName:(_board.columns.find(c=>c.id===_dc.col)||{}).name,
+        colBadgeStyle:{fontSize:'10px',fontWeight:600,fontFamily:"'Geist Mono', monospace",padding:'2px 8px',borderRadius:'5px',color:this.colDot(_dc.col),background:this.rgba(this.colDot(_dc.col),0.15)},
+        title:_dc.title,onTitle:(e)=>this.updateCard(_dc.id,{title:e.target.value}),
+        labels:(_dc.labels||[]).map(t=>({text:t,st:lblStyle(t),onRemove:(e)=>{e.stopPropagation();this.toggleCardLabel(_dc.id,t);}})),
+        colOpts:_board.columns.map(col=>({name:col.name,onClick:()=>this.moveCard(_dc.id,col.id),st:{padding:'5px 10px',borderRadius:'7px',fontSize:'11.5px',fontWeight:500,cursor:'pointer',color:col.id===_dc.col?'#0a1018':'#9a9aa3',background:col.id===_dc.col?'var(--accent,#5b9dd9)':'#121217',border:'1px solid '+(col.id===_dc.col?'transparent':'#222229')}})),
+        hasLinked:!!(linked&&linked.branch),notLinked:!(linked&&linked.branch),
+        branch:linked&&linked.branch,worktree:linked&&linked.worktree,
+        sessionName:sess?sess.name:null,sessionDot:sess?this.dotStyle(sess.status):{},
+        onOpenSession:sess?(()=>this.setState({activeId:sess.id,view:'session',drawerCardId:null})):(()=>{}),
+        isEdit:tab!=='preview',isPreview:tab==='preview',
+        onEditTab:()=>this.setState({drawerTab:'edit'}),onPreviewTab:()=>this.setState({drawerTab:'preview'}),
+        editTabStyle:this.segTab(tab!=='preview'),previewTabStyle:this.segTab(tab==='preview'),
+        body:_dc.body,onBody:(e)=>this.updateCard(_dc.id,{body:e.target.value}),
+        preview:React.createElement('div',{ref:(el)=>{this._previewEl=el;},dangerouslySetInnerHTML:{__html:this.md(_dc.body)}}),
+        mdTools:[{text:'H1',icon:'',title:'Heading 1',onClick:()=>this.applyMd('h1')},{text:'H2',icon:'',title:'Heading 2',onClick:()=>this.applyMd('h2')},{text:'H3',icon:'',title:'Heading 3',onClick:()=>this.applyMd('h3')},{text:'',icon:'format_bold',title:'Bold',onClick:()=>this.applyMd('bold')},{text:'',icon:'format_italic',title:'Italic',onClick:()=>this.applyMd('italic')},{text:'',icon:'strikethrough_s',title:'Strikethrough',onClick:()=>this.applyMd('strike')},{text:'',icon:'link',title:'Link',onClick:()=>this.applyMd('link')},{text:'',icon:'code',title:'Inline code',onClick:()=>this.applyMd('code')},{text:'',icon:'format_list_bulleted',title:'Bulleted list',onClick:()=>this.applyMd('ul')},{text:'',icon:'format_list_numbered',title:'Numbered list',onClick:()=>this.applyMd('ol')},{text:'',icon:'checklist',title:'Checklist',onClick:()=>this.applyMd('check')},{text:'',icon:'format_quote',title:'Quote',onClick:()=>this.applyMd('quote')},{text:'',icon:'data_object',title:'Code block',onClick:()=>this.applyMd('codeblock')},{text:'',icon:'table_chart',title:'Table builder',onClick:()=>this.setState({tableOpen:true,drawerTab:'edit',table:{headers:['Column 1','Column 2'],rows:[['',''],['','']]}})},{text:'',icon:'schema',title:'Diagram builder',onClick:()=>this.setState({diagOpen:true,drawerTab:'edit',diagText:'flowchart TD\n  A[Start] --> B{Decision}\n  B -->|Yes| C[Ship it]\n  B -->|No| D[Iterate]'})}],
+        attachments:(_dc.attachments||[]).map((a,idx)=>({name:a.name,size:this.fmtSize(a.size),onRemove:()=>this.askConfirm({title:'Remove attachment',message:'Remove “'+a.name+'” from this card?',confirmLabel:'Remove',onConfirm:()=>this.removeAttachment(_dc.id,idx)})})),
+        onAttach:(e)=>{this.addAttachment(_dc.id,e.target.files);e.target.value='';},
+        activity:(_dc.activity||[]).map(a=>({icon:a.icon,text:a.text,time:a.time,color:a.c||'#5f5f68'})),
+        onStart:()=>this.startTask(_dc.id),onDelete:()=>this.askConfirm({title:'Delete card',message:'Delete “'+(_dc.title||'this card')+'”? This cannot be undone.',confirmLabel:'Delete card',onConfirm:()=>this.deleteCard(_dc.id)})};
+    }
+    const _usage=(name)=>_board.cards.filter(c=>(c.labels||[]).indexOf(name)>=0).length;
+    const availLabels=_dc?labelDefs.map(l=>({name:l.name,color:l.color,applied:(_dc.labels||[]).indexOf(l.name)>=0,onToggle:()=>this.toggleCardLabel(_dc.id,l.name)})):[];
+    const mgrLabels=labelDefs.map(l=>({name:l.name,color:l.color,chipStyle:lblStyle(l.name),usage:_usage(l.name)+' uses',onCycle:()=>this.cycleLabelColor(l.name),onDelete:()=>this.askConfirm({title:'Delete label',message:'Delete the “'+l.name+'” label? It will be removed from '+_usage(l.name)+' card(s).',confirmLabel:'Delete label',onConfirm:()=>this.deleteBoardLabel(l.name)})}));
+    const labelPalette=this._palette().map(col=>({onPick:()=>this.setState({newLabelColor:col}),st:{width:'22px',height:'22px',borderRadius:'6px',background:col,cursor:'pointer',boxShadow:(col===this.state.newLabelColor?'0 0 0 2px #0d0d11, 0 0 0 4px '+col:'0 0 0 1px rgba(255,255,255,0.08) inset')}}));
+    const _wt=(this.state.worktrees||[]).filter(w=>w.wsId===wsId);
+    const kindColor={clean:'#5cc98a',dirty:'#e0b15e',ahead:'#5b9dd9'};
+    const worktreesList=_wt.map(w=>{const sess=w.sessionId?sessions.find(s=>s.id===w.sessionId):null;return {branch:w.branch,path:w.path,last:w.last,status:w.status,session:sess?sess.name:null,noSession:!sess,dotStyle:sess?this.dotStyle(sess.status):{width:'7px',height:'7px',borderRadius:'50%',background:'#56565e',display:'inline-block',flexShrink:0},statusStyle:{fontSize:'11px',fontFamily:"'Geist Mono', monospace",color:kindColor[w.kind],width:'92px',textAlign:'right',flexShrink:0},onOpen:sess?(()=>this.setState({activeId:sess.id,view:'session'})):(()=>{}),onDelete:()=>this.askConfirm({title:'Remove worktree',message:'Remove the worktree for '+w.branch+'? The branch is kept — only the working copy is deleted.',confirmLabel:'Remove worktree',onConfirm:()=>this.removeWorktree(w.branch)})};});
+
+    return {
+      rootStyle,
+      project:{name:'acme-platform',branch:'main',path:'~/code/acme-platform'},
+      isBoard:view==='board', isWorktrees:view==='worktrees', isTerminals:view==='terminals',
+      terminals, sidebarTerminals, newTerminal:()=>this.newTerminal(),
+      workspaceName:wsActive.name, workspaceUsesWorktree:!!wsActive.useWorktree, worktreesInUse, hasBoard:!!_board.id,
+      wsMenuOpen:this.state.wsMenuOpen, toggleWsMenu:()=>this.setState(st=>({wsMenuOpen:!st.wsMenuOpen})),
+      workspaceList:this.state.workspaces.map(w=>({name:w.name,active:w.id===wsId,useWorktree:!!w.useWorktree,sessionCount:(this.state.sessions||[]).filter(s=>s.wsId===w.id).length,onSelect:()=>this.switchWorkspace(w.id),iconColor:w.id===wsId?'var(--accent,#5b9dd9)':'#74747d',rowStyle:{display:'flex',alignItems:'center',gap:'10px',padding:'9px 10px',borderRadius:'8px',cursor:'pointer',background:w.id===wsId?'#15151b':'transparent'}})),
+      openNewWs:()=>this.setState({newWsOpen:true,newWsName:'',wsMenuOpen:false}),
+      newSessionOpen:this.state.newSessionOpen, closeNewSession:()=>this.setState({newSessionOpen:false}),
+      newSessionName:this.state.newSessionName, setNewSessionName:(e)=>this.setState({newSessionName:e.target.value}),
+      newSessionWorktree:this.state.newSessionWorktree, newSessionWtStyle:this.toggleStyle(this.state.newSessionWorktree), newSessionWtKnob:this.knobStyle(this.state.newSessionWorktree), toggleNewSessionWt:()=>this.setState(st=>({newSessionWorktree:!st.newSessionWorktree})),
+      newSessionSkipPerms:this.state.newSessionSkipPerms, skipPermsStyle:this.toggleStyle(this.state.newSessionSkipPerms), skipPermsKnob:this.knobStyle(this.state.newSessionSkipPerms), toggleSkipPerms:()=>this.setState(st=>({newSessionSkipPerms:!st.newSessionSkipPerms})),
+      newSessionModelOpts:['Opus','Sonnet','Haiku'].map(m=>({label:m,onClick:()=>this.setState({newSessionModel:m}),st:this.segTab(this.state.newSessionModel===m)})),
+      createSession:()=>this.newSessionSubmit(),
+      newWsOpen:this.state.newWsOpen, closeNewWs:()=>this.setState({newWsOpen:false}), newWsName:this.state.newWsName, setNewWsName:(e)=>this.setState({newWsName:e.target.value}), createWorkspace:()=>this.createWorkspace(),
+      newWsWorktree:this.state.newWsWorktree, newWsWtStyle:this.toggleStyle(this.state.newWsWorktree), newWsWtKnob:this.knobStyle(this.state.newWsWorktree), toggleNewWsWt:()=>this.setState(st=>({newWsWorktree:!st.newWsWorktree})),
+      tableOpen:this.state.tableOpen, closeTable:()=>this.setState({tableOpen:false}),
+      tableHeaders:(this.state.table?this.state.table.headers:[]).map((h,c)=>({val:h,onChange:(e)=>this.tableSet('h',0,c,e.target.value),onDel:()=>this.tableDelCol(c)})),
+      tableRows:(this.state.table?this.state.table.rows:[]).map((row,r)=>({onDel:()=>this.tableDelRow(r),cells:row.map((cell,c)=>({val:cell,onChange:(e)=>this.tableSet('c',r,c,e.target.value)}))})),
+      tableAddCol:()=>this.tableAddCol(), tableAddRow:()=>this.tableAddRow(), insertTable:()=>this.insertTable(),
+      diagOpen:this.state.diagOpen, closeDiag:()=>this.setState({diagOpen:false}), diagText:this.state.diagText, setDiagText:(e)=>this.setState({diagText:e.target.value}), insertDiagram:()=>this.insertDiagram(),
+      diagPreview:React.createElement('div',{key:this.state.diagText,ref:(el)=>{this._diagEl=el;},dangerouslySetInnerHTML:{__html:'<div class="mermaid">'+(this.state.diagText||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>'}}),
+      diagTemplates:[{label:'Flowchart',onClick:()=>this.setState({diagText:'flowchart TD\n  A[Start] --> B{Decision}\n  B -->|Yes| C[Ship it]\n  B -->|No| D[Iterate]'})},{label:'Sequence',onClick:()=>this.setState({diagText:'sequenceDiagram\n  User->>App: Request\n  App->>API: Fetch data\n  API-->>App: Rows\n  App-->>User: Render'})},{label:'Class',onClick:()=>this.setState({diagText:'classDiagram\n  class Session {\n    +id\n    +start()\n    +stop()\n  }'})},{label:'Mindmap',onClick:()=>this.setState({diagText:'mindmap\n  root((Project))\n    Auth\n    Billing\n    Platform'})}],
+      setMdRef:(el)=>this.setMdRef(el),
+      newBoardOpen:this.state.newBoardOpen, openNewBoard:()=>this.setState({newBoardOpen:true,newBoardName:'',boardMenuOpen:false}), closeNewBoard:()=>this.setState({newBoardOpen:false}), newBoardName:this.state.newBoardName, setNewBoardName:(e)=>this.setState({newBoardName:e.target.value}), createBoard:()=>this.createBoard(),
+      boardScopeOpts:['Feature','Epic','Release','Chore'].map(sc=>({label:sc,onClick:()=>this.setState({newBoardScope:sc}),st:this.segTab(this.state.newBoardScope===sc)})),
+      confirmOpen:!!this.state.confirm, confirm:this.state.confirm?{title:this.state.confirm.title,message:this.state.confirm.message,confirmLabel:this.state.confirm.confirmLabel||'Confirm',onConfirm:()=>{const f=this.state.confirm.onConfirm;this.setState({confirm:null});if(f)f();},onCancel:()=>this.setState({confirm:null})}:null,
+      board, boardCols, boards:boardsMenu, boardMenuOpen:this.state.boardMenuOpen,
+      toggleBoardMenu:()=>this.setState(st=>({boardMenuOpen:!st.boardMenuOpen})),
+      openGen:()=>this.setState({genOpen:true,genText:''}), genOpen:this.state.genOpen,
+      closeGen:()=>this.setState({genOpen:false}), genText:this.state.genText,
+      setGenText:(e)=>this.setState({genText:e.target.value}), doGenerate:()=>this.doGenerate(),
+      drawerOpen:this.state.drawerCardId!==null, drawerCard, closeDrawer:()=>this.setState({drawerCardId:null,labelMenuOpen:false}),
+      availLabels, labelMenuOpen:this.state.labelMenuOpen, openLabelMenu:()=>this.setState(st=>({labelMenuOpen:!st.labelMenuOpen})),
+      labelMgrOpen:this.state.labelMgrOpen, openLabelMgr:()=>this.setState({labelMgrOpen:true,labelMenuOpen:false}), closeLabelMgr:()=>this.setState({labelMgrOpen:false}),
+      mgrLabels, labelPalette, newLabelName:this.state.newLabelName, setNewLabelName:(e)=>this.setState({newLabelName:e.target.value}), onNewLabelKey:(e)=>{if(e.key==='Enter'){e.preventDefault();this.addBoardLabel();}}, addBoardLabel:()=>this.addBoardLabel(),
+      worktreesList, worktreeCount:_wt.length,
+      isLauncher:view==='launcher', showShell:view!=='launcher',
+      isWorkspace:view==='workspace', isHistory:view==='history', isSkills:view==='skills', isSession:view==='session', isSettings:view==='settings',
+      layoutGrid:layout==='grid', layoutTabs:layout==='tabs', layoutSplit:layout==='split',
+      nav,
+      sidebarSessions:sessions,
+      recents:this.initRecents().map(r=>({...r,onOpen:()=>this.go('workspace')})),
+      openProject:()=>this.go('workspace'),
+      goSettings:()=>this.go('settings'), goWorktrees:()=>this.go('worktrees'),
+      newSession:()=>this.setState({newSessionOpen:true,newSessionName:'',newSessionWorktree:!!wsActive.useWorktree}),
+      backToWorkspace:()=>this.go('workspace'),
+      noSessions:sessions.length===0, noTerminals:terminals.length===0,
+      activeCount:sessions.filter(s=>s.status==='running'||s.status==='waiting').length,
+      layoutOpts,
+      gridSessions:sessions.slice(0,4),
+      tabs,
+      active,
+      splitLeft, splitRight, leftStyle,
+      setSplitEl:(el)=>{this._splitEl=el;},
+      startDrag:(e)=>this.startDrag(e),
+      historyFilters, historyGroups,
+      skills, selectedSkill, skillsEnabledCount:(this.state.skills||[]).filter(s=>s.enabled).length,
+      accentSwatches,
+      fontVal:font, setFont:(e)=>this.setState({fontOverride:+e.target.value}),
+      settingsToggles, modelOpts, shortcuts,
+    };
+  }
+}
+</script>
+</body>
+</html>
