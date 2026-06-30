@@ -807,7 +807,7 @@ export const useStore = create<AppState>((set, get) => {
       if (session?.mode === 'structured') {
         window.api?.agent.dispose(id)
         // Clear the transcript/telemetry and spin a fresh process for the same id.
-        const fresh: Session = { ...session, status: 'running', live: true, startedAt: Date.now(), lines: [], files: [], tokens: { ...session.tokens, used: 0 }, costUsd: undefined }
+        const fresh: Session = { ...session, status: 'running', live: true, startedAt: Date.now(), lines: [], files: [], tokens: { ...session.tokens, used: 0 }, costUsd: undefined, activeMs: 0, runStartedAt: undefined }
         set((s) => ({ sessions: s.sessions.map((x) => (x.id === id ? fresh : x)) }))
         // The old process dies asynchronously; give it a tick before respawn.
         // Guard the respawn so ending/closing the session in that window doesn't
@@ -836,9 +836,9 @@ export const useStore = create<AppState>((set, get) => {
         return
       }
       lastActivity.set(id, Date.now())
-      // When a Start-task session finishes a turn, auto-advance its card to In
+      // When a Start-task session completes a turn, auto-advance its card to In
       // Review (the agent's work is ready for the human to look at).
-      if (event.kind === 'status' && event.status === 'waiting') {
+      if (event.kind === 'turn-complete') {
         const s = get().sessions.find((x) => x.id === id)
         if (s?.cardId && s.boardId) advanceTaskCard(s.boardId, s.cardId)
       }
@@ -848,8 +848,18 @@ export const useStore = create<AppState>((set, get) => {
           switch (event.kind) {
             case 'line':
               return { ...s, lines: [...s.lines, event.line] }
-            case 'status':
+            case 'status': {
+              // Accumulate producing time: running starts the clock; leaving
+              // running banks the elapsed slice into activeMs.
+              const now = Date.now()
+              if (event.status === 'running' && s.status !== 'running') {
+                return { ...s, status: event.status, runStartedAt: now }
+              }
+              if (event.status !== 'running' && s.runStartedAt != null) {
+                return { ...s, status: event.status, activeMs: (s.activeMs ?? 0) + (now - s.runStartedAt), runStartedAt: undefined }
+              }
               return { ...s, status: event.status }
+            }
             case 'file': {
               const has = s.files.some((f) => f.p === event.file.p)
               return {
@@ -1384,11 +1394,36 @@ export const useStore = create<AppState>((set, get) => {
     toggleSkill: (id) =>
       set((st) => ({ skills: st.skills.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)) })),
     runSkill: (id) => {
-      const sk = get().skills.find((s) => s.id === id)
+      const st = get()
+      const sk = st.skills.find((s) => s.id === id)
       if (!sk) return
-      set((st) => ({ skills: st.skills.map((s) => (s.id === id ? { ...s, invocations: s.invocations + 1 } : s)) }))
-      get().openNewSession()
-      set((st) => ({ newSession: { ...st.newSession, name: sk.id.replace(/^vw-/, '') } }))
+      set((s2) => ({ skills: s2.skills.map((s) => (s.id === id ? { ...s, invocations: s.invocations + 1 } : s)) }))
+      // Spawn a structured session and actually invoke the skill (don't just open
+      // the dialog) so "Run now" does something.
+      const sid = uid('s')
+      const cwd = st.activeWorktreePath ?? st.project?.path
+      const session: Session = {
+        id: sid,
+        wsId: st.activeWorkspaceId,
+        name: sk.id.replace(/^vw-/, ''),
+        providerId: st.defaultProviderId,
+        modelId: st.defaultModelId,
+        model: getProviderMeta(st.defaultProviderId)?.models.find((m) => m.id === st.defaultModelId)?.label ?? st.defaultModelId,
+        status: 'running',
+        branch: st.project?.branch ?? 'main',
+        worktree: st.activeWorktreePath,
+        duration: '0m',
+        task: `Skill: ${sk.name}`,
+        tokens: { used: 0, limit: 200 },
+        files: [],
+        lines: [],
+        live: true,
+        cwd: cwd ?? undefined,
+        startedAt: Date.now(),
+        mode: 'structured'
+      }
+      set((s2) => ({ sessions: [...s2.sessions, session], activeSessionId: sid, view: 'session' }))
+      startStructured(session, `Please run the "${sk.name}" skill (${sk.id}).`)
       log({ kind: 'skill', icon: 'play_circle', color: '#7cb3e6', label: `Run skill ${sk.name}`, detail: 'in a new session' })
     },
     openSkillEditor: (id) => set({ skillEditorId: id }),

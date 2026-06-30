@@ -72,6 +72,10 @@ export interface Session {
   /** Structured only: the card this session is working (for context assembly). */
   cardId?: string
   boardId?: string
+  /** Structured only: accumulated time spent actually producing (status === running). */
+  activeMs?: number
+  /** Structured only: epoch ms the current run started, while running. */
+  runStartedAt?: number
 }
 
 export interface Terminal {

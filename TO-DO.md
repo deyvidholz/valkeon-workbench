@@ -17,16 +17,14 @@ get checked off as they land. (Author: Claude, at the user's direction.)
 - [x] **In Review status syncs**; session id → clickable `#abc123` that opens the session.
 - [x] Header **vertical alignment** + composer aligns with `›`.
 - [x] **Settings Save button** (fixed footer, live preview, revert-if-unsaved).
-- [ ] **Logo: `>` → `V`** ("V_" for Valkeon), keep the square/gradient/glow effect.
-- [ ] **Status idle when nothing is happening** — structured: spawn→idle, send→running,
-      turn-complete→idle (drop the amber "waiting" for the quiet state). Auto-advance the
-      card on a dedicated `turn-complete` event (not on every idle, so spawn doesn't advance).
-- [ ] **"Running for" counts only producing time** — accumulate active (running) ms for
-      structured sessions; idle/done time doesn't count. Interactive keeps wall-clock.
-- [ ] **Skills: Run/Edit buttons fixed to the bottom** of the detail panel.
-- [ ] **Run skill actually prompts the agent** — spawn a structured session and send a
-      first turn that invokes the skill (today it only opens the dialog).
-- [ ] `git init` + add + commit (baseline, original icon preserved in history), then the icon change.
+- [x] **Logo: `>` → `V`** ("V_" for Valkeon), keep the square/gradient/glow effect.
+- [x] **Status idle when nothing is happening** — structured: spawn→idle, send→running,
+      turn-complete→idle. Auto-advance the card on the dedicated `turn-complete` event.
+- [x] **"Running for" counts only producing time** ("Active for" for structured = accumulated
+      running ms). Interactive keeps wall-clock "Running for".
+- [x] **Skills: Run/Edit buttons fixed to the bottom** of the detail panel.
+- [x] **Run skill actually prompts the agent** — spawns a structured session + invokes the skill.
+- [x] `git init` + add + commit (baseline, original icon preserved in history), then the icon change.
 
 ## Phase B — session persistence + resume (foundational)
 

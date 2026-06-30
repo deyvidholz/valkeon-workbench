@@ -66,4 +66,6 @@ export type AgentEvent =
   | { kind: 'usage'; contextTokens?: number; costUsd?: number }
   /** The model the CLI actually launched with (from its init event). */
   | { kind: 'model'; model: string }
+  /** A user turn finished (distinct from going idle on spawn). */
+  | { kind: 'turn-complete' }
   | { kind: 'exit'; code: number | null }

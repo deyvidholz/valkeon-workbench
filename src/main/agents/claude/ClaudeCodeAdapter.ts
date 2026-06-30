@@ -123,9 +123,11 @@ export class ClaudeCodeAdapter implements AgentProvider {
           const sub = typeof obj.subtype === 'string' ? obj.subtype.replace(/_/g, ' ') : 'error'
           emit({ kind: 'line', line: { type: 'err', text: `Turn ended with an error (${sub}).` } })
         }
-        // Turn finished — the agent is now waiting on the user. Snapshot the real
-        // files touched from git (catches Bash-written files too; repo-relative).
-        emit({ kind: 'status', status: 'waiting' })
+        // Turn finished — go back to idle (nothing is being produced) and signal
+        // turn completion separately (so a spawn-time idle doesn't look like one).
+        // Snapshot the real files touched from git (catches Bash-written files too).
+        emit({ kind: 'status', status: 'idle' })
+        emit({ kind: 'turn-complete' })
         void gitFileChanges(cwd, startedAt).then((files) => emit({ kind: 'files', files }))
       }
     }

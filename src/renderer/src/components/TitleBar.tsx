@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
+import { LogoMark } from '../ui/LogoMark'
 import { Hover } from '../ui/Hover'
 import type { Recent } from '../types'
 
@@ -60,7 +61,7 @@ export function TitleBar() {
     <div className="drag" style={{ height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '0 12px 0 14px', background: '#0c0c0f', borderBottom: '1px solid #16161a' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
         <div style={{ width: 22, height: 22, borderRadius: 6, background: 'linear-gradient(135deg,var(--accent),var(--accent-hi))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 0 1px rgba(255,255,255,0.10) inset' }}>
-          <Icon name="terminal" size={14} color="#0a1018" />
+          <LogoMark size={14} />
         </div>
 
         {isLauncher ? (

@@ -164,7 +164,16 @@ export function SessionScreen() {
             {detailRow('Model', <ModelChip label={session.model} />)}
             {detailRow('Branch', <span style={{ fontSize: 11.5, color: '#cbcbd2', fontFamily: "'Geist Mono', monospace" }}>{session.branch}</span>)}
             {detailRow('Worktree', <span style={{ fontSize: 11.5, color: session.worktree ? '#b89cf0' : '#73737c', fontFamily: "'Geist Mono', monospace", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.worktree ?? 'main checkout'}</span>)}
-            {detailRow('Running for', <span style={{ fontSize: 11.5, color: '#cbcbd2', fontFamily: "'Geist Mono', monospace" }}>{fmtDuration(Date.now() - session.startedAt)}</span>)}
+            {detailRow(
+              session.mode === 'structured' ? 'Active for' : 'Running for',
+              <span style={{ fontSize: 11.5, color: '#cbcbd2', fontFamily: "'Geist Mono', monospace" }}>
+                {fmtDuration(
+                  session.mode === 'structured'
+                    ? (session.activeMs ?? 0) + (session.runStartedAt != null ? Date.now() - session.runStartedAt : 0)
+                    : Date.now() - session.startedAt
+                )}
+              </span>
+            )}
             {detailRow('Mode', <span style={{ fontSize: 11, color: session.mode === 'structured' ? 'var(--accent-hi)' : '#9a9aa3', fontWeight: 600, background: session.mode === 'structured' ? 'var(--accent-soft)' : '#141419', border: `1px solid ${session.mode === 'structured' ? 'var(--accent-line)' : '#222229'}`, padding: '2px 8px', borderRadius: 5 }}>{session.mode === 'structured' ? 'Structured' : 'Interactive'}</span>)}
             {session.mode === 'structured' && session.costUsd != null && detailRow('Cost', <span style={{ fontSize: 11.5, color: '#cbcbd2', fontFamily: "'Geist Mono', monospace" }}>${session.costUsd.toFixed(3)}</span>)}
           </div>

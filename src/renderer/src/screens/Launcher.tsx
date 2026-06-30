@@ -1,5 +1,6 @@
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
+import { LogoMark } from '../ui/LogoMark'
 import { Hover } from '../ui/Hover'
 import type { Recent } from '../types'
 
@@ -53,7 +54,7 @@ export function Launcher() {
               '0 12px 36px var(--accent-glow,rgba(91,157,217,0.22)),0 0 0 1px rgba(255,255,255,0.1) inset'
           }}
         >
-          <Icon name="terminal" size={30} color="#0a1018" />
+          <LogoMark size={30} />
         </div>
         <div>
           <div
