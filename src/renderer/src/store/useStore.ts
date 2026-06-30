@@ -37,6 +37,7 @@ const cap = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s)
 const lastActivity = new Map<string, number>()
 
 let historyTimer: ReturnType<typeof setTimeout> | null = null
+let sessionsTimer: ReturnType<typeof setTimeout> | null = null
 
 interface NewSessionForm {
   name: string
@@ -410,6 +411,98 @@ export const useStore = create<AppState>((set, get) => {
     }
   }
 
+  /** A serializable subset of a session for persistence (drops transient/live fields). */
+  const serializeSession = (s: Session): Record<string, unknown> => ({
+    id: s.id,
+    name: s.name,
+    providerId: s.providerId,
+    modelId: s.modelId,
+    model: s.model,
+    branch: s.branch,
+    worktree: s.worktree,
+    cwd: s.cwd,
+    mode: s.mode,
+    skipPermissions: s.skipPermissions,
+    cardId: s.cardId,
+    boardId: s.boardId,
+    contextSources: s.contextSources,
+    claudeSessionId: s.claudeSessionId,
+    tokens: s.tokens,
+    costUsd: s.costUsd,
+    files: s.files,
+    lines: s.lines.slice(-150),
+    startedAt: s.startedAt,
+    activeMs: s.activeMs
+  })
+
+  /** Rebuild a live Session from a persisted record (status reset to idle). */
+  const reconstructSession = (r: Record<string, unknown>): Session | null => {
+    if (!r || typeof r.id !== 'string') return null
+    const str = (v: unknown, d: string): string => (typeof v === 'string' ? v : d)
+    const modelId = str(r.modelId, 'sonnet')
+    return {
+      id: r.id,
+      wsId: get().activeWorkspaceId,
+      name: str(r.name, 'session'),
+      providerId: str(r.providerId, DEFAULT_PROVIDER_ID),
+      modelId,
+      model: str(r.model, modelId),
+      status: 'idle',
+      branch: str(r.branch, 'main'),
+      worktree: typeof r.worktree === 'string' ? r.worktree : null,
+      duration: '0m',
+      task: '',
+      tokens: (r.tokens as Session['tokens']) ?? { used: 0, limit: 200 },
+      files: Array.isArray(r.files) ? (r.files as Session['files']) : [],
+      lines: Array.isArray(r.lines) ? (r.lines as Session['lines']) : [],
+      live: true,
+      cwd: typeof r.cwd === 'string' ? r.cwd : undefined,
+      skipPermissions: typeof r.skipPermissions === 'boolean' ? r.skipPermissions : undefined,
+      startedAt: typeof r.startedAt === 'number' ? r.startedAt : Date.now(),
+      mode: r.mode === 'structured' ? 'structured' : 'interactive',
+      contextSources: Array.isArray(r.contextSources) ? (r.contextSources as Session['contextSources']) : undefined,
+      cardId: typeof r.cardId === 'string' ? r.cardId : undefined,
+      boardId: typeof r.boardId === 'string' ? r.boardId : undefined,
+      costUsd: typeof r.costUsd === 'number' ? r.costUsd : undefined,
+      activeMs: typeof r.activeMs === 'number' ? r.activeMs : undefined,
+      claudeSessionId: typeof r.claudeSessionId === 'string' ? r.claudeSessionId : undefined
+    }
+  }
+
+  /** Load + resume persisted sessions (gated by the "restore on open" setting). */
+  const restoreSessions = (repoPath: string): void => {
+    void window.api?.settings
+      .get()
+      .then((settings) => {
+        if (!settings.restoreSessions) return
+        void window.api?.sessions
+          .load(repoPath)
+          .then((raw) => {
+            const restored = (raw as Record<string, unknown>[]).map(reconstructSession).filter((s): s is Session => s !== null)
+            if (!restored.length) return
+            set((st) => ({ sessions: [...st.sessions.filter((e) => !restored.some((r) => r.id === e.id)), ...restored] }))
+            // Reconnect structured agents via --resume; interactive sessions
+            // respawn a fresh PTY when first viewed.
+            restored.forEach((s) => {
+              if (s.mode === 'structured' && s.claudeSessionId) startStructured(s, undefined, undefined, s.claudeSessionId)
+            })
+          })
+          .catch(() => {})
+      })
+      .catch(() => {})
+  }
+
+  /** Persist the open sessions (debounced) so they can be resumed on reopen. */
+  const persistSessions = (): void => {
+    const path = realPath()
+    if (!path) return
+    if (sessionsTimer) clearTimeout(sessionsTimer)
+    sessionsTimer = setTimeout(() => {
+      const sessions = get().sessions.map(serializeSession)
+      void window.api?.sessions.save(path, sessions).catch(() => {})
+    }, 1000)
+  }
+
   const orderForDrop = (board: Board, col: ColumnId, movingId: string, beforeCardId: string | null): string => {
     const colCards = board.cards
       .filter((c) => c.column === col && c.id !== movingId)
@@ -472,6 +565,7 @@ export const useStore = create<AppState>((set, get) => {
     }
     set({ sessions: [...st.sessions, session], newSessionOpen: false, view: 'session', activeSessionId: id })
     if (form.mode === 'structured') startStructured(session, undefined, cwdReady)
+    persistSessions()
     log({ kind: 'session', icon: 'add_circle', color: '#7cb3e6', label: `Started session ${name}`, detail: branch, target: { kind: 'session', id } })
   }
 
@@ -481,7 +575,7 @@ export const useStore = create<AppState>((set, get) => {
    * silently fall back to $HOME), builds the context preamble from the session's
    * enabled sources, then starts the agent and optionally sends an opening turn.
    */
-  const startStructured = (session: Session, firstTurn?: string, cwdReady?: Promise<unknown>): void => {
+  const startStructured = (session: Session, firstTurn?: string, cwdReady?: Promise<unknown>, resumeId?: string): void => {
     const repoPath = realPath()
     const launch = (preamble: string): void => {
       void window.api?.agent
@@ -491,7 +585,8 @@ export const useStore = create<AppState>((set, get) => {
           modelId: session.modelId,
           cwd: session.cwd ?? repoPath ?? '~',
           skipPermissions: session.skipPermissions,
-          contextPreamble: preamble
+          contextPreamble: preamble,
+          resumeId
         })
         .then((res) => {
           if (res && !res.ok) {
@@ -504,6 +599,11 @@ export const useStore = create<AppState>((set, get) => {
         .catch(() => {})
     }
     const proceed = (): void => {
+      // A resumed session already carries its context — skip preamble assembly.
+      if (resumeId) {
+        launch('')
+        return
+      }
       const sources = session.contextSources ?? []
       if (sources.length && repoPath) {
         void window.api?.context
@@ -630,6 +730,9 @@ export const useStore = create<AppState>((set, get) => {
             }))
           })
           .catch(() => {})
+          // Restore sessions only after the active workspace is settled, so they
+          // attach to the right workspace.
+          .finally(() => restoreSessions(project.path))
         void window.api?.skills
           .list(project.path)
           .then((skills) => set({ skills, selectedSkillId: skills[0]?.id ?? null }))
@@ -796,6 +899,7 @@ export const useStore = create<AppState>((set, get) => {
         activeSessionId: s.activeSessionId === id ? null : s.activeSessionId,
         view: s.view === 'session' && s.activeSessionId === id ? 'workspace' : s.view
       }))
+      persistSessions()
       if (session) log({ kind: 'session', icon: 'stop_circle', color: '#9a9aa3', label: `Ended session ${session.name}`, detail: session.branch })
     },
     restartSession: (id) => {
@@ -833,6 +937,7 @@ export const useStore = create<AppState>((set, get) => {
       if (event.kind === 'exit') {
         // The agent process ended — mark done; the user closes it explicitly.
         set((st) => ({ sessions: st.sessions.map((s) => (s.id === id ? { ...s, status: 'done', live: false } : s)) }))
+        persistSessions()
         return
       }
       lastActivity.set(id, Date.now())
@@ -875,11 +980,14 @@ export const useStore = create<AppState>((set, get) => {
                 tokens: event.contextTokens != null ? { used: Math.round(event.contextTokens / 100) / 10, limit: s.tokens.limit || 200 } : s.tokens,
                 costUsd: event.costUsd ?? s.costUsd
               }
+            case 'session-id':
+              return { ...s, claudeSessionId: event.sessionId }
             default:
-              return s // 'model' — structured sessions keep the launch-time label
+              return s // 'model' / 'turn-complete' — no field change
           }
         })
       }))
+      persistSessions()
     },
     sendToAgent: (id, text) => {
       const trimmed = text.trim()
@@ -1267,6 +1375,7 @@ export const useStore = create<AppState>((set, get) => {
       }
       set({ sessions: [...st.sessions, session], activeSessionId: sessionId, view: 'session' })
       startStructured(session, firstTurn, cwdReady)
+      persistSessions()
       get().updateCard(id, {
         column: 'in-progress',
         agent: true,
@@ -1424,6 +1533,7 @@ export const useStore = create<AppState>((set, get) => {
       }
       set((s2) => ({ sessions: [...s2.sessions, session], activeSessionId: sid, view: 'session' }))
       startStructured(session, `Please run the "${sk.name}" skill (${sk.id}).`)
+      persistSessions()
       log({ kind: 'skill', icon: 'play_circle', color: '#7cb3e6', label: `Run skill ${sk.name}`, detail: 'in a new session' })
     },
     openSkillEditor: (id) => set({ skillEditorId: id }),

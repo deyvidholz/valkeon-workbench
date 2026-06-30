@@ -70,6 +70,8 @@ export class ClaudeCodeAdapter implements AgentProvider {
       '--permission-mode',
       spec.skipPermissions ? 'bypassPermissions' : 'acceptEdits'
     ]
+    // Resume a prior CLI session (replays its full context) when reopening a project.
+    if (spec.resumeId) args.push('--resume', spec.resumeId)
 
     let child: ChildProcessWithoutNullStreams
     try {
@@ -98,6 +100,7 @@ export class ClaudeCodeAdapter implements AgentProvider {
       const type = obj.type
       if (type === 'system' && obj.subtype === 'init') {
         if (typeof obj.model === 'string') emit({ kind: 'model', model: obj.model })
+        if (typeof obj.session_id === 'string') emit({ kind: 'session-id', sessionId: obj.session_id })
         return
       }
       if (type === 'assistant') {

@@ -97,6 +97,11 @@ const api = {
     save: (repoPath: string, entries: unknown[]): Promise<void> =>
       ipcRenderer.invoke(IpcChannels.historySave, repoPath, entries)
   },
+  sessions: {
+    load: (repoPath: string): Promise<unknown[]> => ipcRenderer.invoke(IpcChannels.sessionsLoad, repoPath),
+    save: (repoPath: string, sessions: unknown[]): Promise<void> =>
+      ipcRenderer.invoke(IpcChannels.sessionsSave, repoPath, sessions)
+  },
   pty: {
     create: (spec: PtyCreateSpec): Promise<PtyCreateResult> =>
       ipcRenderer.invoke(IpcChannels.ptyCreate, spec),

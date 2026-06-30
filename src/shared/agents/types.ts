@@ -49,6 +49,8 @@ export interface AgentSessionSpec {
    * files, …). Assembled by the ContextProvider seam; provider-neutral text.
    */
   contextPreamble?: string
+  /** Resume a prior CLI session by its id (replays the full prior context). */
+  resumeId?: string
 }
 
 /** Events an adapter streams back while a session runs. */
@@ -66,6 +68,8 @@ export type AgentEvent =
   | { kind: 'usage'; contextTokens?: number; costUsd?: number }
   /** The model the CLI actually launched with (from its init event). */
   | { kind: 'model'; model: string }
+  /** The CLI's own session id (for `--resume` later). */
+  | { kind: 'session-id'; sessionId: string }
   /** A user turn finished (distinct from going idle on spawn). */
   | { kind: 'turn-complete' }
   | { kind: 'exit'; code: number | null }

@@ -76,6 +76,8 @@ export interface Session {
   activeMs?: number
   /** Structured only: epoch ms the current run started, while running. */
   runStartedAt?: number
+  /** Structured only: the CLI's own session id, used to `--resume` on reopen. */
+  claudeSessionId?: string
 }
 
 export interface Terminal {

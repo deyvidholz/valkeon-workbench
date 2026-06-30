@@ -6,6 +6,7 @@ import type { GlobalStore } from './globalStore'
 import { createBoardStore } from './boardStoreFactory'
 import { assertAllowedRepo } from '../security'
 import { loadHistory, saveHistory } from './historyStore'
+import { loadSessions, saveSessions } from './sessionsStore'
 
 /**
  * Wire settings / recents / board persistence to IPC, delegating to the stores.
@@ -50,5 +51,12 @@ export function registerPersistenceIpc(globalStore: GlobalStore): void {
   )
   ipcMain.handle(IpcChannels.historySave, (_e, repoPath: string, entries: unknown[]) =>
     saveHistory(assertAllowedRepo(globalStore, repoPath), entries)
+  )
+
+  ipcMain.handle(IpcChannels.sessionsLoad, (_e, repoPath: string) =>
+    loadSessions(assertAllowedRepo(globalStore, repoPath))
+  )
+  ipcMain.handle(IpcChannels.sessionsSave, (_e, repoPath: string, sessions: unknown[]) =>
+    saveSessions(assertAllowedRepo(globalStore, repoPath), sessions)
   )
 }

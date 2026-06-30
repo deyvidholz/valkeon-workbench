@@ -50,6 +50,8 @@ export const IpcChannels = {
   skillsSave: 'skills:save',
   historyLoad: 'history:load',
   historySave: 'history:save',
+  sessionsLoad: 'sessions:load',
+  sessionsSave: 'sessions:save',
   menuAction: 'menu:action',
   menuOpenedProject: 'menu:opened-project'
 } as const

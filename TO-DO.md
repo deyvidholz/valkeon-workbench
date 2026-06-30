@@ -26,14 +26,14 @@ get checked off as they land. (Author: Claude, at the user's direction.)
 - [x] **Run skill actually prompts the agent** — spawns a structured session + invokes the skill.
 - [x] `git init` + add + commit (baseline, original icon preserved in history), then the icon change.
 
-## Phase B — session persistence + resume (foundational)
+## Phase B — session persistence + resume (foundational) ✅
 
-- [ ] Persist the **session list** + per-session `session_id` (captured from the CLI's
-      `system/init` event) to `userData/projects/<hash>/sessions.json`.
-- [ ] On reopening the project, **resume** structured sessions with `claude --resume <id>`
-      (gated by the existing **"Restore sessions on open"** setting).
-- [ ] Interactive sessions: persist enough to relaunch (cwd/branch/worktree); they restart fresh.
-- [ ] Capture `session_id` in the adapter (`system/init`) → `{kind:'session-id'}` event → store.
+- [x] Persist the **session list** + per-session `session_id` (captured from the CLI's
+      `system/init` event) to `userData/projects/<hash>/sessions.json` (debounced).
+- [x] On reopening the project, **resume** structured sessions with `claude --resume <id>`
+      (gated by the **"Restore sessions on open"** setting). Runs after the workspace settles.
+- [x] Interactive sessions: persisted; respawn a fresh PTY when first viewed.
+- [x] Capture `session_id` in the adapter (`system/init`) → `{kind:'session-id'}` event → store.
 
 ## Phase C — structured commands (rides on resume)
 
