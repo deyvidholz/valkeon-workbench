@@ -1,8 +1,8 @@
-import { app, BrowserWindow, ipcMain, dialog, session, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, session, shell, Notification } from 'electron'
 import { join, basename } from 'node:path'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { IpcChannels, type OpenedProject, type CloneResult } from '@shared/ipc'
+import { IpcChannels, type OpenedProject, type CloneResult, type NotifyRequest } from '@shared/ipc'
 import { registerAgentProviders, listProviderStatus, getProvider } from './agents/registry'
 import { StructuredAgentManager } from './agents/manager'
 import { registerAgentIpc } from './agents/ipc'
@@ -189,6 +189,20 @@ function registerIpc(): void {
   ipcMain.handle(IpcChannels.dialogOpenProject, () => runOpenProjectDialog())
 
   ipcMain.handle(IpcChannels.agentsList, () => listProviderStatus())
+
+  // OS notifications: a session needs attention (asked a question / finished).
+  ipcMain.on(IpcChannels.notifyShow, (_e, req: NotifyRequest) => {
+    if (!Notification.isSupported() || !req || typeof req.title !== 'string') return
+    const n = new Notification({ title: req.title.slice(0, 120), body: String(req.body ?? '').slice(0, 240), silent: false })
+    n.on('click', () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        if (mainWindow.isMinimized()) mainWindow.restore()
+        mainWindow.focus()
+        mainWindow.webContents.send(IpcChannels.notifyClicked, req.sessionId)
+      }
+    })
+    n.show()
+  })
 
   ipcMain.handle(IpcChannels.shellOpenPath, (_e, target: string) => shell.openPath(target))
 

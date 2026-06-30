@@ -35,6 +35,13 @@ get checked off as they land. (Author: Claude, at the user's direction.)
 - [x] Interactive sessions: persisted; respawn a fresh PTY when first viewed.
 - [x] Capture `session_id` in the adapter (`system/init`) → `{kind:'session-id'}` event → store.
 
+## Phase B.5 — OS notifications ✅
+
+- [x] OS notification when a structured session **completes a turn / needs a decision**
+      (detects a trailing "?" → "needs input" vs "finished"), via main-process Electron Notification.
+- [x] **Per-session toggle** (bell in the session header), live — doesn't touch the process; persisted.
+- [x] Suppressed while you're actively viewing that session (focused). Click → opens the session.
+
 ## Phase C — structured commands (rides on resume)
 
 - [ ] Composer: typed `/...` commands. Pass-through for custom/prompt commands.

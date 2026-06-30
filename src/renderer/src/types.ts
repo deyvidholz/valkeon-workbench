@@ -78,6 +78,8 @@ export interface Session {
   runStartedAt?: number
   /** Structured only: the CLI's own session id, used to `--resume` on reopen. */
   claudeSessionId?: string
+  /** OS notification on turn-complete / needs-decision. Undefined = on. */
+  notify?: boolean
 }
 
 export interface Terminal {

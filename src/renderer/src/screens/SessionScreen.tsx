@@ -32,6 +32,7 @@ export function SessionScreen() {
   const nonce = useStore((s) => (activeSessionId ? s.ptyNonce[activeSessionId] ?? 0 : 0))
   const setSessionModel = useStore((s) => s.setSessionModel)
   const toggleContextSource = useStore((s) => s.toggleContextSource)
+  const toggleSessionNotify = useStore((s) => s.toggleSessionNotify)
   const [moreOpen, setMoreOpen] = useState(false)
   const [modelMenuOpen, setModelMenuOpen] = useState(false)
   const [, setTick] = useState(0)
@@ -112,6 +113,9 @@ export function SessionScreen() {
         <Hover as="span" onClick={confirmStop} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8, background: '#121216', border: '1px solid #232329', color: '#cbcbd2', fontSize: 12, fontWeight: 500, cursor: 'pointer' }} hover={{ background: '#17171c' }}>
           <Icon name="stop_circle" size={15} />
           Stop
+        </Hover>
+        <Hover as="span" onClick={() => toggleSessionNotify(id)} title={session.notify === false ? 'Notifications off — click to enable' : 'Notify me when this session needs me'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, color: session.notify === false ? '#56565e' : 'var(--accent-hi)', cursor: 'pointer' }} hover={{ background: '#16161d' }}>
+          <Icon name={session.notify === false ? 'notifications_off' : 'notifications_active'} size={18} />
         </Hover>
         {iconBtn('restart_alt', confirmRestart, 'Restart')}
         <div style={{ position: 'relative' }}>

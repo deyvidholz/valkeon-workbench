@@ -167,6 +167,8 @@ interface AppState {
   sendToAgent: (id: string, text: string) => void
   /** Structured sessions: toggle a context source for the *next* fresh start. */
   toggleContextSource: (id: string, source: ContextSourceId) => void
+  /** Toggle OS notifications for a session (live; doesn't touch the process). */
+  toggleSessionNotify: (id: string) => void
   cycleSession: () => void
   reorderSessions: (fromId: string, toId: string) => void
   setActiveSession: (id: string) => void
@@ -432,7 +434,8 @@ export const useStore = create<AppState>((set, get) => {
     files: s.files,
     lines: s.lines.slice(-150),
     startedAt: s.startedAt,
-    activeMs: s.activeMs
+    activeMs: s.activeMs,
+    notify: s.notify
   })
 
   /** Rebuild a live Session from a persisted record (status reset to idle). */
@@ -465,7 +468,8 @@ export const useStore = create<AppState>((set, get) => {
       boardId: typeof r.boardId === 'string' ? r.boardId : undefined,
       costUsd: typeof r.costUsd === 'number' ? r.costUsd : undefined,
       activeMs: typeof r.activeMs === 'number' ? r.activeMs : undefined,
-      claudeSessionId: typeof r.claudeSessionId === 'string' ? r.claudeSessionId : undefined
+      claudeSessionId: typeof r.claudeSessionId === 'string' ? r.claudeSessionId : undefined,
+      notify: typeof r.notify === 'boolean' ? r.notify : undefined
     }
   }
 
@@ -942,10 +946,24 @@ export const useStore = create<AppState>((set, get) => {
       }
       lastActivity.set(id, Date.now())
       // When a Start-task session completes a turn, auto-advance its card to In
-      // Review (the agent's work is ready for the human to look at).
+      // Review, and notify the OS that the session needs the user (unless they're
+      // already looking at it).
       if (event.kind === 'turn-complete') {
-        const s = get().sessions.find((x) => x.id === id)
-        if (s?.cardId && s.boardId) advanceTaskCard(s.boardId, s.cardId)
+        const st = get()
+        const s = st.sessions.find((x) => x.id === id)
+        if (s) {
+          if (s.cardId && s.boardId) advanceTaskCard(s.boardId, s.cardId)
+          const viewing = st.activeSessionId === id && st.view === 'session' && typeof document !== 'undefined' && document.hasFocus()
+          if (s.notify !== false && !viewing) {
+            const lastText = [...s.lines].reverse().find((l) => l.type === 'text')
+            const asking = !!lastText && /\?\s*$/.test(lastText.text.trim())
+            window.api?.notify.show({
+              title: asking ? `${s.name} needs your input` : `${s.name} finished`,
+              body: lastText ? lastText.text.replace(/\s+/g, ' ').slice(0, 200) : asking ? 'The agent is waiting on your decision.' : 'The agent completed its turn.',
+              sessionId: id
+            })
+          }
+        }
       }
       set((st) => ({
         sessions: st.sessions.map((s) => {
@@ -1002,6 +1020,10 @@ export const useStore = create<AppState>((set, get) => {
           return { ...s, contextSources: cur.includes(source) ? cur.filter((x) => x !== source) : [...cur, source] }
         })
       })),
+    toggleSessionNotify: (id) => {
+      set((st) => ({ sessions: st.sessions.map((s) => (s.id === id ? { ...s, notify: s.notify === false } : s)) }))
+      persistSessions()
+    },
     cycleSession: () => {
       const st = get()
       const scoped = st.sessions.filter((s) => s.wsId === st.activeWorkspaceId)

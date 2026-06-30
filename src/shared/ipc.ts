@@ -52,6 +52,8 @@ export const IpcChannels = {
   historySave: 'history:save',
   sessionsLoad: 'sessions:load',
   sessionsSave: 'sessions:save',
+  notifyShow: 'notify:show',
+  notifyClicked: 'notify:clicked',
   menuAction: 'menu:action',
   menuOpenedProject: 'menu:opened-project'
 } as const
@@ -100,6 +102,14 @@ export interface AgentStartResult {
 export interface AgentEventPayload {
   id: string
   event: AgentEvent
+}
+
+/** An OS notification request from the renderer (a session needs attention). */
+export interface NotifyRequest {
+  title: string
+  body: string
+  /** The session it concerns; clicking the notification opens it. */
+  sessionId: string
 }
 
 export type {

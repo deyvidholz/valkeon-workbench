@@ -96,6 +96,9 @@ export function App() {
   // when the session view isn't mounted (the store is the transcript's truth).
   useEffect(() => window.api?.agent.onEvent((p) => useStore.getState().applyAgentEvent(p.id, p.event)), [])
 
+  // Clicking an OS notification opens the session it concerns.
+  useEffect(() => window.api?.notify.onClicked((sessionId) => useStore.getState().openSession(sessionId)), [])
+
   // Activity-based session status: running while output flows, idle when quiet.
   useEffect(() => window.api?.pty.onData((e) => useStore.getState().noteSessionData(e.id)), [])
   useEffect(() => {

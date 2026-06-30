@@ -22,7 +22,8 @@ import {
   type AgentStartResult,
   type AgentEventPayload,
   type ContextBuildRequest,
-  type ContextBuildResult
+  type ContextBuildResult,
+  type NotifyRequest
 } from '@shared/ipc'
 
 const api = {
@@ -135,6 +136,14 @@ const api = {
   context: {
     build: (req: ContextBuildRequest): Promise<ContextBuildResult> =>
       ipcRenderer.invoke(IpcChannels.contextBuild, req)
+  },
+  notify: {
+    show: (req: NotifyRequest): void => ipcRenderer.send(IpcChannels.notifyShow, req),
+    onClicked: (cb: (sessionId: string) => void): (() => void) => {
+      const listener = (_e: unknown, sessionId: string): void => cb(sessionId)
+      ipcRenderer.on(IpcChannels.notifyClicked, listener)
+      return () => ipcRenderer.removeListener(IpcChannels.notifyClicked, listener)
+    }
   },
   git: {
     worktrees: (repoPath: string): Promise<WorktreeInfo[]> =>
