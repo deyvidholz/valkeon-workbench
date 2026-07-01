@@ -650,7 +650,9 @@ export const useStore = create<AppState>((set, get) => {
     const updated: Session = { ...s, modelId: model.id, model: model.label, status: 'running', runStartedAt: undefined }
     set((st) => ({ sessions: st.sessions.map((x) => (x.id === id ? updated : x)) }))
     get().applyAgentEvent(id, { kind: 'line', line: { type: 'sys', text: `Switched model to ${model.label}${updated.claudeSessionId ? ' — resuming context.' : '.'}` } })
-    setTimeout(() => startStructured(updated, undefined, undefined, updated.claudeSessionId), 300)
+    setTimeout(() => {
+      if (get().sessions.some((x) => x.id === id && x.mode === 'structured')) startStructured(updated, undefined, undefined, updated.claudeSessionId)
+    }, 300)
     log({ kind: 'session', icon: 'tune', color: '#7cb3e6', label: `Set ${s.name} model to ${model.label}`, detail: '', target: { kind: 'session', id } })
   }
 
@@ -661,7 +663,9 @@ export const useStore = create<AppState>((set, get) => {
     window.api?.agent.dispose(id)
     const fresh: Session = { ...s, lines: [], files: [], tokens: { ...s.tokens, used: 0 }, costUsd: undefined, claudeSessionId: undefined, activeMs: 0, runStartedAt: undefined, status: 'idle' }
     set((st) => ({ sessions: st.sessions.map((x) => (x.id === id ? fresh : x)) }))
-    setTimeout(() => startStructured(fresh), 300)
+    setTimeout(() => {
+      if (get().sessions.some((x) => x.id === id && x.mode === 'structured')) startStructured(fresh)
+    }, 300)
   }
 
   return {

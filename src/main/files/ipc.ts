@@ -59,8 +59,10 @@ export function registerFilesIpc(globalStore: GlobalStore): void {
 
   ipcMain.handle(IpcChannels.fileRead, async (_e, repoPath: string, relPath: string): Promise<FileContent> => {
     const repo = guard(repoPath)
-    const abs = assertInside(repo, resolve(repo, relPath))
+    let abs = assertInside(repo, resolve(repo, relPath))
     try {
+      // Canonicalize + re-check so an in-repo symlink can't read outside the repo.
+      abs = assertInside(repo, await fs.realpath(abs))
       const stat = await fs.stat(abs)
       if (!stat.isFile() || stat.size > MAX_FILE_BYTES) return { path: relPath, content: '', truncated: true }
       const buf = await fs.readFile(abs)
