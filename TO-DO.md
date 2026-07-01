@@ -62,12 +62,14 @@ Bring in `monaco-editor` (via `@monaco-editor/react`), used for two things:
 - [x] **IDE / file-explorer mode** — "Explore" view: file tree + read-only Monaco viewer with
       syntax highlighting + app-tuned dark theme. **`.valkeon` hidden** (also `.git`, `node_modules`,
       build dirs). Monaco bundled offline (local loader + editor worker, CSP `worker-src` opened).
-- [ ] **Review window** (replaces "Review diff" just opening the card) — a real diff view
-      (Monaco diff editor) of the card's branch/worktree vs base.
-  - [ ] Actions: **Approve**, **Decline**, **Ask for changes**, **AI review** (spawn an agent to review).
-  - [ ] **GitHub-style line comments**; on "Ask for changes" the comments are fed back to the
-        agent as context for its next turn.
-- [ ] IPC: read file tree + file contents + git diff (allowlisted repo, `.valkeon` filtered).
+- [x] **Review window** (the board "Review diff" now opens it) — Monaco side-by-side diff of the
+      card's worktree vs HEAD, with a changed-files list.
+  - [x] Actions: **Approve** (→ Done), **Decline** (→ In Progress), **Request changes** (feeds the
+        comments to the card's agent as a new turn + → In Progress), **AI review** (spawns a
+        structured session that reviews the diff).
+  - [x] **Line-anchored comments** — click a line in the diff, add a note (`file:line`); on Request
+        changes they're formatted and sent to the agent.
+- [x] IPC: `files:tree` + `files:read` + `git:diff` (allowlisted repo, `.valkeon` filtered).
 
 ---
 

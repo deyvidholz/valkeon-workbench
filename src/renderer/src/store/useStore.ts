@@ -77,6 +77,8 @@ interface AppState {
   boardMenuOpen: boolean
   drawerCardId: string | null
   draftCardId: string | null
+  /** The card whose changes are open in the review/diff window (null = closed). */
+  reviewCardId: string | null
   cardTab: 'write' | 'preview'
   labelMenuOpen: boolean
   paletteOpen: boolean
@@ -215,6 +217,16 @@ interface AppState {
   createBoard: () => void
   addCardTo: (col: ColumnId) => void
   openCard: (id: string) => void
+  openReview: (cardId: string) => void
+  closeReview: () => void
+  /** Approve the reviewed card → Done. */
+  reviewApprove: () => void
+  /** Send it back → In Progress (no agent turn). */
+  reviewDecline: () => void
+  /** Send review feedback to the card's agent and move it back to In Progress. */
+  reviewRequestChanges: (feedback: string) => void
+  /** Spawn a structured session that reviews the card's diff. */
+  reviewByAi: () => void
   closeDrawer: () => void
   setCardTab: (tab: 'write' | 'preview') => void
   updateCard: (id: string, patch: Partial<Card>) => void
@@ -643,6 +655,7 @@ export const useStore = create<AppState>((set, get) => {
     boardMenuOpen: false,
     drawerCardId: null,
     draftCardId: null,
+    reviewCardId: null,
     cardTab: 'write',
     labelMenuOpen: false,
     paletteOpen: false,
@@ -836,6 +849,10 @@ export const useStore = create<AppState>((set, get) => {
       }
       if (st.diagOpen) {
         set({ diagOpen: false })
+        return true
+      }
+      if (st.reviewCardId) {
+        set({ reviewCardId: null })
         return true
       }
       if (st.skillEditorId) {
@@ -1289,6 +1306,71 @@ export const useStore = create<AppState>((set, get) => {
       set({ drawerCardId: cardId, draftCardId: cardId, cardTab: 'write' })
     },
     openCard: (id) => set({ drawerCardId: id, cardTab: 'write', labelMenuOpen: false }),
+    openReview: (cardId) => set({ reviewCardId: cardId }),
+    closeReview: () => set({ reviewCardId: null }),
+    reviewApprove: () => {
+      const st = get()
+      const card = currentBoard(st)?.cards.find((c) => c.id === st.reviewCardId)
+      if (card) get().moveCard(card.id, 'done')
+      set({ reviewCardId: null })
+    },
+    reviewDecline: () => {
+      const st = get()
+      const card = currentBoard(st)?.cards.find((c) => c.id === st.reviewCardId)
+      if (card && card.column !== 'in-progress') get().moveCard(card.id, 'in-progress')
+      set({ reviewCardId: null })
+    },
+    reviewRequestChanges: (feedback) => {
+      const st = get()
+      const board = currentBoard(st)
+      const card = board?.cards.find((c) => c.id === st.reviewCardId)
+      if (!board || !card) {
+        set({ reviewCardId: null })
+        return
+      }
+      const session = card.sessionId ? st.sessions.find((s) => s.id === card.sessionId) : undefined
+      if (session && session.mode === 'structured' && session.status !== 'done') {
+        get().sendToAgent(session.id, feedback)
+        set({ view: 'session', activeSessionId: session.id })
+      }
+      if (card.column !== 'in-progress') get().moveCard(card.id, 'in-progress')
+      set({ reviewCardId: null })
+      log({ kind: 'card', icon: 'rate_review', color: '#e0b15e', label: `Requested changes on #${card.code}`, detail: board.name, target: { kind: 'card', id: card.id, boardId: board.id } })
+    },
+    reviewByAi: () => {
+      const st = get()
+      const board = currentBoard(st)
+      const card = board?.cards.find((c) => c.id === st.reviewCardId)
+      if (!board || !card) return
+      const workSession = card.sessionId ? st.sessions.find((s) => s.id === card.sessionId) : undefined
+      const cwd = workSession?.cwd ?? card.link.worktree ?? st.project?.path
+      const sid = uid('s')
+      const session: Session = {
+        id: sid,
+        wsId: st.activeWorkspaceId,
+        name: `review-${slugify(card.title)}`,
+        providerId: st.defaultProviderId,
+        modelId: st.defaultModelId,
+        model: getProviderMeta(st.defaultProviderId)?.models.find((m) => m.id === st.defaultModelId)?.label ?? st.defaultModelId,
+        status: 'running',
+        branch: card.link.branch ?? st.project?.branch ?? 'main',
+        worktree: card.link.worktree,
+        duration: '0m',
+        task: `Review: ${card.title}`,
+        tokens: { used: 0, limit: 200 },
+        files: [],
+        lines: [],
+        live: true,
+        cwd: cwd ?? undefined,
+        startedAt: Date.now(),
+        mode: 'structured'
+      }
+      set((s) => ({ sessions: [...s.sessions, session], activeSessionId: sid, view: 'session', reviewCardId: null }))
+      const prompt = `Please review the uncommitted changes in this working tree — run \`git diff\` (and \`git status\` for new files). The task being reviewed was:\n\n# ${card.title}\n\n${card.body || '(no description)'}\n\nReport bugs, missing requirements, and concrete improvements. Do NOT change any code — this is a review only.`
+      startStructured(session, prompt)
+      persistSessions()
+      log({ kind: 'card', icon: 'reviews', color: '#7cb3e6', label: `AI review of #${card.code}`, detail: board.name, target: { kind: 'session', id: sid } })
+    },
     closeDrawer: () => {
       maybeDiscardDraft()
       set({ drawerCardId: null, labelMenuOpen: false, draftCardId: null })

@@ -24,6 +24,7 @@ import { NewBoardDialog } from './dialogs/NewBoardDialog'
 import { GenerateCardsDialog } from './dialogs/GenerateCardsDialog'
 import { LabelManagerDialog } from './dialogs/LabelManagerDialog'
 import { CardDrawer } from './dialogs/CardDrawer'
+import { ReviewWindow } from './dialogs/ReviewWindow'
 import { TableBuilder } from './dialogs/TableBuilder'
 import { DiagramBuilder } from './dialogs/DiagramBuilder'
 import { NameDialog } from './dialogs/NameDialog'
@@ -205,6 +206,7 @@ export function App() {
       <NewBoardDialog />
       <GenerateCardsDialog />
       <CardDrawer />
+      <ReviewWindow />
       <LabelManagerDialog />
       <TableBuilder />
       <DiagramBuilder />

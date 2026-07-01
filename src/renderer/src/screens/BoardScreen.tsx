@@ -37,6 +37,7 @@ export function BoardScreen() {
   const openGen = useStore((s) => s.openGen)
   const addCardTo = useStore((s) => s.addCardTo)
   const openCard = useStore((s) => s.openCard)
+  const openReview = useStore((s) => s.openReview)
   const startTask = useStore((s) => s.startTask)
   const openSession = useStore((s) => s.openSession)
   const sessions = useStore((s) => s.sessions)
@@ -71,7 +72,7 @@ export function BoardScreen() {
       return { label: 'Start task', icon: 'rocket_launch', accent: true, onClick: () => startTask(card.id) }
     if (card.column === 'in-progress' && card.sessionId)
       return { label: 'Open session', icon: 'open_in_full', onClick: () => card.sessionId && openSession(card.sessionId) }
-    if (card.column === 'in-review') return { label: 'Review diff', icon: 'difference', onClick: () => openCard(card.id) }
+    if (card.column === 'in-review') return { label: 'Review diff', icon: 'difference', onClick: () => openReview(card.id) }
     return null
   }
 
