@@ -30,6 +30,9 @@ export function WorktreesScreen() {
   const setProjectIsRepo = useStore((s) => s.setProjectIsRepo)
   const openNewWorktree = useStore((s) => s.openNewWorktree)
   const removeWorktreeAction = useStore((s) => s.removeWorktree)
+  const mergeBranchToBase = useStore((s) => s.mergeBranchToBase)
+  const baseBranch = useStore((s) => s.projectConfig.baseBranch)
+  const openProjectSettings = useStore((s) => s.openProjectSettings)
   const worktreesVersion = useStore((s) => s.worktreesVersion)
   const [gitTrees, setGitTrees] = useState<WorktreeInfo[] | null>(null)
   const [isRepo, setIsRepo] = useState<boolean | null>(null)
@@ -148,7 +151,14 @@ export function WorktreesScreen() {
           <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: '#9a9aa3' }}>{mainBranch}</span>
           <span style={{ fontSize: 11, color: '#5cc98a', fontFamily: "'Geist Mono', monospace", width: 92, textAlign: 'right' }}>clean</span>
         </div>
-        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#62626b', padding: '0 4px 6px' }}>LINKED WORKTREES</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 4px 6px' }}>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#62626b' }}>LINKED WORKTREES</span>
+          <div style={{ flex: 1 }} />
+          <span style={{ fontSize: 11, color: '#6b6b74' }}>merges into <span style={{ fontFamily: "'Geist Mono', monospace", color: '#8a8a93' }}>{baseBranch}</span></span>
+          <Hover as="span" title="Project settings" onClick={openProjectSettings} style={{ display: 'flex', width: 22, height: 22, alignItems: 'center', justifyContent: 'center', borderRadius: 6, color: '#6f6f78', cursor: 'pointer' }} hover={{ background: '#16161d', color: '#cfcfd6' }}>
+            <Icon name="tune" size={14} />
+          </Hover>
+        </div>
         {rows.length === 0 && <div style={{ fontSize: 12, color: '#56565e', padding: '14px 4px' }}>No linked worktrees. New sessions can create one.</div>}
         {rows.map((w, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 12px', borderRadius: 9 }}>
@@ -168,6 +178,9 @@ export function WorktreesScreen() {
             </div>
             <span style={{ fontSize: 11, fontFamily: "'Geist Mono', monospace", color: STATUS_COLOR[w.status], width: 92, textAlign: 'right' }}>{w.status}</span>
             <span style={{ fontSize: 11, color: '#56565e', fontFamily: "'Geist Mono', monospace", width: 38, textAlign: 'right' }}>{w.last}</span>
+            {w.branch !== baseBranch && w.branch !== '(detached)' && (
+              <Hover as="span" title={`Merge into ${baseBranch} (commits work, then removes the worktree)`} onClick={() => mergeBranchToBase(w.branch, w.path)} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: '#5f5f68', cursor: 'pointer' }} hover={{ color: '#5cc98a' }}>merge</Hover>
+            )}
             <Hover as="span" title="Open folder" onClick={() => window.api?.shell.openPath(w.path)} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: '#5f5f68', cursor: 'pointer' }} hover={{ color: '#cfcfd6' }}>folder_open</Hover>
             <Hover as="span" title="Remove worktree" onClick={() => removeWorktree(w.path, w.branch)} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: '#5f5f68', cursor: 'pointer' }} hover={{ color: '#e07a6e' }}>delete_outline</Hover>
           </div>

@@ -27,6 +27,7 @@ export function TitleBar() {
   const toggleProjectMenu = useStore((s) => s.toggleProjectMenu)
   const openProject = useStore((s) => s.openProject)
   const closeProject = useStore((s) => s.closeProject)
+  const openProjectSettings = useStore((s) => s.openProjectSettings)
   const askConfirm = useStore((s) => s.askConfirm)
   const openPalette = useStore((s) => s.openPalette)
   const isLauncher = view === 'launcher'
@@ -95,6 +96,9 @@ export function TitleBar() {
                     </Hover>
                   ))}
                   <div style={{ height: 1, background: '#1d1d23', margin: '5px 8px' }} />
+                  <Hover onClick={() => { toggleProjectMenu(false); openProjectSettings() }} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 9px', borderRadius: 8, cursor: 'pointer', color: '#cbcbd2', fontSize: 12.5 }} hover={{ background: '#17171c' }}>
+                    <Icon name="tune" size={16} />Project settings…
+                  </Hover>
                   <Hover onClick={() => void openFromDialog()} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 9px', borderRadius: 8, cursor: 'pointer', color: '#cbcbd2', fontSize: 12.5 }} hover={{ background: '#17171c' }}>
                     <Icon name="folder_open" size={16} />Open another folder…
                   </Hover>

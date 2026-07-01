@@ -89,6 +89,36 @@ sudo apt install ./valkeon-workbench-<version>.deb   # adds a `valkeon-workbench
 chmod +x valkeon-workbench-<version>.AppImage && ./valkeon-workbench-<version>.AppImage
 ```
 
+### Install from source (terminal)
+
+Build and install entirely from the terminal — works on macOS, Linux, and WSL. Needs **Node.js 20+**, `git`, and a C/C++ toolchain (to compile `node-pty`).
+
+```bash
+git clone https://github.com/deyvidholz/valkeon-workbench.git
+cd valkeon-workbench
+npm install                 # installs deps + rebuilds native modules
+
+# Build an installer for your OS (output lands in dist/):
+npm run build:linux         # → dist/valkeon-workbench-<version>.deb / .AppImage
+npm run build:mac           # → dist/…-<arch>.dmg
+npm run build:win           # → dist/…-setup.exe
+```
+
+Then install the produced package (Linux example):
+
+```bash
+sudo apt install ./dist/valkeon-workbench-*.deb
+```
+
+Prefer not to package? Run an unpacked build directly and point the CLI at it:
+
+```bash
+npm run build:unpack        # → dist/linux-unpacked/ (or mac/win equivalent)
+export VALKEON_BIN="$PWD/dist/linux-unpacked/valkeon-workbench"   # macOS: …/mac-*/Valkeon Workbench.app
+```
+
+> `npm run build:*` just produce files in `dist/`. Publishing to GitHub Releases happens only in CI (the workflow adds `--publish always`).
+
 ### WSL Ubuntu (run inside WSL from Windows)
 
 If your code, `git`, and the `claude` CLI live in WSL, run Valkeon **inside WSL** so its terminals are `bash`, git operates on the Linux checkout, and `claude` resolves there. On **Windows 11** (or a recent Windows 10 with WSLg) the window renders on your Windows desktop automatically — no X-server setup.
@@ -105,13 +135,31 @@ Notes for WSL:
 
 ### The `valkeon` CLI
 
-Once installed on Linux/WSL, launch the app and open projects straight from the shell — each call opens **its own window**, so you can work on several directories at once:
+Launch the app and open projects straight from the shell — each call opens **its own window**, so you can work on several directories at once:
 
 ```bash
 valkeon              # open the workbench (home screen)
 valkeon .            # open the current directory as a project
 valkeon ~/work/api   # open a specific project
 ```
+
+**Setting up the command**
+
+- **WSL Ubuntu** — the `install-wsl.sh` one-liner above already installs it.
+- **From a source checkout (macOS / Linux / WSL)** — run the helper, which symlinks `bin/valkeon` onto your PATH:
+
+  ```bash
+  ./scripts/link-cli.sh                              # → /usr/local/bin/valkeon (uses sudo if needed)
+  PREFIX="$HOME/.local/bin" ./scripts/link-cli.sh    # user-local, no sudo
+  ```
+
+- **Manually** — symlink the wrapper yourself:
+
+  ```bash
+  sudo ln -sfn "$PWD/bin/valkeon" /usr/local/bin/valkeon
+  ```
+
+The wrapper auto-detects an installed app (`/Applications/Valkeon Workbench.app` on macOS, the `valkeon-workbench` binary on Linux). To target a specific or unpackaged build, export **`VALKEON_BIN`** (a `.app` on macOS, or the executable on Linux) before running `valkeon`.
 
 ---
 

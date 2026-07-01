@@ -26,7 +26,9 @@ import {
   type NotifyRequest,
   type FileNode,
   type FileContent,
-  type DiffFile
+  type DiffFile,
+  type ProjectConfig,
+  type MergeResult
 } from '@shared/ipc'
 
 const api = {
@@ -178,7 +180,17 @@ const api = {
       ipcRenderer.invoke(IpcChannels.gitWorktreeRemove, repoPath, dir),
     isRepo: (repoPath: string): Promise<boolean> => ipcRenderer.invoke(IpcChannels.gitIsRepo, repoPath),
     init: (repoPath: string): Promise<string> => ipcRenderer.invoke(IpcChannels.gitInit, repoPath),
-    clone: (url: string): Promise<CloneResult> => ipcRenderer.invoke(IpcChannels.gitClone, url)
+    clone: (url: string): Promise<CloneResult> => ipcRenderer.invoke(IpcChannels.gitClone, url),
+    branches: (repoPath: string): Promise<string[]> => ipcRenderer.invoke(IpcChannels.gitBranches, repoPath),
+    createBranch: (repoPath: string, branch: string): Promise<void> =>
+      ipcRenderer.invoke(IpcChannels.gitCreateBranch, repoPath, branch),
+    mergeBranch: (repoPath: string, branch: string, target: string): Promise<MergeResult> =>
+      ipcRenderer.invoke(IpcChannels.gitMergeBranch, repoPath, branch, target)
+  },
+  projectConfig: {
+    load: (repoPath: string): Promise<ProjectConfig> => ipcRenderer.invoke(IpcChannels.projectConfigLoad, repoPath),
+    save: (repoPath: string, config: ProjectConfig): Promise<void> =>
+      ipcRenderer.invoke(IpcChannels.projectConfigSave, repoPath, config)
   }
 }
 

@@ -7,6 +7,7 @@ import type { Skill, SkillSave } from './skills'
 import type { AgentEvent, AgentSessionSpec } from './agents/types'
 import type { ContextBuildRequest, ContextBuildResult } from './context'
 import type { FileNode, FileContent, DiffFile } from './files'
+import type { ProjectConfig, MergeResult } from './project'
 
 /** Channel names shared by main, preload, and (via the typed bridge) renderer. */
 export const IpcChannels = {
@@ -47,6 +48,11 @@ export const IpcChannels = {
   gitIsRepo: 'git:is-repo',
   gitInit: 'git:init',
   gitClone: 'git:clone',
+  gitBranches: 'git:branches',
+  gitCreateBranch: 'git:create-branch',
+  gitMergeBranch: 'git:merge-branch',
+  projectConfigLoad: 'project-config:load',
+  projectConfigSave: 'project-config:save',
   shellOpenPath: 'shell:open-path',
   skillsList: 'skills:list',
   skillsSave: 'skills:save',
@@ -143,5 +149,7 @@ export type {
   ContextBuildResult,
   FileNode,
   FileContent,
-  DiffFile
+  DiffFile,
+  ProjectConfig,
+  MergeResult
 }

@@ -6,6 +6,8 @@ import type { SkillSave } from '@shared/skills'
 import type { WorktreeInfo } from '@shared/git'
 import type { AgentEvent } from '@shared/agents/types'
 import type { ContextSourceId } from '@shared/context'
+import type { ProjectConfig } from '@shared/project'
+import { DEFAULT_PROJECT_CONFIG } from '@shared/project'
 import type {
   Board,
   BoardScope,
@@ -111,6 +113,9 @@ interface AppState {
   cloneError: string | null
   newWorktreeName: string
   worktreesVersion: number
+  projectConfig: ProjectConfig
+  branches: string[]
+  projectSettingsOpen: boolean
   newSession: NewSessionForm
   newWs: { name: string; useWorktree: boolean }
   newBoard: { name: string; scope: BoardScope }
@@ -207,6 +212,11 @@ interface AppState {
   setNewWorktreeName: (name: string) => void
   createWorktree: (name: string) => void
   removeWorktree: (dir: string, branch: string) => void
+  loadProjectConfig: () => void
+  saveProjectConfig: (patch: Partial<ProjectConfig>) => void
+  openProjectSettings: () => void
+  closeProjectSettings: () => void
+  mergeBranchToBase: (branch: string, worktreeDir?: string | null) => void
   loadWorktrees: () => void
   reconcileWorktrees: (list: WorktreeInfo[]) => void
   setActiveWorktree: (path: string | null) => void
@@ -747,6 +757,9 @@ export const useStore = create<AppState>((set, get) => {
     cloneError: null,
     newWorktreeName: '',
     worktreesVersion: 0,
+    projectConfig: { ...DEFAULT_PROJECT_CONFIG },
+    branches: [],
+    projectSettingsOpen: false,
 
     newSession: { name: '', providerId: DEFAULT_PROVIDER_ID, modelId: 'sonnet', worktree: false, skipPerms: false, mode: 'structured', notify: false },
     newWs: { name: '', useWorktree: false },
@@ -793,6 +806,7 @@ export const useStore = create<AppState>((set, get) => {
       if (project.path && project.path.startsWith('/')) {
         void window.api?.history.load(project.path).then((h) => set({ history: h as HistoryEntry[] })).catch(() => {})
         get().loadWorktrees()
+        get().loadProjectConfig()
         void window.api?.boards
           .load(project.path)
           .then((data) => {
@@ -911,6 +925,10 @@ export const useStore = create<AppState>((set, get) => {
         set({ newWorktreeOpen: false })
         return true
       }
+      if (st.projectSettingsOpen) {
+        set({ projectSettingsOpen: false })
+        return true
+      }
       if (st.tableOpen) {
         set({ tableOpen: false })
         return true
@@ -973,7 +991,7 @@ export const useStore = create<AppState>((set, get) => {
           name: '',
           providerId: st.defaultProviderId,
           modelId: st.defaultModelId,
-          worktree: !!st.workspaces.find((w) => w.id === st.activeWorkspaceId)?.useWorktree,
+          worktree: st.projectConfig.taskStrategy === 'worktree',
           skipPerms: false,
           mode: 'structured',
           notify: false
@@ -1337,6 +1355,53 @@ export const useStore = create<AppState>((set, get) => {
         .catch(() => {})
       log({ kind: 'worktree', icon: 'delete_outline', color: '#e07a6e', label: `Removed worktree ${branch}`, detail: dir })
     },
+    loadProjectConfig: () => {
+      const path = realPath()
+      if (!path) {
+        set({ projectConfig: { ...DEFAULT_PROJECT_CONFIG }, branches: [] })
+        return
+      }
+      void window.api?.projectConfig.load(path).then((c) => set({ projectConfig: c })).catch(() => {})
+      void window.api?.git.branches(path).then((b) => set({ branches: b })).catch(() => {})
+    },
+    saveProjectConfig: (patch) => {
+      const next = { ...get().projectConfig, ...patch }
+      set({ projectConfig: next })
+      const path = realPath()
+      if (path) void window.api?.projectConfig.save(path, next).catch(() => {})
+      log({ kind: 'board', icon: 'tune', color: '#7cb3e6', label: 'Updated project settings', detail: '' })
+    },
+    openProjectSettings: () => {
+      get().loadProjectConfig()
+      set({ projectSettingsOpen: true, projectMenuOpen: false })
+    },
+    closeProjectSettings: () => set({ projectSettingsOpen: false }),
+    mergeBranchToBase: (branch, worktreeDir) => {
+      const path = realPath()
+      const target = get().projectConfig.baseBranch
+      if (!path || !branch) return
+      if (branch === target) return
+      get().askConfirm({
+        title: `Merge into ${target}`,
+        message: `Merge branch “${branch}” into ${target}? Any uncommitted work on it is committed first.`,
+        confirmLabel: 'Merge',
+        onConfirm: () => {
+          void window.api?.git
+            .mergeBranch(path, branch, target)
+            .then((res) => {
+              if (res?.ok) {
+                log({ kind: 'worktree', icon: 'merge', color: '#5cc98a', label: `Merged ${branch} → ${target}`, detail: '' })
+                // Clean up the worktree now that it's merged.
+                if (worktreeDir) get().removeWorktree(worktreeDir, branch)
+                else set((s) => ({ worktreesVersion: s.worktreesVersion + 1 }))
+              } else {
+                get().askConfirm({ title: 'Merge failed', message: res?.error ?? 'Could not merge.', confirmLabel: 'OK', onConfirm: () => {} })
+              }
+            })
+            .catch(() => {})
+        }
+      })
+    },
     setActiveWorktree: (path) => {
       if (get().activeWorktreePath === path) return
       set({ activeWorktreePath: path })
@@ -1573,17 +1638,25 @@ export const useStore = create<AppState>((set, get) => {
       const card = board?.cards.find((c) => c.id === id)
       if (!board || !card) return
       const slug = slugify(card.title)
-      const branch = `feat/${slug}`
       const sessionId = uid('s')
       const project = st.project
+      const strategy = st.projectConfig.taskStrategy
+      const isRepo = !!project?.path && project.path.startsWith('/') && project.isGitRepo !== false
       let worktree: string | null = null
       let cwd = project?.path
       let cwdReady: Promise<unknown> | undefined
-      if (project?.path && project.path.startsWith('/')) {
-        const parent = project.path.replace(/\/[^/]+$/, '')
-        worktree = `${parent}/${project.name}.wt/${slug}`
+      // Default (and non-repo / 'current'): stay on the current branch, main checkout.
+      let branch = project?.branch ?? st.projectConfig.baseBranch
+      if (isRepo && strategy === 'worktree') {
+        branch = `feat/${slug}`
+        const parent = project!.path.replace(/\/[^/]+$/, '')
+        worktree = `${parent}/${project!.name}.wt/${slug}`
         cwd = worktree
-        cwdReady = window.api?.git.addWorktree(project.path, branch, worktree).catch(() => {})
+        cwdReady = window.api?.git.addWorktree(project!.path, branch, worktree).catch(() => {})
+      } else if (isRepo && strategy === 'branch') {
+        branch = `feat/${slug}`
+        cwd = project!.path
+        cwdReady = window.api?.git.createBranch(project!.path, branch).catch(() => {})
       }
       // Start-task runs structured so the card is auto-injected and the work is
       // driven with live telemetry. The card body arrives via the context

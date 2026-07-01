@@ -1,10 +1,12 @@
 import { ipcMain } from 'electron'
 import { dirname, isAbsolute, resolve, sep } from 'node:path'
 import { IpcChannels } from '@shared/ipc'
+import type { ProjectConfig } from '@shared/project'
 import type { GlobalStore } from '../persistence/globalStore'
 import { assertAllowedRepo } from '../security'
-import { addWorktree, initRepo, isGitRepo, listWorktrees, removeWorktree } from './worktrees'
+import { addWorktree, initRepo, isGitRepo, listWorktrees, removeWorktree, listBranches, createBranch, mergeBranch } from './worktrees'
 import { ensureBuiltinSkills } from '../skills/reader'
+import { loadProjectConfig, saveProjectConfig } from '../persistence/projectConfigStore'
 
 /** A worktree dir must live inside the project or its parent directory. */
 function assertSafeWorktreeDir(repoPath: string, dir: string): string {
@@ -46,4 +48,15 @@ export function registerGitIpc(globalStore: GlobalStore): void {
   })
   ipcMain.handle(IpcChannels.gitIsRepo, (_e, repoPath: string) => isGitRepo(guard(repoPath)))
   ipcMain.handle(IpcChannels.gitInit, (_e, repoPath: string) => initRepo(guard(repoPath)))
+  ipcMain.handle(IpcChannels.gitBranches, (_e, repoPath: string) => listBranches(guard(repoPath)))
+  ipcMain.handle(IpcChannels.gitCreateBranch, (_e, repoPath: string, branch: string) =>
+    createBranch(guard(repoPath), assertSafeBranch(branch))
+  )
+  ipcMain.handle(IpcChannels.gitMergeBranch, (_e, repoPath: string, branch: string, target: string) =>
+    mergeBranch(guard(repoPath), assertSafeBranch(branch), assertSafeBranch(target))
+  )
+  ipcMain.handle(IpcChannels.projectConfigLoad, (_e, repoPath: string) => loadProjectConfig(guard(repoPath)))
+  ipcMain.handle(IpcChannels.projectConfigSave, (_e, repoPath: string, config: ProjectConfig) =>
+    saveProjectConfig(guard(repoPath), config)
+  )
 }

@@ -1,5 +1,6 @@
 import { simpleGit } from 'simple-git'
 import type { WorktreeInfo, WorktreeStatus } from '@shared/git'
+import type { MergeResult } from '@shared/project'
 
 async function statusOf(dir: string): Promise<WorktreeStatus> {
   try {
@@ -116,4 +117,57 @@ export async function initRepo(repoPath: string): Promise<string> {
     }
   }
   return 'main'
+}
+
+/** Local branch names (excludes detached HEAD entries). */
+export async function listBranches(repoPath: string): Promise<string[]> {
+  try {
+    const out = await simpleGit(repoPath).raw(['branch', '--format=%(refname:short)'])
+    return out
+      .split('\n')
+      .map((s) => s.trim())
+      .filter((s) => s && !s.includes('HEAD'))
+  } catch {
+    return []
+  }
+}
+
+/** Create (or switch to) a branch in the main checkout. */
+export async function createBranch(repoPath: string, branch: string): Promise<void> {
+  const git = simpleGit(repoPath)
+  try {
+    await git.raw(['switch', '-c', branch])
+  } catch {
+    // Branch may already exist → just switch to it.
+    await git.raw(['switch', branch])
+  }
+}
+
+/**
+ * Merge `branch` into `target` in the main checkout. Commits any uncommitted work
+ * on `branch` first (the agent is told not to commit), then checks out `target`
+ * and merges. Aborts on conflict and reports it rather than leaving a mess.
+ */
+export async function mergeBranch(repoPath: string, branch: string, target: string): Promise<MergeResult> {
+  const git = simpleGit(repoPath)
+  try {
+    // Commit any pending work sitting on `branch` (in the main checkout or its worktree).
+    const wt = (await listWorktrees(repoPath)).find((w) => w.branch === branch)
+    const workGit = wt ? simpleGit(wt.path) : git
+    const st = await workGit.status()
+    if (!st.isClean()) {
+      await workGit.add(['-A'])
+      await workGit.commit(`Valkeon: finish ${branch}`)
+    }
+    // Merge into target from the main checkout.
+    await git.raw(['switch', target])
+    await git.raw(['merge', '--no-ff', branch, '-m', `Merge ${branch} into ${target}`])
+    return { ok: true }
+  } catch (err) {
+    const msg = (err as Error).message || 'Merge failed.'
+    // Leave no half-merged state.
+    await git.raw(['merge', '--abort']).catch(() => {})
+    if (/conflict/i.test(msg)) return { ok: false, error: `Merge conflict merging ${branch} into ${target}. Resolve it manually.` }
+    return { ok: false, error: msg.split('\n')[0].slice(0, 200) }
+  }
 }

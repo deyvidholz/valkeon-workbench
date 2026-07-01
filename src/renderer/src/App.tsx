@@ -25,6 +25,7 @@ import { GenerateCardsDialog } from './dialogs/GenerateCardsDialog'
 import { LabelManagerDialog } from './dialogs/LabelManagerDialog'
 import { CardDrawer } from './dialogs/CardDrawer'
 import { ReviewWindow } from './dialogs/ReviewWindow'
+import { ProjectSettingsDialog } from './dialogs/ProjectSettingsDialog'
 import { TableBuilder } from './dialogs/TableBuilder'
 import { DiagramBuilder } from './dialogs/DiagramBuilder'
 import { NameDialog } from './dialogs/NameDialog'
@@ -205,6 +206,7 @@ export function App() {
       <SearchPalette />
       <CloneDialog />
       <NewWorktreeDialog />
+      <ProjectSettingsDialog />
       <NewSessionDialog />
       <NewWorkspaceDialog />
       <NewBoardDialog />

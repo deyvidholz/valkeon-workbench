@@ -39,7 +39,7 @@ jobs:
         run: npm ci
 
       - name: Build and publish
-        run: ${{ matrix.build }}
+        run: ${{ matrix.build }} -- --publish always
         env:
           # electron-builder uploads assets to the release for this tag.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

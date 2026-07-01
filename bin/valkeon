@@ -10,39 +10,59 @@
 # Multiple instances are allowed, so each call opens its own window — run it in
 # several directories to work on them side by side.
 #
-# Installed to /usr/local/bin/valkeon by scripts/install-wsl.sh.
+# Point it at a specific build with VALKEON_BIN (a .app on macOS, or the
+# executable on Linux); otherwise it auto-detects an installed app.
 set -euo pipefail
 
-# Locate the installed app binary (the .deb symlinks it onto PATH).
-APP_BIN="$(command -v valkeon-workbench || true)"
-if [[ -z "$APP_BIN" ]]; then
-  for candidate in \
-    "/opt/Valkeon Workbench/valkeon-workbench" \
-    "$HOME/.local/bin/valkeon-workbench"; do
-    if [[ -x "$candidate" ]]; then APP_BIN="$candidate"; break; fi
-  done
-fi
-if [[ -z "$APP_BIN" ]]; then
-  echo "valkeon: could not find the installed app (valkeon-workbench)." >&2
-  echo "Install it first — see the README 'Installation' section." >&2
-  exit 1
-fi
-
-ARGS=()
-
-# Under WSL the Chromium sandbox usually can't initialize; disable it there.
-if grep -qiE "(microsoft|wsl)" /proc/version 2>/dev/null; then
-  ARGS+=(--no-sandbox)
-fi
-
 # Resolve the first path argument to an absolute path (the app opens it as a
-# project). Everything else is passed through untouched.
+# project); anything starting with `-` is passed through as a flag.
+project_arg=()
+passthrough=()
 if [[ $# -gt 0 && "${1:0:1}" != "-" ]]; then
   target="$1"; shift
-  ARGS+=("$(cd "$target" 2>/dev/null && pwd || echo "$target")")
+  project_arg=("$(cd "$target" 2>/dev/null && pwd || echo "$target")")
 fi
-ARGS+=("$@")
+passthrough=("$@")
 
-# Detach so the terminal is usable while the app runs.
-nohup "$APP_BIN" "${ARGS[@]}" </dev/null >/dev/null 2>&1 &
-disown 2>/dev/null || true
+case "$(uname -s)" in
+  Darwin)
+    APP="${VALKEON_BIN:-}"
+    if [[ -z "$APP" ]]; then
+      for candidate in \
+        "/Applications/Valkeon Workbench.app" \
+        "$HOME/Applications/Valkeon Workbench.app"; do
+        if [[ -d "$candidate" ]]; then APP="$candidate"; break; fi
+      done
+    fi
+    if [[ -z "$APP" ]]; then
+      echo "valkeon: could not find Valkeon Workbench.app. Set VALKEON_BIN to it." >&2
+      exit 1
+    fi
+    # -n forces a new instance so each call opens its own window.
+    exec open -n -a "$APP" --args \
+      ${project_arg[@]+"${project_arg[@]}"} ${passthrough[@]+"${passthrough[@]}"}
+    ;;
+  *)
+    APP_BIN="${VALKEON_BIN:-$(command -v valkeon-workbench || true)}"
+    if [[ -z "$APP_BIN" ]]; then
+      for candidate in \
+        "/opt/Valkeon Workbench/valkeon-workbench" \
+        "$HOME/.local/bin/valkeon-workbench"; do
+        if [[ -x "$candidate" ]]; then APP_BIN="$candidate"; break; fi
+      done
+    fi
+    if [[ -z "$APP_BIN" ]]; then
+      echo "valkeon: could not find the installed app (valkeon-workbench)." >&2
+      echo "Install it first, or set VALKEON_BIN — see the README 'Installation' section." >&2
+      exit 1
+    fi
+    FLAGS=()
+    # Under WSL the Chromium sandbox usually can't initialize; disable it there.
+    grep -qiE "(microsoft|wsl)" /proc/version 2>/dev/null && FLAGS+=(--no-sandbox)
+    # Detach so the terminal stays usable while the app runs.
+    nohup "$APP_BIN" ${FLAGS[@]+"${FLAGS[@]}"} \
+      ${project_arg[@]+"${project_arg[@]}"} ${passthrough[@]+"${passthrough[@]}"} \
+      </dev/null >/dev/null 2>&1 &
+    disown 2>/dev/null || true
+    ;;
+esac
