@@ -1,5 +1,9 @@
 # Valkeon Workbench — build plan
 
+**STATUS: all phases (A, B, B.5, C, D, E) implemented, verified, and committed.**
+Two adversarial review rounds applied (mid-session active-time/persist fixes + a final
+8-finding pass on Monaco/review/files/commands). Only open item: verify `/effort` live.
+
 Living plan for the in-flight work. Chosen order is foundational → visible. Items
 get checked off as they land. (Author: Claude, at the user's direction.)
 
