@@ -21,6 +21,28 @@ const skillsDir = (repoPath: string): string => join(repoPath, '.claude', 'skill
 const disabledDir = (repoPath: string): string => join(repoPath, '.valkeon', 'skills-disabled')
 const legacyDisabledDir = (repoPath: string): string => join(repoPath, '.claude', 'skills-disabled')
 
+/** Write a `.gitignore` in a dir if missing (idempotent, best-effort). */
+async function ensureGitignore(dir: string, content: string): Promise<void> {
+  const file = join(dir, '.gitignore')
+  try {
+    await fs.access(file)
+  } catch {
+    await fs.mkdir(dir, { recursive: true }).catch(() => {})
+    await fs.writeFile(file, content, 'utf8').catch(() => {})
+  }
+}
+
+/**
+ * Keep skill enable/disable a MACHINE-LOCAL decision so it never collides across
+ * a team: Valkeon's own `vw-*` skills (every teammate's app installs them) and the
+ * whole disabled area are git-ignored. So a pull can't resurrect a skill you
+ * disabled, and disabling one never shows up in your commits.
+ */
+async function ensureSkillGitignores(repoPath: string): Promise<void> {
+  await ensureGitignore(skillsDir(repoPath), '# App-managed skills — installed per-machine by Valkeon.\nvw-*/\n.vw-builtin-version\n')
+  await ensureGitignore(disabledDir(repoPath), '# Disabled-skill state is machine-local.\n*\n')
+}
+
 /** One-time migration: move any skills disabled under the old `.claude/skills-disabled`. */
 async function migrateDisabled(repoPath: string): Promise<void> {
   const legacy = legacyDisabledDir(repoPath)
@@ -135,11 +157,21 @@ async function readSkillsFrom(dir: string, enabled: boolean): Promise<Skill[]> {
 export async function listSkills(repoPath: string): Promise<Skill[]> {
   await migrateDisabled(repoPath).catch(() => {})
   await ensureBuiltinSkills(repoPath).catch(() => {})
+  await ensureSkillGitignores(repoPath).catch(() => {})
   const [enabled, disabled] = await Promise.all([
     readSkillsFrom(skillsDir(repoPath), true),
     readSkillsFrom(disabledDir(repoPath), false)
   ])
-  return [...enabled, ...disabled].sort((a, b) => a.name.localeCompare(b.name))
+  // Collision (e.g. a teammate committed a skill you disabled locally, then you
+  // pulled it back): the disabled copy wins — remove the enabled copy so the CLI
+  // stops loading it. Safe because vw-* skills + the disabled area are git-ignored,
+  // so this removal never enters your commits.
+  const disabledIds = new Set(disabled.map((s) => s.id))
+  for (const s of enabled) {
+    if (disabledIds.has(s.id)) await fs.rm(join(skillsDir(repoPath), s.id), { recursive: true, force: true }).catch(() => {})
+  }
+  const enabledFinal = enabled.filter((s) => !disabledIds.has(s.id))
+  return [...enabledFinal, ...disabled].sort((a, b) => a.name.localeCompare(b.name))
 }
 
 /** Move a skill between `.claude/skills` (enabled) and `.claude/skills-disabled`. */

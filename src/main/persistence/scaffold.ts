@@ -8,6 +8,7 @@ const GITIGNORE = `# Valkeon Workbench
 # These subfolders hold machine-local, possibly-sensitive state — keep them out of git.
 local/
 cache/
+skills-disabled/
 `
 
 /**
