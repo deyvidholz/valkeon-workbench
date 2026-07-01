@@ -59,10 +59,12 @@ export function registerFilesIpc(globalStore: GlobalStore): void {
 
   ipcMain.handle(IpcChannels.fileRead, async (_e, repoPath: string, relPath: string): Promise<FileContent> => {
     const repo = guard(repoPath)
-    let abs = assertInside(repo, resolve(repo, relPath))
     try {
-      // Canonicalize + re-check so an in-repo symlink can't read outside the repo.
-      abs = assertInside(repo, await fs.realpath(abs))
+      // Canonicalize the BASE too — assertInside is lexical, and on macOS the repo
+      // path itself often traverses a symlink (/tmp→/private/tmp), so comparing a
+      // realpath'd target against a non-canonical base would reject every file.
+      const realRepo = await fs.realpath(repo)
+      const abs = assertInside(realRepo, await fs.realpath(assertInside(realRepo, resolve(realRepo, relPath))))
       const stat = await fs.stat(abs)
       if (!stat.isFile() || stat.size > MAX_FILE_BYTES) return { path: relPath, content: '', truncated: true }
       const buf = await fs.readFile(abs)
@@ -75,6 +77,7 @@ export function registerFilesIpc(globalStore: GlobalStore): void {
 
   ipcMain.handle(IpcChannels.gitDiff, async (_e, repoPath: string): Promise<DiffFile[]> => {
     const repo = guard(repoPath)
+    const realRepo = await fs.realpath(repo).catch(() => repo)
     const git = simpleGit(repo)
     let status
     try {
@@ -92,11 +95,14 @@ export function registerFilesIpc(globalStore: GlobalStore): void {
       let newContent = ''
       if (st !== 'added') {
         oldContent = await git.show([`HEAD:${path}`]).catch(() => '')
-        if (oldContent.length > MAX_FILE_BYTES) oldContent = ''
+        if (oldContent.length > MAX_FILE_BYTES || oldContent.includes('\u0000')) oldContent = ''
       }
       if (st !== 'deleted') {
         try {
-          const buf = await fs.readFile(join(repo, f.path))
+          // Same symlink hardening as fileRead — don't dereference an in-repo
+          // symlink to leak an out-of-repo file into the diff.
+          const abs = assertInside(realRepo, await fs.realpath(join(repo, f.path)))
+          const buf = await fs.readFile(abs)
           newContent = buf.length <= MAX_FILE_BYTES && !looksBinary(buf) ? buf.toString('utf8') : ''
         } catch {
           newContent = ''

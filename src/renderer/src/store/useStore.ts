@@ -39,6 +39,12 @@ const lastActivity = new Map<string, number>()
 let historyTimer: ReturnType<typeof setTimeout> | null = null
 let sessionsTimer: ReturnType<typeof setTimeout> | null = null
 
+/** Structured sessions mid-relaunch (/model, /clear): serialize the respawn and
+ *  buffer any user turns typed during the ~300ms gap so they aren't dropped. */
+const relaunching = new Set<string>()
+const pendingTurns = new Map<string, string[]>()
+const relaunchTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
 interface NewSessionForm {
   name: string
   providerId: string
@@ -646,13 +652,12 @@ export const useStore = create<AppState>((set, get) => {
       get().applyAgentEvent(id, { kind: 'line', line: { type: 'err', text: `Unknown model "${arg}". Try: opus, sonnet, haiku.` } })
       return
     }
-    window.api?.agent.dispose(id)
-    const updated: Session = { ...s, modelId: model.id, model: model.label, status: 'running', runStartedAt: undefined }
-    set((st) => ({ sessions: st.sessions.map((x) => (x.id === id ? updated : x)) }))
-    get().applyAgentEvent(id, { kind: 'line', line: { type: 'sys', text: `Switched model to ${model.label}${updated.claudeSessionId ? ' — resuming context.' : '.'}` } })
-    setTimeout(() => {
-      if (get().sessions.some((x) => x.id === id && x.mode === 'structured')) startStructured(updated, undefined, undefined, updated.claudeSessionId)
-    }, 300)
+    scheduleRelaunch(id, () => {
+      const updated: Session = { ...get().sessions.find((x) => x.id === id)!, modelId: model.id, model: model.label, status: 'idle', runStartedAt: undefined }
+      set((st) => ({ sessions: st.sessions.map((x) => (x.id === id ? updated : x)) }))
+      get().applyAgentEvent(id, { kind: 'line', line: { type: 'sys', text: `Switched model to ${model.label}${updated.claudeSessionId ? ' — resuming context.' : '.'}` } })
+      return () => startStructured(get().sessions.find((x) => x.id === id) ?? updated, undefined, undefined, updated.claudeSessionId)
+    })
     log({ kind: 'session', icon: 'tune', color: '#7cb3e6', label: `Set ${s.name} model to ${model.label}`, detail: '', target: { kind: 'session', id } })
   }
 
@@ -660,12 +665,34 @@ export const useStore = create<AppState>((set, get) => {
   const clearStructuredSession = (id: string): void => {
     const s = get().sessions.find((x) => x.id === id)
     if (!s || s.mode !== 'structured') return
+    scheduleRelaunch(id, () => {
+      const fresh: Session = { ...get().sessions.find((x) => x.id === id)!, lines: [], files: [], tokens: { ...s.tokens, used: 0 }, costUsd: undefined, claudeSessionId: undefined, activeMs: 0, runStartedAt: undefined, status: 'idle' }
+      set((st) => ({ sessions: st.sessions.map((x) => (x.id === id ? fresh : x)) }))
+      return () => startStructured(fresh)
+    })
+  }
+
+  /**
+   * Serialize a structured session relaunch: dispose the current agent, mark the
+   * session relaunching (so turns typed in the gap are buffered, not dropped),
+   * apply the caller's state change, and respawn after a tick — cancelling any
+   * prior pending relaunch so rapid /model,/clear don't race.
+   */
+  const scheduleRelaunch = (id: string, apply: () => () => void): void => {
     window.api?.agent.dispose(id)
-    const fresh: Session = { ...s, lines: [], files: [], tokens: { ...s.tokens, used: 0 }, costUsd: undefined, claudeSessionId: undefined, activeMs: 0, runStartedAt: undefined, status: 'idle' }
-    set((st) => ({ sessions: st.sessions.map((x) => (x.id === id ? fresh : x)) }))
-    setTimeout(() => {
-      if (get().sessions.some((x) => x.id === id && x.mode === 'structured')) startStructured(fresh)
+    relaunching.add(id)
+    const existing = relaunchTimers.get(id)
+    if (existing) clearTimeout(existing)
+    const respawn = apply()
+    const t = setTimeout(() => {
+      relaunchTimers.delete(id)
+      if (get().sessions.some((x) => x.id === id && x.mode === 'structured')) respawn()
+      else {
+        relaunching.delete(id)
+        pendingTurns.delete(id)
+      }
     }, 300)
+    relaunchTimers.set(id, t)
   }
 
   return {
@@ -994,8 +1021,11 @@ export const useStore = create<AppState>((set, get) => {
       set((st) => ({ sessions: st.sessions.map((s) => (s.id === id ? { ...s, initialPrompt: undefined } : s)) })),
     applyAgentEvent: (id, event) => {
       if (event.kind === 'exit') {
-        // The agent process ended — mark done. If it died mid-turn, bank the
-        // in-flight active slice and clear runStartedAt so "Active for" stops.
+        // The agent process ended — clean up any relaunch buffering for it.
+        relaunching.delete(id)
+        pendingTurns.delete(id)
+        // Mark done. If it died mid-turn, bank the in-flight active slice and
+        // clear runStartedAt so "Active for" stops.
         const now = Date.now()
         set((st) => ({
           sessions: st.sessions.map((s) =>
@@ -1014,6 +1044,15 @@ export const useStore = create<AppState>((set, get) => {
         return
       }
       lastActivity.set(id, Date.now())
+      // A relaunched session (/model, /clear) is back up when it emits its spawn
+      // 'idle' — flush any turns the user typed during the gap.
+      if (event.kind === 'status' && event.status === 'idle' && relaunching.has(id)) {
+        relaunching.delete(id)
+        const buf = pendingTurns.get(id)
+        pendingTurns.delete(id)
+        // agent.send re-emits the user line + running status per turn.
+        buf?.forEach((t) => window.api?.agent.send(id, t))
+      }
       // When a Start-task session completes a turn, auto-advance its card to In
       // Review, and notify the OS that the session needs the user (unless they're
       // already looking at it).
@@ -1079,6 +1118,13 @@ export const useStore = create<AppState>((set, get) => {
     sendToAgent: (id, text) => {
       const trimmed = text.trim()
       if (!trimmed) return
+      // Mid-relaunch (the old agent was disposed, the new one isn't up yet):
+      // buffer the turn so it isn't silently dropped; flushed to the agent on
+      // respawn (which emits the user line then, so no duplicate here).
+      if (relaunching.has(id)) {
+        pendingTurns.set(id, [...(pendingTurns.get(id) ?? []), trimmed])
+        return
+      }
       window.api?.agent.send(id, trimmed)
     },
     submitToAgent: (id, text) => {
@@ -1382,13 +1428,18 @@ export const useStore = create<AppState>((set, get) => {
         return
       }
       const session = card.sessionId ? st.sessions.find((s) => s.id === card.sessionId) : undefined
-      if (session && session.mode === 'structured' && session.status !== 'done') {
-        get().sendToAgent(session.id, feedback)
-        set({ view: 'session', activeSessionId: session.id })
+      const canDeliver = !!session && session.mode === 'structured' && session.status !== 'done'
+      if (canDeliver) {
+        get().sendToAgent(session!.id, feedback)
+        set({ view: 'session', activeSessionId: session!.id })
+      } else {
+        // No live session to receive the comments — persist them onto the card so
+        // they aren't lost and the next agent that picks it up sees them.
+        get().updateCard(card.id, { body: `${card.body}\n\n## Review feedback\n\n${feedback}`.trim() })
       }
       if (card.column !== 'in-progress') get().moveCard(card.id, 'in-progress')
       set({ reviewCardId: null })
-      log({ kind: 'card', icon: 'rate_review', color: '#e0b15e', label: `Requested changes on #${card.code}`, detail: board.name, target: { kind: 'card', id: card.id, boardId: board.id } })
+      log({ kind: 'card', icon: 'rate_review', color: '#e0b15e', label: `Requested changes on #${card.code}`, detail: canDeliver ? 'sent to the agent' : 'saved to the card', target: { kind: 'card', id: card.id, boardId: board.id } })
     },
     reviewByAi: () => {
       const st = get()
@@ -1396,7 +1447,8 @@ export const useStore = create<AppState>((set, get) => {
       const card = board?.cards.find((c) => c.id === st.reviewCardId)
       if (!board || !card) return
       const workSession = card.sessionId ? st.sessions.find((s) => s.id === card.sessionId) : undefined
-      const cwd = workSession?.cwd ?? card.link.worktree ?? st.project?.path
+      // Must match ReviewWindow's diff cwd exactly, or the AI reviews a different tree.
+      const cwd = workSession?.cwd ?? card.link.worktree ?? st.activeWorktreePath ?? st.project?.path
       const sid = uid('s')
       const session: Session = {
         id: sid,

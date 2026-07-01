@@ -1,20 +1,31 @@
 import * as monaco from 'monaco-editor'
 import { loader } from '@monaco-editor/react'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
 
 /**
  * Wire Monaco to the *locally bundled* package (never a CDN — this is an offline
- * desktop app) and provide the base editor worker. Language-service workers
- * (ts/json/…) are intentionally skipped: we use Monaco as a read-only code +
- * diff viewer, where syntax highlighting runs on the main thread and the heavy
- * language workers aren't needed.
+ * desktop app) and provide the right worker per language. The TS/JSON/CSS/HTML
+ * language modes (registered by the `monaco-editor` barrel) request their own
+ * workers on model creation; returning the plain editor worker for them would
+ * error and leak an idle worker per file — so we branch on the label.
  */
 let configured = false
 export function setupMonaco(): void {
   if (configured) return
   configured = true
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(self as any).MonacoEnvironment = { getWorker: () => new editorWorker() }
+  ;(self as unknown as { MonacoEnvironment: unknown }).MonacoEnvironment = {
+    getWorker(_workerId: string, label: string): Worker {
+      if (label === 'typescript' || label === 'javascript') return new tsWorker()
+      if (label === 'json') return new jsonWorker()
+      if (label === 'css' || label === 'scss' || label === 'less') return new cssWorker()
+      if (label === 'html' || label === 'handlebars' || label === 'razor') return new htmlWorker()
+      return new editorWorker()
+    }
+  }
   loader.config({ monaco })
 }
 
