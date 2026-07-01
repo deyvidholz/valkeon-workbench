@@ -18,7 +18,14 @@ jobs:
         include:
           - os: macos-latest
             build: npm run build:mac
-          - os: windows-latest
+          # Pinned to windows-2022 (VS 2022 / v17): windows-latest migrated to the
+          # Windows Server 2025 image with Visual Studio 2026 (v18), which the
+          # node-gyp bundled in @electron/rebuild can't detect ("unknown version
+          # undefined" at ...\Visual Studio\18\Enterprise), so the node-pty rebuild
+          # fails. windows-2022 has VS 17, which node-gyp detects fine.
+          # Durable follow-up once tooling supports VS 18: return to windows-latest
+          # after bumping @electron/rebuild (v4 uses mainline node-gyp >=12.2).
+          - os: windows-2022
             build: npm run build:win
           - os: ubuntu-latest
             build: npm run build:linux

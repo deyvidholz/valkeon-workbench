@@ -14,7 +14,9 @@
 set -euo pipefail
 
 REPO="${VALKEON_REPO:-deyvidholz/valkeon-workbench}"
-API="https://api.github.com/repos/${REPO}/releases/latest"
+# List endpoint (newest first) — unlike releases/latest it also surfaces
+# prereleases. Neither shows *draft* releases, so a release must be published.
+API="https://api.github.com/repos/${REPO}/releases?per_page=20"
 
 echo "==> Checking prerequisites…"
 if ! grep -qiE "(microsoft|wsl)" /proc/version 2>/dev/null; then
@@ -23,10 +25,14 @@ fi
 command -v curl >/dev/null || { echo "curl is required. Run: sudo apt-get install -y curl"; exit 1; }
 
 echo "==> Finding the latest release .deb…"
-DEB_URL="$(curl -fsSL "$API" | grep -oE 'https://[^"]+\.deb' | head -n1)"
+# Don't let a 404/network hiccup abort via set -e; handle it explicitly below.
+RELEASES_JSON="$(curl -fsSL "$API" 2>/dev/null || true)"
+DEB_URL="$(printf '%s' "$RELEASES_JSON" | grep -oE 'https://[^"]+\.deb' | head -n1)"
 if [[ -z "$DEB_URL" ]]; then
-  echo "Could not find a .deb asset in the latest release of ${REPO}." >&2
-  echo "Set VALKEON_REPO=<owner>/<repo> if this fork lives elsewhere." >&2
+  echo "No published release with a .deb asset was found for ${REPO}." >&2
+  echo "GitHub *draft* releases aren't visible here — publish the release first:" >&2
+  echo "  https://github.com/${REPO}/releases" >&2
+  echo "(Set VALKEON_REPO=<owner>/<repo> if this fork lives elsewhere.)" >&2
   exit 1
 fi
 echo "    $DEB_URL"
