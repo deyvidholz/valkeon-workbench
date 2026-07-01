@@ -27,7 +27,9 @@ command -v curl >/dev/null || { echo "curl is required. Run: sudo apt-get instal
 echo "==> Finding the latest release .deb…"
 # Don't let a 404/network hiccup abort via set -e; handle it explicitly below.
 RELEASES_JSON="$(curl -fsSL "$API" 2>/dev/null || true)"
-DEB_URL="$(printf '%s' "$RELEASES_JSON" | grep -oE 'https://[^"]+\.deb' | head -n1)"
+# `|| true` so a no-match grep (empty release list) doesn't abort under set -e
+# + pipefail before we can print the helpful message below.
+DEB_URL="$(printf '%s' "$RELEASES_JSON" | grep -oE 'https://[^"]+\.deb' | head -n1 || true)"
 if [[ -z "$DEB_URL" ]]; then
   echo "No published release with a .deb asset was found for ${REPO}." >&2
   echo "GitHub *draft* releases aren't visible here — publish the release first:" >&2
