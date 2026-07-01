@@ -217,6 +217,7 @@ interface AppState {
   openProjectSettings: () => void
   closeProjectSettings: () => void
   mergeBranchToBase: (branch: string, worktreeDir?: string | null) => void
+  deleteBranch: (branch: string) => void
   loadWorktrees: () => void
   reconcileWorktrees: (list: WorktreeInfo[]) => void
   setActiveWorktree: (path: string | null) => void
@@ -1376,6 +1377,19 @@ export const useStore = create<AppState>((set, get) => {
       set({ projectSettingsOpen: true, projectMenuOpen: false })
     },
     closeProjectSettings: () => set({ projectSettingsOpen: false }),
+    deleteBranch: (branch) => {
+      const path = realPath()
+      if (!path || !branch || branch === get().projectConfig.baseBranch) return
+      get().askConfirm({
+        title: 'Delete branch',
+        message: `Delete branch “${branch}”? Unmerged commits on it are lost. This cannot be undone.`,
+        confirmLabel: 'Delete branch',
+        onConfirm: () => {
+          void window.api?.git.deleteBranch(path, branch).then((b) => set({ branches: b })).catch(() => {})
+          log({ kind: 'worktree', icon: 'delete_outline', color: '#e07a6e', label: `Deleted branch ${branch}`, detail: '' })
+        }
+      })
+    },
     mergeBranchToBase: (branch, worktreeDir) => {
       const path = realPath()
       const target = get().projectConfig.baseBranch
@@ -1391,9 +1405,10 @@ export const useStore = create<AppState>((set, get) => {
             .then((res) => {
               if (res?.ok) {
                 log({ kind: 'worktree', icon: 'merge', color: '#5cc98a', label: `Merged ${branch} → ${target}`, detail: '' })
-                // Clean up the worktree now that it's merged.
+                // Clean up the worktree now that it's merged, and refresh branches.
                 if (worktreeDir) get().removeWorktree(worktreeDir, branch)
                 else set((s) => ({ worktreesVersion: s.worktreesVersion + 1 }))
+                void window.api?.git.branches(path).then((b) => set({ branches: b })).catch(() => {})
               } else {
                 get().askConfirm({ title: 'Merge failed', message: res?.error ?? 'Could not merge.', confirmLabel: 'OK', onConfirm: () => {} })
               }

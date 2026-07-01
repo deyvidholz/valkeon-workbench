@@ -4,7 +4,7 @@ import { IpcChannels } from '@shared/ipc'
 import type { ProjectConfig } from '@shared/project'
 import type { GlobalStore } from '../persistence/globalStore'
 import { assertAllowedRepo } from '../security'
-import { addWorktree, initRepo, isGitRepo, listWorktrees, removeWorktree, listBranches, createBranch, mergeBranch } from './worktrees'
+import { addWorktree, initRepo, isGitRepo, listWorktrees, removeWorktree, listBranches, createBranch, mergeBranch, deleteBranch } from './worktrees'
 import { ensureBuiltinSkills } from '../skills/reader'
 import { loadProjectConfig, saveProjectConfig } from '../persistence/projectConfigStore'
 
@@ -54,6 +54,9 @@ export function registerGitIpc(globalStore: GlobalStore): void {
   )
   ipcMain.handle(IpcChannels.gitMergeBranch, (_e, repoPath: string, branch: string, target: string) =>
     mergeBranch(guard(repoPath), assertSafeBranch(branch), assertSafeBranch(target))
+  )
+  ipcMain.handle(IpcChannels.gitDeleteBranch, (_e, repoPath: string, branch: string) =>
+    deleteBranch(guard(repoPath), assertSafeBranch(branch))
   )
   ipcMain.handle(IpcChannels.projectConfigLoad, (_e, repoPath: string) => loadProjectConfig(guard(repoPath)))
   ipcMain.handle(IpcChannels.projectConfigSave, (_e, repoPath: string, config: ProjectConfig) =>

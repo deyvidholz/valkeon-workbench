@@ -51,6 +51,7 @@ export const IpcChannels = {
   gitBranches: 'git:branches',
   gitCreateBranch: 'git:create-branch',
   gitMergeBranch: 'git:merge-branch',
+  gitDeleteBranch: 'git:delete-branch',
   projectConfigLoad: 'project-config:load',
   projectConfigSave: 'project-config:save',
   shellOpenPath: 'shell:open-path',

@@ -185,7 +185,9 @@ const api = {
     createBranch: (repoPath: string, branch: string): Promise<void> =>
       ipcRenderer.invoke(IpcChannels.gitCreateBranch, repoPath, branch),
     mergeBranch: (repoPath: string, branch: string, target: string): Promise<MergeResult> =>
-      ipcRenderer.invoke(IpcChannels.gitMergeBranch, repoPath, branch, target)
+      ipcRenderer.invoke(IpcChannels.gitMergeBranch, repoPath, branch, target),
+    deleteBranch: (repoPath: string, branch: string): Promise<string[]> =>
+      ipcRenderer.invoke(IpcChannels.gitDeleteBranch, repoPath, branch)
   },
   projectConfig: {
     load: (repoPath: string): Promise<ProjectConfig> => ipcRenderer.invoke(IpcChannels.projectConfigLoad, repoPath),

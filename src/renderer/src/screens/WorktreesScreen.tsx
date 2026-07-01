@@ -31,7 +31,9 @@ export function WorktreesScreen() {
   const openNewWorktree = useStore((s) => s.openNewWorktree)
   const removeWorktreeAction = useStore((s) => s.removeWorktree)
   const mergeBranchToBase = useStore((s) => s.mergeBranchToBase)
+  const deleteBranch = useStore((s) => s.deleteBranch)
   const baseBranch = useStore((s) => s.projectConfig.baseBranch)
+  const branches = useStore((s) => s.branches)
   const openProjectSettings = useStore((s) => s.openProjectSettings)
   const worktreesVersion = useStore((s) => s.worktreesVersion)
   const [gitTrees, setGitTrees] = useState<WorktreeInfo[] | null>(null)
@@ -185,6 +187,25 @@ export function WorktreesScreen() {
             <Hover as="span" title="Remove worktree" onClick={() => removeWorktree(w.path, w.branch)} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: '#5f5f68', cursor: 'pointer' }} hover={{ color: '#e07a6e' }}>delete_outline</Hover>
           </div>
         ))}
+
+        {(() => {
+          const wtBranches = new Set(rows.map((r) => r.branch))
+          const other = branches.filter((b) => b !== baseBranch && !wtBranches.has(b))
+          if (!other.length) return null
+          return (
+            <>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#62626b', padding: '18px 4px 6px' }}>OTHER BRANCHES</div>
+              {other.map((b) => (
+                <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 12px', borderRadius: 9 }}>
+                  <Icon name="fork_right" size={17} color="#8a8a93" />
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: '#cbcbd2', fontFamily: "'Geist Mono', monospace", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b}</span>
+                  <Hover as="span" title={`Merge into ${baseBranch}`} onClick={() => mergeBranchToBase(b, null)} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: '#5f5f68', cursor: 'pointer' }} hover={{ color: '#5cc98a' }}>merge</Hover>
+                  <Hover as="span" title="Delete branch" onClick={() => deleteBranch(b)} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: '#5f5f68', cursor: 'pointer' }} hover={{ color: '#e07a6e' }}>delete_outline</Hover>
+                </div>
+              ))}
+            </>
+          )
+        })()}
           </>
         )}
       </div>
