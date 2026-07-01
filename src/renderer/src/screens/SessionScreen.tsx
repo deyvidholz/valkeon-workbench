@@ -141,7 +141,7 @@ export function SessionScreen() {
               <div style={{ flex: 1, minHeight: 0, background: '#0a0a0c', overflow: 'hidden' }}>
                 <AgentTranscript lines={session.lines} status={session.status} sessionName={session.name} />
               </div>
-              <AgentComposer key={id} sessionId={id} placeholder={`Message ${session.name}…  (Enter to send, Shift+Enter for newline)`} focusToken={focusToken} />
+              <AgentComposer key={id} sessionId={id} placeholder={`Message ${session.name}…  ( /model · /clear · Enter to send )`} focusToken={focusToken} />
             </>
           ) : (
             <>

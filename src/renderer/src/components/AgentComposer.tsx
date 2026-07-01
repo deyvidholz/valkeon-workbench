@@ -12,7 +12,7 @@ interface AgentComposerProps {
 
 /** Composer beneath a structured session: sends a user turn to the agent on Enter. */
 export function AgentComposer({ sessionId, placeholder, focusToken }: AgentComposerProps) {
-  const send = useStore((s) => s.sendToAgent)
+  const send = useStore((s) => s.submitToAgent)
   const [value, setValue] = useState('')
   const ref = useRef<HTMLTextAreaElement>(null)
 

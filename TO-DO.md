@@ -42,12 +42,15 @@ get checked off as they land. (Author: Claude, at the user's direction.)
 - [x] **Per-session toggle** (bell in the session header), live — doesn't touch the process; persisted.
 - [x] Suppressed while you're actively viewing that session (focused). Click → opens the session.
 
-## Phase C — structured commands (rides on resume)
+## Phase C — structured commands (rides on resume) ✅
 
-- [ ] Composer: typed `/...` commands. Pass-through for custom/prompt commands.
-- [ ] `/model <x>` and `/effort <x>` → relaunch the **same session** via `--resume <id>`
-      with the new flag, preserving context. Surface as buttons too (model picker already exists).
-- [ ] `/clear` → fresh session (new context); `/compact` → compaction request if supported.
+- [x] Composer routes through `submitToAgent`: intercepts client commands, passes everything
+      else (custom/prompt commands, `/effort`, `/compact`, …) through to the agent.
+- [x] `/model <x>` → relaunches the **same session** via `--resume <id>` with the new model,
+      preserving context (falls back to fresh if no context yet). Model picker button still works.
+- [x] `/clear` → fresh session (drops context + transcript, no resume).
+- [ ] NOTE: `/effort` passes through to the CLI — verify live that the CLI accepts it; if it
+      needs a real flag, wire it like `/model` (add `effort` to the spec → adapter flag).
 
 ## Phase D — card dialog Save button + Start-task gating ✅
 

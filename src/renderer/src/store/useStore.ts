@@ -167,6 +167,8 @@ interface AppState {
   applyAgentEvent: (id: string, event: AgentEvent) => void
   /** Structured sessions: send a user turn to the agent. */
   sendToAgent: (id: string, text: string) => void
+  /** Composer entry point: intercepts /model, /clear; else sends as a turn. */
+  submitToAgent: (id: string, text: string) => void
   /** Structured sessions: toggle a context source for the *next* fresh start. */
   toggleContextSource: (id: string, source: ContextSourceId) => void
   /** Toggle OS notifications for a session (live; doesn't touch the process). */
@@ -634,6 +636,34 @@ export const useStore = create<AppState>((set, get) => {
     else proceed()
   }
 
+  /** `/model <x>`: relaunch the structured session with a new model, resuming context. */
+  const changeSessionModel = (id: string, arg: string): void => {
+    const s = get().sessions.find((x) => x.id === id)
+    if (!s || s.mode !== 'structured') return
+    const q = arg.toLowerCase()
+    const model = getProviderMeta(s.providerId)?.models.find((m) => m.id.toLowerCase() === q || m.short.toLowerCase() === q)
+    if (!model) {
+      get().applyAgentEvent(id, { kind: 'line', line: { type: 'err', text: `Unknown model "${arg}". Try: opus, sonnet, haiku.` } })
+      return
+    }
+    window.api?.agent.dispose(id)
+    const updated: Session = { ...s, modelId: model.id, model: model.label, status: 'running', runStartedAt: undefined }
+    set((st) => ({ sessions: st.sessions.map((x) => (x.id === id ? updated : x)) }))
+    get().applyAgentEvent(id, { kind: 'line', line: { type: 'sys', text: `Switched model to ${model.label}${updated.claudeSessionId ? ' — resuming context.' : '.'}` } })
+    setTimeout(() => startStructured(updated, undefined, undefined, updated.claudeSessionId), 300)
+    log({ kind: 'session', icon: 'tune', color: '#7cb3e6', label: `Set ${s.name} model to ${model.label}`, detail: '', target: { kind: 'session', id } })
+  }
+
+  /** `/clear`: drop context — a fresh agent (no resume) and an empty transcript. */
+  const clearStructuredSession = (id: string): void => {
+    const s = get().sessions.find((x) => x.id === id)
+    if (!s || s.mode !== 'structured') return
+    window.api?.agent.dispose(id)
+    const fresh: Session = { ...s, lines: [], files: [], tokens: { ...s.tokens, used: 0 }, costUsd: undefined, claudeSessionId: undefined, activeMs: 0, runStartedAt: undefined, status: 'idle' }
+    set((st) => ({ sessions: st.sessions.map((x) => (x.id === id ? fresh : x)) }))
+    setTimeout(() => startStructured(fresh), 300)
+  }
+
   return {
     view: 'launcher',
     project: null,
@@ -1046,6 +1076,25 @@ export const useStore = create<AppState>((set, get) => {
       const trimmed = text.trim()
       if (!trimmed) return
       window.api?.agent.send(id, trimmed)
+    },
+    submitToAgent: (id, text) => {
+      const t = text.trim()
+      if (!t) return
+      const s = get().sessions.find((x) => x.id === id)
+      // Structured-only client commands; everything else (incl. custom/prompt
+      // slash commands like /effort) passes through to the agent.
+      if (s?.mode === 'structured') {
+        const model = /^\/model\s+(\S+)$/.exec(t)
+        if (model) {
+          changeSessionModel(id, model[1])
+          return
+        }
+        if (t === '/clear') {
+          clearStructuredSession(id)
+          return
+        }
+      }
+      get().sendToAgent(id, t)
     },
     toggleContextSource: (id, source) =>
       set((st) => ({
