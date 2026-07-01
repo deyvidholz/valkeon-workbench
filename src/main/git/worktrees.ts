@@ -132,6 +132,12 @@ export async function listBranches(repoPath: string): Promise<string[]> {
   }
 }
 
+/** Force-delete a local branch (used after merge / to discard). */
+export async function deleteBranch(repoPath: string, branch: string): Promise<string[]> {
+  await simpleGit(repoPath).raw(['branch', '-D', branch]).catch(() => {})
+  return listBranches(repoPath)
+}
+
 /** Create (or switch to) a branch in the main checkout. */
 export async function createBranch(repoPath: string, branch: string): Promise<void> {
   const git = simpleGit(repoPath)

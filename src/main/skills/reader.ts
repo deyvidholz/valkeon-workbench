@@ -16,8 +16,30 @@ const TAG_FOR = (name: string): string => {
 
 const skillsDir = (repoPath: string): string => join(repoPath, '.claude', 'skills')
 // Disabled skills are MOVED here so the agent CLI (which only loads .claude/skills)
-// no longer sees them; re-enabling moves them back.
-const disabledDir = (repoPath: string): string => join(repoPath, '.claude', 'skills-disabled')
+// no longer sees them. They live under `.valkeon/` (the app's own state), not
+// `.claude/`, so the CLI's directory stays clean. Re-enabling moves them back.
+const disabledDir = (repoPath: string): string => join(repoPath, '.valkeon', 'skills-disabled')
+const legacyDisabledDir = (repoPath: string): string => join(repoPath, '.claude', 'skills-disabled')
+
+/** One-time migration: move any skills disabled under the old `.claude/skills-disabled`. */
+async function migrateDisabled(repoPath: string): Promise<void> {
+  const legacy = legacyDisabledDir(repoPath)
+  let names: string[]
+  try {
+    names = (await fs.readdir(legacy, { withFileTypes: true })).filter((e) => e.isDirectory()).map((e) => e.name)
+  } catch {
+    return
+  }
+  if (!names.length) {
+    await fs.rmdir(legacy).catch(() => {})
+    return
+  }
+  await fs.mkdir(disabledDir(repoPath), { recursive: true })
+  for (const name of names) {
+    await fs.rename(join(legacy, name), join(disabledDir(repoPath), name)).catch(() => {})
+  }
+  await fs.rmdir(legacy).catch(() => {})
+}
 
 /**
  * Install Valkeon's own `vw-*` skills into `.claude/skills/` (where the agent CLI
@@ -111,6 +133,7 @@ async function readSkillsFrom(dir: string, enabled: boolean): Promise<Skill[]> {
 }
 
 export async function listSkills(repoPath: string): Promise<Skill[]> {
+  await migrateDisabled(repoPath).catch(() => {})
   await ensureBuiltinSkills(repoPath).catch(() => {})
   const [enabled, disabled] = await Promise.all([
     readSkillsFrom(skillsDir(repoPath), true),
