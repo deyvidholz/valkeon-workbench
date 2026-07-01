@@ -228,8 +228,8 @@ export function CardDrawer() {
         </div>
 
         <div style={{ flexShrink: 0, borderTop: '1px solid #16161a', background: '#0b0b0e', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 11 }}>
-          <span style={{ fontSize: 11.5, color: dirty ? '#e0b15e' : titleOk ? '#5cc98a' : '#56565e' }}>
-            {dirty ? 'Unsaved changes' : titleOk ? 'Saved' : 'Add a title to save'}
+          <span style={{ fontSize: 11.5, color: dirty ? '#e0b15e' : '#5cc98a' }}>
+            {dirty ? 'Unsaved changes' : titleOk ? 'Saved' : ''}
           </span>
           <div style={{ flex: 1 }} />
           <Hover as="span" onClick={closeDrawer} style={{ padding: '8px 14px', borderRadius: 8, color: '#9a9aa3', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: '#16161c' }}>Close</Hover>

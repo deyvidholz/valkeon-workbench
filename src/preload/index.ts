@@ -60,7 +60,9 @@ const api = {
   skills: {
     list: (repoPath: string): Promise<Skill[]> => ipcRenderer.invoke(IpcChannels.skillsList, repoPath),
     save: (repoPath: string, save: SkillSave): Promise<Skill[]> =>
-      ipcRenderer.invoke(IpcChannels.skillsSave, repoPath, save)
+      ipcRenderer.invoke(IpcChannels.skillsSave, repoPath, save),
+    setEnabled: (repoPath: string, id: string, enabled: boolean): Promise<Skill[]> =>
+      ipcRenderer.invoke(IpcChannels.skillsSetEnabled, repoPath, id, enabled)
   },
   menu: {
     onAction: (cb: (action: MenuAction) => void): (() => void) => {
@@ -144,7 +146,15 @@ const api = {
     tree: (repoPath: string): Promise<FileNode[]> => ipcRenderer.invoke(IpcChannels.filesTree, repoPath),
     read: (repoPath: string, relPath: string): Promise<FileContent> =>
       ipcRenderer.invoke(IpcChannels.fileRead, repoPath, relPath),
-    diff: (repoPath: string): Promise<DiffFile[]> => ipcRenderer.invoke(IpcChannels.gitDiff, repoPath)
+    diff: (repoPath: string): Promise<DiffFile[]> => ipcRenderer.invoke(IpcChannels.gitDiff, repoPath),
+    createFile: (repoPath: string, relPath: string): Promise<boolean> =>
+      ipcRenderer.invoke(IpcChannels.fileCreate, repoPath, relPath),
+    createDir: (repoPath: string, relPath: string): Promise<boolean> =>
+      ipcRenderer.invoke(IpcChannels.dirCreate, repoPath, relPath),
+    rename: (repoPath: string, oldRel: string, newRel: string): Promise<boolean> =>
+      ipcRenderer.invoke(IpcChannels.fileRename, repoPath, oldRel, newRel),
+    remove: (repoPath: string, relPath: string): Promise<boolean> =>
+      ipcRenderer.invoke(IpcChannels.fileDelete, repoPath, relPath)
   },
   notify: {
     show: (req: NotifyRequest): void => ipcRenderer.send(IpcChannels.notifyShow, req),

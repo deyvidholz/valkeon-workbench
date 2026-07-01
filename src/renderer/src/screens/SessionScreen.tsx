@@ -114,8 +114,8 @@ export function SessionScreen() {
           <Icon name="stop_circle" size={15} />
           Stop
         </Hover>
-        <Hover as="span" onClick={() => toggleSessionNotify(id)} title={session.notify === false ? 'Notifications off — click to enable' : 'Notify me when this session needs me'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, color: session.notify === false ? '#56565e' : 'var(--accent-hi)', cursor: 'pointer' }} hover={{ background: '#16161d' }}>
-          <Icon name={session.notify === false ? 'notifications_off' : 'notifications_active'} size={18} />
+        <Hover as="span" onClick={() => toggleSessionNotify(id)} title={session.notify === true ? 'Notifications on — click to disable' : 'Notify me when this session needs me'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, color: session.notify === true ? 'var(--accent-hi)' : '#56565e', cursor: 'pointer' }} hover={{ background: '#16161d' }}>
+          <Icon name={session.notify === true ? 'notifications_active' : 'notifications_off'} size={18} />
         </Hover>
         {iconBtn('restart_alt', confirmRestart, 'Restart')}
         <div style={{ position: 'relative' }}>

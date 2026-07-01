@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, session, shell, Notification } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, session, shell, Notification, nativeImage } from 'electron'
 import { join, basename } from 'node:path'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
@@ -24,6 +24,11 @@ app.setName('Valkeon Workbench')
 
 const exec = promisify(execFile)
 const isDev = !app.isPackaged
+
+// The app icon (our V_ mark). In dev, main runs from out/main, so the repo's
+// resources/ sit two levels up; packaged, they're bundled alongside.
+const iconPath = join(__dirname, '../../resources/icon.png')
+const appIcon = nativeImage.createFromPath(iconPath)
 
 let mainWindow: BrowserWindow | null = null
 let globalStore: GlobalStore
@@ -82,6 +87,7 @@ function createWindow(): void {
     transparent: true,
     backgroundColor: '#00000000',
     hasShadow: true,
+    icon: appIcon,
     title: 'Valkeon Workbench',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -244,6 +250,9 @@ function registerIpc(): void {
 }
 
 app.whenReady().then(async () => {
+  // Show our V_ mark on the macOS dock (dev shows Electron's otherwise).
+  if (process.platform === 'darwin' && app.dock && !appIcon.isEmpty()) app.dock.setIcon(appIcon)
+
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {

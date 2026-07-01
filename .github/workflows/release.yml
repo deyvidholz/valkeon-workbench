@@ -1,0 +1,47 @@
+name: Release
+
+# Push a version tag (e.g. `git tag v0.1.0 && git push origin v0.1.0`) to build
+# installers for all three OSes and attach them to a GitHub Release.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            build: npm run build:mac
+          - os: windows-latest
+            build: npm run build:win
+          - os: ubuntu-latest
+            build: npm run build:linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and publish
+        run: ${{ matrix.build }}
+        env:
+          # electron-builder uploads assets to the release for this tag.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Keep macOS builds unsigned (no signing certificate configured).
+          CSC_IDENTITY_AUTO_DISCOVERY: false

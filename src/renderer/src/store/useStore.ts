@@ -52,6 +52,7 @@ interface NewSessionForm {
   worktree: boolean
   skipPerms: boolean
   mode: SessionMode
+  notify: boolean
 }
 
 interface HistoryTarget {
@@ -583,6 +584,7 @@ export const useStore = create<AppState>((set, get) => {
       skipPermissions: form.skipPerms,
       startedAt: Date.now(),
       mode: form.mode,
+      notify: form.notify,
       // Structured sessions start with no context sources — zero added cost until
       // the user opts one in. (Start-task seeds the card source itself.)
       contextSources: form.mode === 'structured' ? [] : undefined
@@ -618,7 +620,12 @@ export const useStore = create<AppState>((set, get) => {
             get().applyAgentEvent(session.id, { kind: 'status', status: 'idle' })
             return
           }
-          if (res?.spawned && firstTurn?.trim()) get().sendToAgent(session.id, firstTurn.trim())
+          if (res?.spawned && firstTurn?.trim()) {
+            // Show the injected context in the transcript so the opening turn's
+            // "described above" actually refers to something the user can see.
+            if (preamble.trim()) get().applyAgentEvent(session.id, { kind: 'line', line: { type: 'sys', text: preamble.trim() } })
+            get().sendToAgent(session.id, firstTurn.trim())
+          }
         })
         .catch(() => {})
     }
@@ -741,7 +748,7 @@ export const useStore = create<AppState>((set, get) => {
     newWorktreeName: '',
     worktreesVersion: 0,
 
-    newSession: { name: '', providerId: DEFAULT_PROVIDER_ID, modelId: 'sonnet', worktree: false, skipPerms: false, mode: 'structured' },
+    newSession: { name: '', providerId: DEFAULT_PROVIDER_ID, modelId: 'sonnet', worktree: false, skipPerms: false, mode: 'structured', notify: false },
     newWs: { name: '', useWorktree: false },
     newBoard: { name: '', scope: 'feature' },
     genText: '',
@@ -968,7 +975,8 @@ export const useStore = create<AppState>((set, get) => {
           modelId: st.defaultModelId,
           worktree: !!st.workspaces.find((w) => w.id === st.activeWorkspaceId)?.useWorktree,
           skipPerms: false,
-          mode: 'structured'
+          mode: 'structured',
+          notify: false
         }
       })),
     closeNewSession: () => set({ newSessionOpen: false }),
@@ -1062,7 +1070,7 @@ export const useStore = create<AppState>((set, get) => {
         if (s) {
           if (s.cardId && s.boardId) advanceTaskCard(s.boardId, s.cardId)
           const viewing = st.activeSessionId === id && st.view === 'session' && typeof document !== 'undefined' && document.hasFocus()
-          if (s.notify !== false && !viewing) {
+          if (s.notify === true && !viewing) {
             const lastText = [...s.lines].reverse().find((l) => l.type === 'text')
             const asking = !!lastText && /\?\s*$/.test(lastText.text.trim())
             window.api?.notify.show({
@@ -1134,9 +1142,16 @@ export const useStore = create<AppState>((set, get) => {
       // Structured-only client commands; everything else (incl. custom/prompt
       // slash commands like /effort) passes through to the agent.
       if (s?.mode === 'structured') {
-        const model = /^\/model\s+(\S+)$/.exec(t)
-        if (model) {
-          changeSessionModel(id, model[1])
+        // Intercept /model even without an arg (headless `claude` rejects it) —
+        // show usage instead of letting it reach the CLI.
+        if (/^\/model(\s|$)/.test(t)) {
+          const arg = t.replace(/^\/model\s*/, '').trim()
+          if (arg) {
+            changeSessionModel(id, arg)
+          } else {
+            const models = getProviderMeta(s.providerId)?.models.map((m) => m.short).join(', ') ?? ''
+            get().applyAgentEvent(id, { kind: 'line', line: { type: 'sys', text: `Usage: /model <name>. Available: ${models}. Current: ${s.model}.` } })
+          }
           return
         }
         if (t === '/clear') {
@@ -1155,7 +1170,7 @@ export const useStore = create<AppState>((set, get) => {
         })
       })),
     toggleSessionNotify: (id) => {
-      set((st) => ({ sessions: st.sessions.map((s) => (s.id === id ? { ...s, notify: s.notify === false } : s)) }))
+      set((st) => ({ sessions: st.sessions.map((s) => (s.id === id ? { ...s, notify: !s.notify } : s)) }))
       persistSessions()
     },
     cycleSession: () => {
@@ -1727,11 +1742,21 @@ export const useStore = create<AppState>((set, get) => {
 
     selectSkill: (id) => set({ selectedSkillId: id }),
     newSkill: () => set({ skillEditorId: '__new__' }),
-    toggleSkill: (id) =>
-      set((st) => ({ skills: st.skills.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)) })),
+    toggleSkill: (id) => {
+      const st = get()
+      const sk = st.skills.find((s) => s.id === id)
+      if (!sk) return
+      const next = !sk.enabled
+      // Optimistic flip; the real state is the folder move on disk (so the CLI
+      // actually stops/starts loading it).
+      set((s) => ({ skills: s.skills.map((x) => (x.id === id ? { ...x, enabled: next } : x)) }))
+      const path = realPath()
+      if (path) void window.api?.skills.setEnabled(path, id, next).then((skills) => set({ skills })).catch(() => {})
+    },
     runSkill: (id) => {
       const st = get()
       const sk = st.skills.find((s) => s.id === id)
+      if (sk && !sk.enabled) return
       if (!sk) return
       set((s2) => ({ skills: s2.skills.map((s) => (s.id === id ? { ...s, invocations: s.invocations + 1 } : s)) }))
       // Spawn a structured session and actually invoke the skill (don't just open

@@ -1,0 +1,52 @@
+appId: com.valkeon.workbench
+productName: Valkeon Workbench
+
+directories:
+  # Icons / entitlements live here (build/icon.png, build/icon.icns, build/icon.ico).
+  # If absent, electron-builder falls back to the default Electron icon.
+  buildResources: build
+  output: dist
+
+# Ship the electron-vite output plus package.json; runtime dependencies in
+# `dependencies` (incl. native node-pty) are picked up automatically.
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+
+# node-pty ships native binaries + a spawn helper that must stay unpacked
+# (they can't run from inside the asar archive).
+asarUnpack:
+  - '**/node_modules/node-pty/**'
+
+win:
+  target:
+    - nsis
+  artifactName: ${name}-${version}-setup.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: ${productName}
+
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.developer-tools
+  # Unsigned for now: don't let electron-builder auto-pick a signing identity.
+  identity: null
+  artifactName: ${name}-${version}-${arch}.${ext}
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Development
+  maintainer: Valkeon
+  artifactName: ${name}-${version}.${ext}
+
+# Attach installers to the GitHub Release for the pushed tag (as a draft).
+publish:
+  provider: github

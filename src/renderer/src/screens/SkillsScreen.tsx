@@ -122,7 +122,7 @@ export function SkillsScreen() {
           <div style={{ fontSize: 11.5, color: '#a4a4ad', lineHeight: 1.6, fontFamily: "'Geist Mono', monospace", background: '#0c0c0f', border: '1px solid #1a1a1f', borderRadius: 9, padding: 13 }}>{selected.instructions}</div>
         </div>
         <div style={{ flexShrink: 0, borderTop: '1px solid #16161a', background: '#0b0b0e', padding: '12px 20px', display: 'flex', gap: 9 }}>
-          <Hover as="span" onClick={() => runSkill(selected.id)} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: 'var(--accent)', color: '#0a1018', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>Run now</Hover>
+          <Hover as="span" onClick={() => selected.enabled && runSkill(selected.id)} title={selected.enabled ? undefined : 'Enable the skill to run it'} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: 'var(--accent)', color: '#0a1018', fontSize: 12.5, fontWeight: 600, cursor: selected.enabled ? 'pointer' : 'not-allowed', opacity: selected.enabled ? 1 : 0.45 }} hover={selected.enabled ? { filter: 'brightness(1.08)' } : {}}>Run now</Hover>
           <Hover as="span" onClick={() => openSkillEditor(selected.id)} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: '#121216', border: '1px solid #232329', color: '#cbcbd2', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: '#17171c' }}>Edit</Hover>
         </div>
       </div>

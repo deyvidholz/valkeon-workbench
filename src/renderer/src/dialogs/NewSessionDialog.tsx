@@ -74,13 +74,22 @@ export function NewSessionDialog() {
         <Toggle on={form.worktree && !notRepo} onClick={() => !notRepo && setForm({ worktree: !form.worktree })} />
       </div>
 
-      <div onClick={() => setForm({ skipPerms: !form.skipPerms })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 13px', borderRadius: 10, background: '#100c0c', border: '1px solid #2a1a1a', cursor: 'pointer', marginBottom: 20 }}>
+      <div onClick={() => setForm({ skipPerms: !form.skipPerms })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 13px', borderRadius: 10, background: '#100c0c', border: '1px solid #2a1a1a', cursor: 'pointer', marginBottom: 12 }}>
         <Icon name="gpp_maybe" size={19} color="#e0a05b" />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, color: '#e4e4ea', fontWeight: 500 }}>Skip permission prompts</div>
           <div style={{ fontSize: 11, color: '#8a7a5e', marginTop: 2, fontFamily: "'Geist Mono', monospace" }}>--dangerously-skip-permissions</div>
         </div>
         <Toggle on={form.skipPerms} danger onClick={() => setForm({ skipPerms: !form.skipPerms })} />
+      </div>
+
+      <div onClick={() => setForm({ notify: !form.notify })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 13px', borderRadius: 10, background: '#0e0e12', border: '1px solid #1c1c22', cursor: 'pointer', marginBottom: 20 }}>
+        <Icon name="notifications_active" size={19} color="var(--accent-hi)" />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, color: '#e4e4ea', fontWeight: 500 }}>Notify me when it needs me</div>
+          <div style={{ fontSize: 11, color: '#6b6b74', marginTop: 2 }}>OS notification when a turn finishes or the agent asks something</div>
+        </div>
+        <Toggle on={form.notify} onClick={() => setForm({ notify: !form.notify })} />
       </div>
 
       <DialogActions onCancel={close} onConfirm={create} confirmLabel="Start session" confirmIcon="add" />

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { MouseEvent } from 'react'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -6,10 +7,22 @@ import { FileTree } from '../components/FileTree'
 import { CodeViewer } from '../components/CodeViewer'
 import type { FileNode } from '@shared/files'
 
-/** VS Code-style file explorer + read-only Monaco viewer for the project. */
+interface PromptCfg {
+  title: string
+  placeholder: string
+  initial: string
+  confirmLabel: string
+  onSubmit: (value: string) => void
+}
+
+const parentOf = (path: string): string => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '')
+
+/** VS Code-style file explorer + read-only Monaco viewer, with create/rename/delete. */
 export function CodeScreen() {
   const project = useStore((s) => s.project)
   const activeWorktreePath = useStore((s) => s.activeWorktreePath)
+  const openContextMenu = useStore((s) => s.openContextMenu)
+  const askConfirm = useStore((s) => s.askConfirm)
   const repoPath = activeWorktreePath ?? (project?.path && project.path.startsWith('/') ? project.path : null)
 
   const [tree, setTree] = useState<FileNode[] | null>(null)
@@ -17,21 +30,29 @@ export function CodeScreen() {
   const [selected, setSelected] = useState<string | null>(null)
   const [content, setContent] = useState('')
   const [state, setState] = useState<'idle' | 'loading' | 'binary'>('idle')
+  const [prompt, setPrompt] = useState<PromptCfg | null>(null)
+  const [promptValue, setPromptValue] = useState('')
+  const promptRef = useRef<HTMLInputElement>(null)
+
+  const reloadTree = (): void => {
+    if (!repoPath) return
+    void window.api?.files.tree(repoPath).then(setTree).catch(() => setTree([]))
+  }
 
   useEffect(() => {
     setTree(null)
     setSelected(null)
     setContent('')
-    if (!repoPath) return
-    let active = true
-    void window.api?.files
-      .tree(repoPath)
-      .then((t) => active && setTree(t))
-      .catch(() => active && setTree([]))
-    return () => {
-      active = false
-    }
+    reloadTree()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repoPath])
+
+  useEffect(() => {
+    if (prompt) {
+      setPromptValue(prompt.initial)
+      setTimeout(() => promptRef.current?.select(), 0)
+    }
+  }, [prompt])
 
   const openFile = (path: string): void => {
     if (!repoPath) return
@@ -58,6 +79,86 @@ export function CodeScreen() {
       return n
     })
 
+  const askName = (cfg: PromptCfg): void => setPrompt(cfg)
+  const join = (dir: string, name: string): string => (dir ? `${dir}/${name}` : name)
+
+  const createFileIn = (dir: string): void =>
+    askName({
+      title: 'New file',
+      placeholder: 'name.ext',
+      initial: '',
+      confirmLabel: 'Create',
+      onSubmit: (name) => {
+        if (!repoPath || !name) return
+        const path = join(dir, name)
+        void window.api?.files.createFile(repoPath, path).then(() => {
+          reloadTree()
+          if (dir) setExpanded((p) => new Set(p).add(dir))
+          openFile(path)
+        }).catch(() => {})
+      }
+    })
+
+  const createFolderIn = (dir: string): void =>
+    askName({
+      title: 'New folder',
+      placeholder: 'folder-name',
+      initial: '',
+      confirmLabel: 'Create',
+      onSubmit: (name) => {
+        if (!repoPath || !name) return
+        const path = join(dir, name)
+        void window.api?.files.createDir(repoPath, path).then(() => {
+          reloadTree()
+          setExpanded((p) => new Set(p).add(path))
+        }).catch(() => {})
+      }
+    })
+
+  const renameNode = (node: FileNode): void =>
+    askName({
+      title: `Rename ${node.dir ? 'folder' : 'file'}`,
+      placeholder: 'new name',
+      initial: node.name,
+      confirmLabel: 'Rename',
+      onSubmit: (name) => {
+        if (!repoPath || !name || name === node.name) return
+        const next = join(parentOf(node.path), name)
+        void window.api?.files.rename(repoPath, node.path, next).then(() => {
+          reloadTree()
+          if (selected === node.path) openFile(next)
+        }).catch(() => {})
+      }
+    })
+
+  const deleteNode = (node: FileNode): void =>
+    askConfirm({
+      title: `Delete ${node.dir ? 'folder' : 'file'}`,
+      message: `Delete “${node.name}”?${node.dir ? ' Everything inside it is removed.' : ''} This cannot be undone.`,
+      confirmLabel: 'Delete',
+      onConfirm: () => {
+        if (!repoPath) return
+        void window.api?.files.remove(repoPath, node.path).then(() => {
+          reloadTree()
+          if (selected === node.path) {
+            setSelected(null)
+            setContent('')
+          }
+        }).catch(() => {})
+      }
+    })
+
+  const onContext = (e: MouseEvent<HTMLElement>, node: FileNode): void => {
+    e.preventDefault()
+    const dir = node.dir ? node.path : parentOf(node.path)
+    openContextMenu(e.clientX, e.clientY, [
+      { label: 'New file', icon: 'note_add', onClick: () => createFileIn(dir) },
+      { label: 'New folder', icon: 'create_new_folder', onClick: () => createFolderIn(dir) },
+      { label: 'Rename', icon: 'edit', onClick: () => renameNode(node) },
+      { label: 'Delete', icon: 'delete_outline', danger: true, onClick: () => deleteNode(node) }
+    ])
+  }
+
   if (!repoPath) {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#6b6b74' }}>
@@ -68,15 +169,21 @@ export function CodeScreen() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100%', minHeight: 0 }}>
+    <div style={{ display: 'flex', height: '100%', minHeight: 0, position: 'relative' }}>
       <div style={{ width: 264, flexShrink: 0, borderRight: '1px solid #16161a', background: '#0a0a0c', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <div style={{ height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 7, padding: '0 14px', borderBottom: '1px solid #16161a' }}>
+        <div style={{ height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px 0 14px', borderBottom: '1px solid #16161a' }}>
           <Icon name="folder_open" size={16} color="#7c9bd0" />
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: '#cbcbd2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project?.name ?? 'Files'}</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: '#cbcbd2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginLeft: 3 }}>{project?.name ?? 'Files'}</span>
           <div style={{ flex: 1 }} />
-          <Hover as="span" title="Reload tree" onClick={() => repoPath && window.api?.files.tree(repoPath).then(setTree).catch(() => {})} style={{ display: 'flex', width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center', color: '#6f6f78', cursor: 'pointer' }} hover={{ background: '#16161d', color: '#cfcfd6' }}>
-            <Icon name="refresh" size={15} />
-          </Hover>
+          {[
+            { icon: 'note_add', title: 'New file', on: () => createFileIn('') },
+            { icon: 'create_new_folder', title: 'New folder', on: () => createFolderIn('') },
+            { icon: 'refresh', title: 'Reload', on: reloadTree }
+          ].map((b) => (
+            <Hover key={b.title} as="span" title={b.title} onClick={b.on} style={{ display: 'flex', width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center', color: '#6f6f78', cursor: 'pointer' }} hover={{ background: '#16161d', color: '#cfcfd6' }}>
+              <Icon name={b.icon} size={15} />
+            </Hover>
+          ))}
         </div>
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '6px 6px 16px' }}>
           {tree === null ? (
@@ -84,7 +191,7 @@ export function CodeScreen() {
           ) : tree.length === 0 ? (
             <div style={{ padding: 12, fontSize: 12, color: '#56565e' }}>Empty folder.</div>
           ) : (
-            <FileTree nodes={tree} selected={selected} expanded={expanded} onSelect={openFile} onToggle={toggle} />
+            <FileTree nodes={tree} selected={selected} expanded={expanded} onSelect={openFile} onToggle={toggle} onContext={onContext} />
           )}
         </div>
       </div>
@@ -107,6 +214,31 @@ export function CodeScreen() {
           )}
         </div>
       </div>
+
+      {prompt && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 120, background: 'rgba(4,4,6,0.55)' }}>
+          <div onClick={() => setPrompt(null)} style={{ position: 'absolute', inset: 0 }} />
+          <div style={{ position: 'relative', width: 380, background: '#0e0e12', border: '1px solid #25252d', borderRadius: 12, padding: 16, boxShadow: '0 24px 70px rgba(0,0,0,0.6)' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#ededf0', marginBottom: 10 }}>{prompt.title}</div>
+            <input
+              ref={promptRef}
+              value={promptValue}
+              onChange={(e) => setPromptValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { const v = promptValue.trim(); setPrompt(null); if (v) prompt.onSubmit(v) }
+                if (e.key === 'Escape') setPrompt(null)
+              }}
+              placeholder={prompt.placeholder}
+              autoFocus
+              style={{ width: '100%', background: '#0a0a0c', border: '1px solid #2a2a32', borderRadius: 8, padding: '9px 11px', color: '#e4e4ea', fontSize: 13, fontFamily: "'Geist Mono', monospace" }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 9, marginTop: 13 }}>
+              <Hover as="span" onClick={() => setPrompt(null)} style={{ padding: '7px 13px', borderRadius: 8, color: '#9a9aa3', fontSize: 12.5, cursor: 'pointer' }} hover={{ background: '#16161c' }}>Cancel</Hover>
+              <Hover as="span" onClick={() => { const v = promptValue.trim(); setPrompt(null); if (v) prompt.onSubmit(v) }} style={{ padding: '7px 15px', borderRadius: 8, background: 'var(--accent)', color: '#0a1018', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>{prompt.confirmLabel}</Hover>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -15,6 +15,9 @@ const TAG_FOR = (name: string): string => {
 }
 
 const skillsDir = (repoPath: string): string => join(repoPath, '.claude', 'skills')
+// Disabled skills are MOVED here so the agent CLI (which only loads .claude/skills)
+// no longer sees them; re-enabling moves them back.
+const disabledDir = (repoPath: string): string => join(repoPath, '.claude', 'skills-disabled')
 
 /**
  * Install Valkeon's own `vw-*` skills into `.claude/skills/` (where the agent CLI
@@ -38,13 +41,23 @@ export async function ensureBuiltinSkills(repoPath: string): Promise<void> {
   for (const s of BUILTIN_SKILLS) {
     const dir = join(skillsDir(repoPath), s.id)
     const file = join(dir, 'SKILL.md')
-    let exists = true
+    // Present (in either state) → don't recreate (recreating a disabled skill
+    // would silently re-enable it).
+    let existsEnabled = true
     try {
       await fs.access(file)
     } catch {
-      exists = false
+      existsEnabled = false
     }
-    if (!exists || refresh) {
+    let existsDisabled = false
+    try {
+      await fs.access(join(disabledDir(repoPath), s.id, 'SKILL.md'))
+      existsDisabled = true
+    } catch {
+      existsDisabled = false
+    }
+    // Refresh only touches the enabled copy in place; never resurrect a disabled one.
+    if ((!existsEnabled && !existsDisabled) || (refresh && existsEnabled)) {
       await fs.mkdir(dir, { recursive: true })
       await fs.writeFile(file, s.content, 'utf8')
     }
@@ -56,24 +69,19 @@ export async function ensureBuiltinSkills(repoPath: string): Promise<void> {
   }
 }
 
-export async function listSkills(repoPath: string): Promise<Skill[]> {
-  await ensureBuiltinSkills(repoPath).catch(() => {})
-
+async function readSkillsFrom(dir: string, enabled: boolean): Promise<Skill[]> {
   let names: string[] = []
   try {
-    names = (await fs.readdir(skillsDir(repoPath), { withFileTypes: true }))
-      .filter((e) => e.isDirectory())
-      .map((e) => e.name)
+    names = (await fs.readdir(dir, { withFileTypes: true })).filter((e) => e.isDirectory()).map((e) => e.name)
   } catch {
     return []
   }
-
   const skills: Skill[] = []
   for (const name of names.sort()) {
     let fm: Record<string, unknown> = {}
     let instructions = ''
     try {
-      const raw = (await fs.readFile(join(skillsDir(repoPath), name, 'SKILL.md'), 'utf8')).replace(/\r\n/g, '\n')
+      const raw = (await fs.readFile(join(dir, name, 'SKILL.md'), 'utf8')).replace(/\r\n/g, '\n')
       const m = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(raw)
       if (m) {
         fm = (yaml.load(m[1]) as Record<string, unknown>) ?? {}
@@ -91,7 +99,7 @@ export async function listSkills(repoPath: string): Promise<Skill[]> {
       desc: typeof fm.description === 'string' ? fm.description : 'No description provided.',
       tag: typeof fm.tag === 'string' ? fm.tag : TAG_FOR(name),
       trigger: fm.trigger === 'auto' ? 'auto' : 'manual',
-      enabled: true,
+      enabled,
       invocations: 0,
       icon: 'auto_awesome',
       touches: Array.isArray(fm.touches) ? fm.touches.map(String) : [],
@@ -100,6 +108,29 @@ export async function listSkills(repoPath: string): Promise<Skill[]> {
     })
   }
   return skills
+}
+
+export async function listSkills(repoPath: string): Promise<Skill[]> {
+  await ensureBuiltinSkills(repoPath).catch(() => {})
+  const [enabled, disabled] = await Promise.all([
+    readSkillsFrom(skillsDir(repoPath), true),
+    readSkillsFrom(disabledDir(repoPath), false)
+  ])
+  return [...enabled, ...disabled].sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/** Move a skill between `.claude/skills` (enabled) and `.claude/skills-disabled`. */
+export async function setSkillEnabled(repoPath: string, id: string, enabled: boolean): Promise<Skill[]> {
+  const safe = safeSegment('skillId', id)
+  const from = join(enabled ? disabledDir(repoPath) : skillsDir(repoPath), safe)
+  const to = join(enabled ? skillsDir(repoPath) : disabledDir(repoPath), safe)
+  try {
+    await fs.mkdir(join(to, '..'), { recursive: true })
+    await fs.rename(from, to)
+  } catch {
+    // already in the target state / missing — ignore and just re-list
+  }
+  return listSkills(repoPath)
 }
 
 export async function saveSkill(repoPath: string, save: SkillSave): Promise<Skill[]> {

@@ -108,7 +108,13 @@ export function ReviewWindow() {
         <div style={{ width: 230, flexShrink: 0, borderRight: '1px solid #16161a', background: '#0a0a0c', overflowY: 'auto', padding: '8px 8px 16px' }}>
           <div style={{ fontSize: 10.5, color: '#62626b', letterSpacing: '0.06em', padding: '6px 8px' }}>CHANGED FILES {files ? `· ${files.length}` : ''}</div>
           {files === null && <div style={{ padding: 10, fontSize: 12, color: '#56565e' }}>Loading diff…</div>}
-          {files?.length === 0 && <div style={{ padding: 10, fontSize: 12, color: '#56565e' }}>No uncommitted changes to review.</div>}
+          {files?.length === 0 && (
+            <div style={{ padding: 10, fontSize: 11.5, color: '#56565e', lineHeight: 1.5 }}>
+              No uncommitted changes to review in
+              <div style={{ fontFamily: "'Geist Mono', monospace", color: '#73737c', marginTop: 4, wordBreak: 'break-all' }}>{cwd ?? '(no working tree)'}</div>
+              <div style={{ marginTop: 6 }}>The agent may not have edited files, or the changes are elsewhere.</div>
+            </div>
+          )}
           {files?.map((f) => {
             const on = f.path === selected
             const cCount = comments.filter((c) => c.file === f.path).length

@@ -251,6 +251,9 @@ export function WorkspaceScreen() {
                   </span>
                 )
               })}
+              <Hover as="span" onClick={openNewSession} title="New session" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, color: 'var(--accent-hi)', cursor: 'pointer', flexShrink: 0 }} hover={{ background: '#15151b' }}>
+                <Icon name="add" size={17} />
+              </Hover>
             </div>
             <div style={{ flex: 1, minHeight: 0 }}>{active && <SessionCard session={active} />}</div>
           </div>

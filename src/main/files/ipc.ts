@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { promises as fs } from 'node:fs'
-import { join, resolve, sep, posix } from 'node:path'
+import { join, resolve, dirname, basename, sep, posix } from 'node:path'
 import { simpleGit } from 'simple-git'
 import { IpcChannels } from '@shared/ipc'
 import type { FileNode, FileContent, DiffFile, DiffStatus } from '@shared/files'
@@ -48,7 +48,27 @@ async function buildTree(repoRoot: string, relDir: string, depth: number, budget
   return [...dirs, ...files]
 }
 
-/** File tree + read + review-diff for the IDE. `repoPath` is untrusted → allowlisted. */
+// App/VCS state the user must not mutate through the IDE.
+const PROTECTED = ['.git', '.valkeon']
+const isProtected = (rel: string): boolean => {
+  const p = toPosix(rel)
+  return PROTECTED.some((d) => p === d || p.startsWith(`${d}/`))
+}
+
+/**
+ * Resolve a NEW path for writing: its parent must exist inside the (canonical)
+ * repo, and the leaf can't escape. Returns the absolute target.
+ */
+async function resolveForWrite(repo: string, relPath: string): Promise<string> {
+  if (isProtected(relPath)) throw new Error('protected path')
+  const realRepo = await fs.realpath(repo)
+  const abs = resolve(realRepo, relPath)
+  const realParent = await fs.realpath(dirname(abs))
+  const target = join(realParent, basename(abs))
+  return assertInside(realRepo, target)
+}
+
+/** File tree + read + review-diff + create/rename/delete for the IDE. `repoPath` untrusted → allowlisted. */
 export function registerFilesIpc(globalStore: GlobalStore): void {
   const guard = (repoPath: string): string => assertAllowedRepo(globalStore, repoPath)
 
@@ -111,5 +131,37 @@ export function registerFilesIpc(globalStore: GlobalStore): void {
       out.push({ path, status: st, oldContent, newContent })
     }
     return out
+  })
+
+  ipcMain.handle(IpcChannels.fileCreate, async (_e, repoPath: string, relPath: string): Promise<boolean> => {
+    const target = await resolveForWrite(guard(repoPath), relPath)
+    await fs.writeFile(target, '', { flag: 'wx' }) // wx → fail if it already exists
+    return true
+  })
+
+  ipcMain.handle(IpcChannels.dirCreate, async (_e, repoPath: string, relPath: string): Promise<boolean> => {
+    const target = await resolveForWrite(guard(repoPath), relPath)
+    await fs.mkdir(target, { recursive: false })
+    return true
+  })
+
+  ipcMain.handle(IpcChannels.fileRename, async (_e, repoPath: string, oldRel: string, newRel: string): Promise<boolean> => {
+    const repo = guard(repoPath)
+    if (isProtected(oldRel) || isProtected(newRel)) throw new Error('protected path')
+    const realRepo = await fs.realpath(repo)
+    const from = assertInside(realRepo, await fs.realpath(resolve(realRepo, oldRel)))
+    const to = await resolveForWrite(repo, newRel)
+    await fs.rename(from, to)
+    return true
+  })
+
+  ipcMain.handle(IpcChannels.fileDelete, async (_e, repoPath: string, relPath: string): Promise<boolean> => {
+    const repo = guard(repoPath)
+    if (isProtected(relPath)) throw new Error('protected path')
+    const realRepo = await fs.realpath(repo)
+    const abs = assertInside(realRepo, await fs.realpath(resolve(realRepo, relPath)))
+    if (abs === realRepo) throw new Error('cannot delete the repo root')
+    await fs.rm(abs, { recursive: true, force: true })
+    return true
   })
 }

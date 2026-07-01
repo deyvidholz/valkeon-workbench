@@ -49,6 +49,7 @@ export const IpcChannels = {
   shellOpenPath: 'shell:open-path',
   skillsList: 'skills:list',
   skillsSave: 'skills:save',
+  skillsSetEnabled: 'skills:set-enabled',
   historyLoad: 'history:load',
   historySave: 'history:save',
   sessionsLoad: 'sessions:load',
@@ -57,6 +58,10 @@ export const IpcChannels = {
   notifyClicked: 'notify:clicked',
   filesTree: 'files:tree',
   fileRead: 'files:read',
+  fileCreate: 'files:create',
+  dirCreate: 'files:dir-create',
+  fileRename: 'files:rename',
+  fileDelete: 'files:delete',
   gitDiff: 'git:diff',
   menuAction: 'menu:action',
   menuOpenedProject: 'menu:opened-project'

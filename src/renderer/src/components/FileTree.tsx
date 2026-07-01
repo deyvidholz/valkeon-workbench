@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { FileNode } from '@shared/files'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -22,9 +23,10 @@ interface FileTreeProps {
   expanded: Set<string>
   onSelect: (path: string) => void
   onToggle: (path: string) => void
+  onContext?: (e: MouseEvent<HTMLElement>, node: FileNode) => void
 }
 
-export function FileTree({ nodes, depth = 0, selected, expanded, onSelect, onToggle }: FileTreeProps) {
+export function FileTree({ nodes, depth = 0, selected, expanded, onSelect, onToggle, onContext }: FileTreeProps) {
   return (
     <>
       {nodes.map((n) => {
@@ -35,6 +37,7 @@ export function FileTree({ nodes, depth = 0, selected, expanded, onSelect, onTog
             <div key={n.path}>
               <Hover
                 onClick={() => onToggle(n.path)}
+                onContextMenu={onContext ? (e) => onContext(e, n) : undefined}
                 style={{ display: 'flex', alignItems: 'center', gap: 5, padding: `4px 8px 4px ${pad}px`, borderRadius: 6, cursor: 'pointer', color: '#b7b7c0', fontSize: 12.5, whiteSpace: 'nowrap' }}
                 hover={{ background: '#141419' }}
               >
@@ -43,7 +46,7 @@ export function FileTree({ nodes, depth = 0, selected, expanded, onSelect, onTog
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.name}</span>
               </Hover>
               {open && n.children && n.children.length > 0 && (
-                <FileTree nodes={n.children} depth={depth + 1} selected={selected} expanded={expanded} onSelect={onSelect} onToggle={onToggle} />
+                <FileTree nodes={n.children} depth={depth + 1} selected={selected} expanded={expanded} onSelect={onSelect} onToggle={onToggle} onContext={onContext} />
               )}
             </div>
           )
@@ -53,6 +56,7 @@ export function FileTree({ nodes, depth = 0, selected, expanded, onSelect, onTog
           <Hover
             key={n.path}
             onClick={() => onSelect(n.path)}
+            onContextMenu={onContext ? (e) => onContext(e, n) : undefined}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: `4px 8px 4px ${pad + 16}px`, borderRadius: 6, cursor: 'pointer', color: on ? '#ededf0' : '#9a9aa3', background: on ? '#15151c' : 'transparent', fontSize: 12.5, whiteSpace: 'nowrap' }}
             hover={on ? undefined : { background: '#111116' }}
           >
