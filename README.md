@@ -65,7 +65,57 @@ Adding another AI = add a metadata entry + an adapter. The UI picks it up automa
 
 ---
 
-## Getting started
+## Installation
+
+Download the installer for your platform from the [**Releases**](../../releases) page.
+
+> Sessions and terminals run **on the machine the app runs on**, and Valkeon looks for the `claude` CLI on that machine's `PATH`. So run it where your dev environment lives — natively on Windows/macOS/Linux, or **inside WSL** if that's where your code, `git`, and `claude` are (see below).
+
+### Windows
+
+Download and run `valkeon-workbench-<version>-setup.exe`. Because the build isn't code-signed yet, SmartScreen may warn — choose **More info → Run anyway**.
+
+### macOS
+
+Download the `.dmg`, open it, and drag **Valkeon Workbench** to Applications. It's unsigned for now, so the first launch needs **right-click → Open** (or *System Settings → Privacy & Security → Open Anyway*).
+
+### Linux
+
+Install the `.deb` (Debian/Ubuntu) or run the portable `.AppImage`:
+
+```bash
+sudo apt install ./valkeon-workbench-<version>.deb   # adds a `valkeon-workbench` command
+# or:
+chmod +x valkeon-workbench-<version>.AppImage && ./valkeon-workbench-<version>.AppImage
+```
+
+### WSL Ubuntu (run inside WSL from Windows)
+
+If your code, `git`, and the `claude` CLI live in WSL, run Valkeon **inside WSL** so its terminals are `bash`, git operates on the Linux checkout, and `claude` resolves there. On **Windows 11** (or a recent Windows 10 with WSLg) the window renders on your Windows desktop automatically — no X-server setup.
+
+One-line install (downloads the latest `.deb`, installs it, and adds the `valkeon` CLI):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/deyvidholz/valkeon-workbench/main/scripts/install-wsl.sh | bash
+```
+
+Notes for WSL:
+- The `valkeon` wrapper adds `--no-sandbox` automatically (the Chromium sandbox can't initialize under WSL).
+- If nothing appears, update WSL (`wsl --update` in Windows PowerShell) so WSLg is present.
+
+### The `valkeon` CLI
+
+Once installed on Linux/WSL, launch the app and open projects straight from the shell — each call opens **its own window**, so you can work on several directories at once:
+
+```bash
+valkeon              # open the workbench (home screen)
+valkeon .            # open the current directory as a project
+valkeon ~/work/api   # open a specific project
+```
+
+---
+
+## Development
 
 ### Prerequisites
 

@@ -19,9 +19,16 @@ files:
 asarUnpack:
   - '**/node_modules/node-pty/**'
 
+# Ship the `valkeon` CLI wrapper alongside the app so the installer can copy it
+# onto PATH (resources/bin/valkeon in the packaged app).
+extraResources:
+  - from: bin/valkeon
+    to: bin/valkeon
+
 win:
   target:
     - nsis
+  executableName: Valkeon Workbench
   artifactName: ${name}-${version}-setup.${ext}
 
 nsis:
@@ -40,9 +47,12 @@ mac:
   artifactName: ${name}-${version}-${arch}.${ext}
 
 linux:
+  # `deb` installs to /opt and creates a `valkeon-workbench` symlink on PATH,
+  # which the `valkeon` CLI wrapper calls. AppImage is the portable fallback.
   target:
     - AppImage
     - deb
+  executableName: valkeon-workbench
   category: Development
   maintainer: Valkeon
   artifactName: ${name}-${version}.${ext}

@@ -141,6 +141,10 @@ export function App() {
         st.askConfirm({ title: 'Close project', message: 'Go back to the home screen? Running sessions and terminals will be closed.', confirmLabel: 'Close project', onConfirm: st.closeProject })
     })
     const offOpened = window.api?.menu.onOpenedProject((p) => useStore.getState().openProject(p))
+    // Open a project passed on the command line (`valkeon <path>`), if any.
+    void window.api?.cli?.pendingProject().then((p) => {
+      if (p) useStore.getState().openProject(p)
+    })
     return () => {
       offAction?.()
       offOpened?.()

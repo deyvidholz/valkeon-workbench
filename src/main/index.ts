@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, session, shell, Notification, nativeImage } from 'electron'
-import { join, basename } from 'node:path'
+import { join, basename, isAbsolute, resolve } from 'node:path'
+import { statSync } from 'node:fs'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { IpcChannels, type OpenedProject, type CloneResult, type NotifyRequest } from '@shared/ipc'
@@ -161,6 +162,47 @@ async function readBranch(dir: string): Promise<string> {
   }
 }
 
+// A project passed on the command line (`valkeon <path>`), resolved once at
+// startup and handed to the renderer when it asks (pull, so there's no race
+// with the renderer registering its listeners). Multi-instance: each launched
+// process parses its own argv, so every `valkeon <path>` opens its own window.
+let pendingCliProject: OpenedProject | null = null
+
+/**
+ * Extract a project directory from the process argv, resolved against the
+ * launching shell's cwd. Packaged builds get `[exe, ...args]`; dev gets
+ * `[electron, mainScript, ...args]`. We take the first non-flag argument.
+ */
+function projectPathFromArgv(argv: string[]): string | null {
+  const args = argv.slice(app.isPackaged ? 1 : 2)
+  for (const arg of args) {
+    if (!arg || arg.startsWith('-')) continue
+    return isAbsolute(arg) ? arg : resolve(process.cwd(), arg)
+  }
+  return null
+}
+
+/** Resolve a CLI path into an OpenedProject, recording it as a recent. */
+async function resolveCliProject(cliPath: string): Promise<OpenedProject | null> {
+  try {
+    if (!statSync(cliPath).isDirectory()) {
+      console.warn(`[valkeon] CLI path is not a directory: ${cliPath}`)
+      return null
+    }
+  } catch {
+    console.warn(`[valkeon] CLI path does not exist: ${cliPath}`)
+    return null
+  }
+  const project: OpenedProject = {
+    path: cliPath,
+    name: basename(cliPath),
+    branch: await readBranch(cliPath),
+    isGitRepo: await isGitRepo(cliPath)
+  }
+  await globalStore.addRecent({ ...project, sessions: 0, lastOpened: new Date().toISOString() })
+  return project
+}
+
 /** Show the open-folder dialog, record the recent, and return the project. */
 async function runOpenProjectDialog(): Promise<OpenedProject | null> {
   if (!mainWindow) return null
@@ -196,6 +238,13 @@ function registerIpc(): void {
   ipcMain.handle(IpcChannels.windowIsMaximized, () => mainWindow?.isMaximized() ?? false)
 
   ipcMain.handle(IpcChannels.dialogOpenProject, () => runOpenProjectDialog())
+
+  // The renderer pulls any `valkeon <path>` project once, on startup.
+  ipcMain.handle(IpcChannels.cliPendingProject, () => {
+    const project = pendingCliProject
+    pendingCliProject = null
+    return project
+  })
 
   ipcMain.handle(IpcChannels.agentsList, () => listProviderStatus())
 
@@ -268,6 +317,11 @@ app.whenReady().then(async () => {
 
   globalStore = new GlobalStore(join(app.getPath('userData'), 'valkeon.json'))
   await globalStore.init()
+
+  // Resolve a project passed on the command line (`valkeon <path>`) before the
+  // window loads, so the renderer can open straight into it.
+  const cliPath = projectPathFromArgv(process.argv)
+  if (cliPath) pendingCliProject = await resolveCliProject(cliPath)
 
   const webContentsFor = (): Electron.WebContents | null =>
     mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null

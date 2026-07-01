@@ -51,6 +51,11 @@ const api = {
   },
   openProject: (): Promise<OpenedProject | null> =>
     ipcRenderer.invoke(IpcChannels.dialogOpenProject),
+  cli: {
+    // Any project passed as `valkeon <path>`, consumed once on startup.
+    pendingProject: (): Promise<OpenedProject | null> =>
+      ipcRenderer.invoke(IpcChannels.cliPendingProject)
+  },
   agents: {
     list: (): Promise<ProviderStatus[]> => ipcRenderer.invoke(IpcChannels.agentsList)
   },

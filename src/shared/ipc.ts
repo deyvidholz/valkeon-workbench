@@ -18,6 +18,7 @@ export const IpcChannels = {
   windowCloseRequested: 'window:close-requested',
   windowConfirmClose: 'window:confirm-close',
   dialogOpenProject: 'dialog:open-project',
+  cliPendingProject: 'cli:pending-project',
   agentsList: 'agents:list',
   settingsGet: 'settings:get',
   settingsSet: 'settings:set',
