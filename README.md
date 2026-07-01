@@ -18,6 +18,18 @@ The workspace with running sessions, and the new-session dialog (model, interact
 
 ![New session dialog over an active workspace](docs/screenshots/new-session.png)
 
+Multiple agent sessions side by side in a grid — each with live transcript, tool calls, and status:
+
+![Sessions grid — several agents running at once](docs/screenshots/sessions.png)
+
+The planning Kanban — markdown cards across columns, with per-card **Start task** / **Review diff** and AI card generation:
+
+![Kanban board with cards across Backlog, To Do, In Progress, In Review and Done](docs/screenshots/kanban.png)
+
+Skills manager — enable/disable reusable agent skills, inspect triggers and instructions, and run or edit them:
+
+![Skills manager with a skill's details panel open](docs/screenshots/skills-manager.png)
+
 ---
 
 ## Highlights
