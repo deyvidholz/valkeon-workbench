@@ -49,11 +49,12 @@ get checked off as they land. (Author: Claude, at the user's direction.)
       with the new flag, preserving context. Surface as buttons too (model picker already exists).
 - [ ] `/clear` → fresh session (new context); `/compact` → compaction request if supported.
 
-## Phase D — card dialog Save button + Start-task gating
+## Phase D — card dialog Save button + Start-task gating ✅
 
-- [ ] Card dialog: replace autosave with an explicit **Save** (fixed footer), like Settings.
-- [ ] **"Start task" disabled until the card is saved** (created). Close-without-save discards
-      the new draft (reuses the existing draft-discard logic).
+- [x] Card dialog: title + body edited as a local **draft**; explicit **Save card** in a fixed
+      footer (with a Saved/Unsaved indicator). No more per-keystroke autosave.
+- [x] **"Start task" disabled until the card is saved** (has a real title, no unsaved changes).
+      Close-without-save discards an unsaved new card via the existing draft-discard logic.
 
 ## Phase E — Monaco IDE + review (the big one)
 

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -40,7 +41,27 @@ export function CardDrawer() {
 
   const board = boards.find((b) => b.id === activeBoardId) ?? boards.find((b) => b.wsId === wsId)
   const card: Card | undefined = board?.cards.find((c) => c.id === drawerCardId)
+
+  // Title/body are edited as a local draft and only written on Save (no autosave).
+  const [dTitle, setDTitle] = useState('')
+  const [dBody, setDBody] = useState('')
+  useEffect(() => {
+    if (card) {
+      setDTitle(card.title)
+      setDBody(card.body)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawerCardId])
+
   if (!drawerCardId || !board || !card) return null
+
+  const dirty = dTitle !== card.title || dBody !== card.body
+  const titleOk = dTitle.trim() !== '' && dTitle.trim() !== 'New card'
+  const saved = titleOk && !dirty
+  const save = (): void => {
+    if (!titleOk) return
+    updateCard(card.id, { title: dTitle.trim(), body: dBody })
+  }
 
   const colColor = COL_COLOR[card.column]
   const colName = board.columns.find((c) => c.id === card.column)?.name ?? card.column
@@ -79,7 +100,7 @@ export function CardDrawer() {
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '18px 18px 26px' }}>
-          <input value={card.title} onChange={(e) => updateCard(card.id, { title: e.target.value })} style={{ width: '100%', background: 'transparent', border: 'none', color: '#f1f1f4', fontSize: 18, fontWeight: 600, marginBottom: 12 }} />
+          <input value={dTitle} onChange={(e) => setDTitle(e.target.value)} placeholder="Card title" style={{ width: '100%', background: 'transparent', border: 'none', color: '#f1f1f4', fontSize: 18, fontWeight: 600, marginBottom: 12 }} />
 
           <div style={{ position: 'relative', marginBottom: 18 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
@@ -153,18 +174,20 @@ export function CardDrawer() {
             </div>
           ) : (
             <div style={{ marginBottom: 20 }}>
-              <Hover as="span" onClick={() => startTask(card.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 10, borderRadius: 9, background: 'var(--accent)', color: '#0a1018', fontSize: 13, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>
+              <Hover as="span" onClick={() => saved && startTask(card.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 10, borderRadius: 9, background: 'var(--accent)', color: '#0a1018', fontSize: 13, fontWeight: 600, cursor: saved ? 'pointer' : 'not-allowed', opacity: saved ? 1 : 0.45 }} hover={saved ? { filter: 'brightness(1.08)' } : {}}>
                 <Icon name="rocket_launch" size={17} />Start task
               </Hover>
-              <div style={{ fontSize: 11, color: '#56565e', marginTop: 7, textAlign: 'center' }}>Creates a branch + worktree and hands the card to the agent</div>
+              <div style={{ fontSize: 11, color: '#56565e', marginTop: 7, textAlign: 'center' }}>
+                {saved ? 'Creates a branch + worktree and hands the card to the agent' : 'Save the card first to start a task'}
+              </div>
             </div>
           )}
 
           <div style={{ fontSize: 10.5, color: '#62626b', letterSpacing: '0.06em', marginBottom: 8 }}>DESCRIPTION</div>
           <MarkdownEditor
             key={card.id}
-            value={card.body}
-            onChange={(v) => updateCard(card.id, { body: v })}
+            value={dBody}
+            onChange={setDBody}
             placeholder="Write the task in markdown…  **bold**  *italic*  - [ ] todo  ```mermaid …"
           />
 
@@ -202,6 +225,17 @@ export function CardDrawer() {
               </div>
             </>
           )}
+        </div>
+
+        <div style={{ flexShrink: 0, borderTop: '1px solid #16161a', background: '#0b0b0e', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 11 }}>
+          <span style={{ fontSize: 11.5, color: dirty ? '#e0b15e' : titleOk ? '#5cc98a' : '#56565e' }}>
+            {dirty ? 'Unsaved changes' : titleOk ? 'Saved' : 'Add a title to save'}
+          </span>
+          <div style={{ flex: 1 }} />
+          <Hover as="span" onClick={closeDrawer} style={{ padding: '8px 14px', borderRadius: 8, color: '#9a9aa3', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: '#16161c' }}>Close</Hover>
+          <Hover as="span" onClick={() => (titleOk && dirty ? save() : undefined)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', borderRadius: 8, background: 'var(--accent)', color: '#0a1018', fontSize: 12.5, fontWeight: 600, cursor: titleOk && dirty ? 'pointer' : 'not-allowed', opacity: titleOk && dirty ? 1 : 0.5 }} hover={titleOk && dirty ? { filter: 'brightness(1.08)' } : {}}>
+            <Icon name="check" size={16} />Save card
+          </Hover>
         </div>
       </div>
     </div>
