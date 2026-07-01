@@ -8,6 +8,18 @@ It ships with **Claude Code** as the first supported agent, but the agent layer 
 
 ---
 
+## Screenshots
+
+Open a project — recent projects, plus open-folder and clone-from-git:
+
+![Home screen — open or clone a project](docs/screenshots/home.png)
+
+The workspace with running sessions, and the new-session dialog (model, interactive vs. structured mode, optional worktree, skip-permissions, and turn-completion notifications):
+
+![New session dialog over an active workspace](docs/screenshots/new-session.png)
+
+---
+
 ## Highlights
 
 - **AI sessions** — run agents in either *structured* mode (rich, telemetry-driven status: running / waiting / idle, active-time tracking, OS notifications on turn completion) or *interactive* mode (a raw xterm PTY). Sessions persist and **resume** on reopen.
