@@ -22,3 +22,6 @@ Fonts: Geist (UI), Geist Mono (code/paths/chips), Material Symbols Rounded (icon
 
 ## Working style
 Match the hifi visuals closely. Build incrementally (shell → launcher → workspace → board → the rest) and pause for review at milestones. Ask before adding UI not present in the design.
+
+## Commits
+Do **not** add a `Co-Authored-By` trailer (or any "Generated with Claude" attribution) to commit messages. Keep messages to the change itself.
