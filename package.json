@@ -20,12 +20,14 @@
     "postinstall": "electron-rebuild -f -w node-pty"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-web-links": "^0.11.0",
     "@xterm/xterm": "^5.5.0",
     "fractional-indexing": "^3.2.0",
     "js-yaml": "^4.1.0",
     "mermaid": "^11.6.0",
+    "monaco-editor": "^0.52.2",
     "node-pty": "^1.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

@@ -23,7 +23,10 @@ import {
   type AgentEventPayload,
   type ContextBuildRequest,
   type ContextBuildResult,
-  type NotifyRequest
+  type NotifyRequest,
+  type FileNode,
+  type FileContent,
+  type DiffFile
 } from '@shared/ipc'
 
 const api = {
@@ -136,6 +139,12 @@ const api = {
   context: {
     build: (req: ContextBuildRequest): Promise<ContextBuildResult> =>
       ipcRenderer.invoke(IpcChannels.contextBuild, req)
+  },
+  files: {
+    tree: (repoPath: string): Promise<FileNode[]> => ipcRenderer.invoke(IpcChannels.filesTree, repoPath),
+    read: (repoPath: string, relPath: string): Promise<FileContent> =>
+      ipcRenderer.invoke(IpcChannels.fileRead, repoPath, relPath),
+    diff: (repoPath: string): Promise<DiffFile[]> => ipcRenderer.invoke(IpcChannels.gitDiff, repoPath)
   },
   notify: {
     show: (req: NotifyRequest): void => ipcRenderer.send(IpcChannels.notifyShow, req),

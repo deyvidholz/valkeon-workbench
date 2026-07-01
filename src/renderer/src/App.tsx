@@ -13,6 +13,7 @@ import { SessionScreen } from './screens/SessionScreen'
 import { TerminalsScreen } from './screens/TerminalsScreen'
 import { BoardScreen } from './screens/BoardScreen'
 import { WorktreesScreen } from './screens/WorktreesScreen'
+import { CodeScreen } from './screens/CodeScreen'
 import { HistoryScreen } from './screens/HistoryScreen'
 import { SkillsScreen } from './screens/SkillsScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
@@ -41,6 +42,8 @@ function MainView({ view }: { view: ViewId }) {
       return <BoardScreen />
     case 'worktrees':
       return <WorktreesScreen />
+    case 'code':
+      return <CodeScreen />
     case 'history':
       return <HistoryScreen />
     case 'skills':

@@ -6,6 +6,7 @@ import type { WorktreeInfo } from './git'
 import type { Skill, SkillSave } from './skills'
 import type { AgentEvent, AgentSessionSpec } from './agents/types'
 import type { ContextBuildRequest, ContextBuildResult } from './context'
+import type { FileNode, FileContent, DiffFile } from './files'
 
 /** Channel names shared by main, preload, and (via the typed bridge) renderer. */
 export const IpcChannels = {
@@ -54,6 +55,9 @@ export const IpcChannels = {
   sessionsSave: 'sessions:save',
   notifyShow: 'notify:show',
   notifyClicked: 'notify:clicked',
+  filesTree: 'files:tree',
+  fileRead: 'files:read',
+  gitDiff: 'git:diff',
   menuAction: 'menu:action',
   menuOpenedProject: 'menu:opened-project'
 } as const
@@ -130,5 +134,8 @@ export type {
   AgentEvent,
   AgentSessionSpec,
   ContextBuildRequest,
-  ContextBuildResult
+  ContextBuildResult,
+  FileNode,
+  FileContent,
+  DiffFile
 }

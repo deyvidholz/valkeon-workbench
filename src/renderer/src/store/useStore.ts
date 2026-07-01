@@ -745,6 +745,10 @@ export const useStore = create<AppState>((set, get) => {
     },
 
     closeProject: () => {
+      // Cancel pending debounced writes — otherwise they'd fire after we clear
+      // state below and overwrite the persisted sessions/history with empties.
+      if (sessionsTimer) { clearTimeout(sessionsTimer); sessionsTimer = null }
+      if (historyTimer) { clearTimeout(historyTimer); historyTimer = null }
       const st = get()
       st.sessions.forEach((s) =>
         s.mode === 'structured' ? window.api?.agent.dispose(s.id) : killPty(`${s.id}:${st.ptyNonce[s.id] ?? 0}`)
@@ -939,8 +943,22 @@ export const useStore = create<AppState>((set, get) => {
       set((st) => ({ sessions: st.sessions.map((s) => (s.id === id ? { ...s, initialPrompt: undefined } : s)) })),
     applyAgentEvent: (id, event) => {
       if (event.kind === 'exit') {
-        // The agent process ended — mark done; the user closes it explicitly.
-        set((st) => ({ sessions: st.sessions.map((s) => (s.id === id ? { ...s, status: 'done', live: false } : s)) }))
+        // The agent process ended — mark done. If it died mid-turn, bank the
+        // in-flight active slice and clear runStartedAt so "Active for" stops.
+        const now = Date.now()
+        set((st) => ({
+          sessions: st.sessions.map((s) =>
+            s.id === id
+              ? {
+                  ...s,
+                  status: 'done',
+                  live: false,
+                  activeMs: s.runStartedAt != null ? (s.activeMs ?? 0) + (now - s.runStartedAt) : s.activeMs,
+                  runStartedAt: undefined
+                }
+              : s
+          )
+        }))
         persistSessions()
         return
       }

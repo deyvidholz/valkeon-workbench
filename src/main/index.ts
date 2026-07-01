@@ -14,6 +14,7 @@ import { registerPtyIpc } from './pty/ipc'
 import { registerGitIpc } from './git/ipc'
 import { cloneRepo, isGitRepo } from './git/worktrees'
 import { registerSkillsIpc } from './skills/ipc'
+import { registerFilesIpc } from './files/ipc'
 import { buildAppMenu } from './menu'
 
 // Name the app (dock, menu bar) before anything reads it. Note: in dev the
@@ -48,6 +49,8 @@ function contentSecurityPolicy(): string {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data:",
+    // Monaco editor loads its language/editor workers as bundled (blob) workers.
+    "worker-src 'self' blob:",
     connect
   ].join('; ')
 }
@@ -269,6 +272,7 @@ app.whenReady().then(async () => {
   registerAgentIpc(agentManager, globalStore)
   registerGitIpc(globalStore)
   registerSkillsIpc(globalStore)
+  registerFilesIpc(globalStore)
   createWindow()
 
   buildAppMenu({

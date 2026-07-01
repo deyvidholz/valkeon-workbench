@@ -59,9 +59,9 @@ get checked off as they land. (Author: Claude, at the user's direction.)
 
 Bring in `monaco-editor` (via `@monaco-editor/react`), used for two things:
 
-- [ ] **IDE / file-explorer mode** — a new view to browse the project like VS Code: file tree +
-      Monaco editor (read-only first, editable later). **`.valkeon` is hidden** in this view's
-      tree and in any git surface it shows.
+- [x] **IDE / file-explorer mode** — "Explore" view: file tree + read-only Monaco viewer with
+      syntax highlighting + app-tuned dark theme. **`.valkeon` hidden** (also `.git`, `node_modules`,
+      build dirs). Monaco bundled offline (local loader + editor worker, CSP `worker-src` opened).
 - [ ] **Review window** (replaces "Review diff" just opening the card) — a real diff view
       (Monaco diff editor) of the card's branch/worktree vs base.
   - [ ] Actions: **Approve**, **Decline**, **Ask for changes**, **AI review** (spawn an agent to review).

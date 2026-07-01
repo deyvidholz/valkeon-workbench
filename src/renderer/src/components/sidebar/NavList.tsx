@@ -14,6 +14,7 @@ const NAV: NavItem[] = [
   { id: 'workspace', icon: 'grid_view', label: 'Sessions' },
   { id: 'terminals', icon: 'terminal', label: 'Terminals' },
   { id: 'worktrees', icon: 'account_tree', label: 'Worktrees' },
+  { id: 'code', icon: 'code', label: 'Explore' },
   { id: 'history', icon: 'history', label: 'History' },
   { id: 'skills', icon: 'auto_awesome', label: 'Skills' },
   { id: 'settings', icon: 'tune', label: 'Settings' }

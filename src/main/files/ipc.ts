@@ -1,0 +1,107 @@
+import { ipcMain } from 'electron'
+import { promises as fs } from 'node:fs'
+import { join, resolve, sep, posix } from 'node:path'
+import { simpleGit } from 'simple-git'
+import { IpcChannels } from '@shared/ipc'
+import type { FileNode, FileContent, DiffFile, DiffStatus } from '@shared/files'
+import type { GlobalStore } from '../persistence/globalStore'
+import { assertAllowedRepo } from '../security'
+import { assertInside } from '../persistence/paths'
+
+// Directories never shown in the IDE tree: VCS/tooling internals, heavy build
+// output, and — per product requirement — Valkeon's own `.valkeon` state.
+const HIDDEN_DIRS = new Set(['.git', '.valkeon', 'node_modules', 'out', 'dist', '.vite', '.next', '.turbo', '.cache', '.DS_Store'])
+const MAX_NODES = 8000
+const MAX_DEPTH = 12
+const MAX_FILE_BYTES = 1024 * 1024 // 1 MB — bigger files aren't shown/diffed
+
+const toPosix = (p: string): string => p.split(sep).join('/')
+
+function looksBinary(buf: Buffer): boolean {
+  const n = Math.min(buf.length, 4096)
+  for (let i = 0; i < n; i++) if (buf[i] === 0) return true
+  return false
+}
+
+async function buildTree(repoRoot: string, relDir: string, depth: number, budget: { n: number }): Promise<FileNode[]> {
+  if (depth > MAX_DEPTH || budget.n >= MAX_NODES) return []
+  let entries: import('node:fs').Dirent[]
+  try {
+    entries = await fs.readdir(join(repoRoot, relDir), { withFileTypes: true })
+  } catch {
+    return []
+  }
+  const dirs: FileNode[] = []
+  const files: FileNode[] = []
+  for (const e of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    if (budget.n >= MAX_NODES) break
+    if (HIDDEN_DIRS.has(e.name)) continue
+    const rel = relDir ? posix.join(relDir, e.name) : e.name
+    if (e.isDirectory()) {
+      budget.n++
+      dirs.push({ path: rel, name: e.name, dir: true, children: await buildTree(repoRoot, rel, depth + 1, budget) })
+    } else if (e.isFile()) {
+      budget.n++
+      files.push({ path: rel, name: e.name, dir: false })
+    }
+  }
+  return [...dirs, ...files]
+}
+
+/** File tree + read + review-diff for the IDE. `repoPath` is untrusted → allowlisted. */
+export function registerFilesIpc(globalStore: GlobalStore): void {
+  const guard = (repoPath: string): string => assertAllowedRepo(globalStore, repoPath)
+
+  ipcMain.handle(IpcChannels.filesTree, async (_e, repoPath: string): Promise<FileNode[]> => {
+    const repo = guard(repoPath)
+    return buildTree(repo, '', 0, { n: 0 })
+  })
+
+  ipcMain.handle(IpcChannels.fileRead, async (_e, repoPath: string, relPath: string): Promise<FileContent> => {
+    const repo = guard(repoPath)
+    const abs = assertInside(repo, resolve(repo, relPath))
+    try {
+      const stat = await fs.stat(abs)
+      if (!stat.isFile() || stat.size > MAX_FILE_BYTES) return { path: relPath, content: '', truncated: true }
+      const buf = await fs.readFile(abs)
+      if (looksBinary(buf)) return { path: relPath, content: '', truncated: true }
+      return { path: relPath, content: buf.toString('utf8') }
+    } catch {
+      return { path: relPath, content: '', truncated: true }
+    }
+  })
+
+  ipcMain.handle(IpcChannels.gitDiff, async (_e, repoPath: string): Promise<DiffFile[]> => {
+    const repo = guard(repoPath)
+    const git = simpleGit(repo)
+    let status
+    try {
+      status = await git.status()
+    } catch {
+      return []
+    }
+    const out: DiffFile[] = []
+    for (const f of status.files.slice(0, 200)) {
+      const path = toPosix(f.path)
+      if (path.startsWith('.valkeon/') || path.startsWith('.git/')) continue
+      const code = `${f.index}${f.working_dir}`.trim()
+      const st: DiffStatus = /A|\?/.test(code) ? 'added' : /D/.test(code) ? 'deleted' : 'modified'
+      let oldContent = ''
+      let newContent = ''
+      if (st !== 'added') {
+        oldContent = await git.show([`HEAD:${path}`]).catch(() => '')
+        if (oldContent.length > MAX_FILE_BYTES) oldContent = ''
+      }
+      if (st !== 'deleted') {
+        try {
+          const buf = await fs.readFile(join(repo, f.path))
+          newContent = buf.length <= MAX_FILE_BYTES && !looksBinary(buf) ? buf.toString('utf8') : ''
+        } catch {
+          newContent = ''
+        }
+      }
+      out.push({ path, status: st, oldContent, newContent })
+    }
+    return out
+  })
+}

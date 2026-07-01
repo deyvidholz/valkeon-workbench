@@ -173,7 +173,7 @@ export function SessionScreen() {
               <span style={{ fontSize: 11.5, color: '#cbcbd2', fontFamily: "'Geist Mono', monospace" }}>
                 {fmtDuration(
                   session.mode === 'structured'
-                    ? (session.activeMs ?? 0) + (session.runStartedAt != null ? Date.now() - session.runStartedAt : 0)
+                    ? (session.activeMs ?? 0) + (session.status === 'running' && session.runStartedAt != null ? Date.now() - session.runStartedAt : 0)
                     : Date.now() - session.startedAt
                 )}
               </span>

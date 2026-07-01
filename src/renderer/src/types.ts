@@ -27,6 +27,7 @@ export type ViewId =
   | 'terminals'
   | 'board'
   | 'worktrees'
+  | 'code'
   | 'history'
   | 'skills'
   | 'settings'
