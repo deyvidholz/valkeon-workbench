@@ -69,6 +69,8 @@ Adding another AI = add a metadata entry + an adapter. The UI picks it up automa
 
 Download the installer for your platform from the [**Releases**](../../releases) page.
 
+**Requirements:** besides the app itself you only need **[`git`](https://git-scm.com/)** and the **[Claude Code CLI](https://docs.claude.com/en/docs/claude-code)** (`claude`) on your `PATH`, and Claude signed in (run `claude` once to authenticate). Node.js isn't a separate requirement — the app bundles its own, and the `claude` CLI already brings it. A shell (bash/zsh, or PowerShell on Windows) is used for terminals and is present by default. On Linux the `.deb` pulls Electron's system libraries automatically (the portable `.AppImage` additionally needs `libfuse2`).
+
 > Sessions and terminals run **on the machine the app runs on**, and Valkeon looks for the `claude` CLI on that machine's `PATH`. So run it where your dev environment lives — natively on Windows/macOS/Linux, or **inside WSL** if that's where your code, `git`, and `claude` are (see below).
 
 ### Windows
