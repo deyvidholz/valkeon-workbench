@@ -1,5 +1,11 @@
 # Valkeon Workbench — Enhancements Plan (2026‑07)
 
+> **STATUS: ✅ Delivered.** All nine milestones (M1–M9) were implemented on branch
+> `feat/theming-i18n-and-enhancements` across 9 commits. Full `npm run typecheck`
+> (node + web) and `electron-vite build` pass; the persistence test suite passes.
+> Residual notes: activity-feed `log()` labels remain English (low-visibility dev
+> feed); `diagramBuilder.tpl*` diagram-type names intentionally fall back to English.
+
 A carefully-scoped plan covering a batch of bug fixes and feature requests. It is written to be
 implemented incrementally, milestone by milestone, matching the project's working style
 ("shell → launcher → workspace → board → the rest, pause for review at milestones").
