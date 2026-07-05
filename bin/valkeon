@@ -57,8 +57,16 @@ case "$(uname -s)" in
       exit 1
     fi
     FLAGS=()
-    # Under WSL the Chromium sandbox usually can't initialize; disable it there.
-    grep -qiE "(microsoft|wsl)" /proc/version 2>/dev/null && FLAGS+=(--no-sandbox)
+    if grep -qiE "(microsoft|wsl)" /proc/version 2>/dev/null; then
+      # Under WSL the Chromium sandbox usually can't initialize; disable it.
+      FLAGS+=(--no-sandbox)
+      # WSLg has no cursor theme, so hover/resize cursors look off. Point Xcursor
+      # at Adwaita (pulled in by the app's GTK deps) for this process ONLY — this
+      # is inherited just by the app we launch, never the shell or other apps, and
+      # only under WSL. Respect the user's own XCURSOR_* if they set them.
+      : "${XCURSOR_THEME:=Adwaita}"; export XCURSOR_THEME
+      : "${XCURSOR_SIZE:=24}"; export XCURSOR_SIZE
+    fi
     # Detach so the terminal stays usable while the app runs.
     nohup "$APP_BIN" ${FLAGS[@]+"${FLAGS[@]}"} \
       ${project_arg[@]+"${project_arg[@]}"} ${passthrough[@]+"${passthrough[@]}"} \
