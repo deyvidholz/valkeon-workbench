@@ -52,6 +52,8 @@ export interface Session {
   modelId: string
   branch: string
   worktree: string | null
+  /** The agent was asked to pick its own isolation strategy (worktree/branch/current). */
+  aiIsolation?: boolean
   duration: string
   task: string
   tokens: TokenUsage

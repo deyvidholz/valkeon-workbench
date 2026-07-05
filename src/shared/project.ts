@@ -1,5 +1,5 @@
-/** How a Start-task isolates its work. */
-export type TaskStrategy = 'worktree' | 'branch' | 'current'
+/** How a Start-task isolates its work. `auto` lets the agent decide per task. */
+export type TaskStrategy = 'worktree' | 'branch' | 'current' | 'auto'
 
 /**
  * Per-project settings, stored in the repo at `.valkeon/config.json` so they're

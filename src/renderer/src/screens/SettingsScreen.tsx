@@ -227,10 +227,10 @@ export function SettingsScreen() {
               <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t('settings.taskStrategy', 'Task strategy')}</div>
               <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2, marginBottom: 12 }}>{t('settings.taskStrategyDesc', 'How “Start task” isolates work by default')}</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {(['worktree', 'branch', 'current'] as const).map((s) => {
+                {(['worktree', 'branch', 'current', 'auto'] as const).map((s) => {
                   const on = projectConfig.taskStrategy === s
                   return (
-                    <span key={s} onClick={() => saveProjectConfig({ taskStrategy: s })} style={{ padding: '7px 13px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 500, textTransform: 'capitalize', color: on ? 'var(--accent-hi)' : 'var(--text-dim)', background: on ? 'var(--accent-soft)' : 'var(--surface)', border: `1px solid ${on ? 'var(--accent-line)' : 'var(--line-2)'}` }}>{t(`settings.strategy_${s}`, s)}</span>
+                    <span key={s} onClick={() => saveProjectConfig({ taskStrategy: s })} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 13px', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, fontWeight: 500, textTransform: 'capitalize', color: on ? 'var(--accent-hi)' : 'var(--text-dim)', background: on ? 'var(--accent-soft)' : 'var(--surface)', border: `1px solid ${on ? 'var(--accent-line)' : 'var(--line-2)'}` }}>{s === 'auto' && <Icon name="auto_awesome" size={14} />}{t(`settings.strategy_${s}`, s === 'auto' ? 'Let AI decide' : s)}</span>
                   )
                 })}
               </div>

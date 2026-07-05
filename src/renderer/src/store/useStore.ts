@@ -38,6 +38,15 @@ import i18n, { resolveLocale } from '../i18n'
 import { extractJson } from '../lib/json'
 import type { ResolvedLocale as RLocale } from '@shared/persistence/global'
 
+/** Instruction injected when the user lets the agent choose its own isolation. */
+const AI_ISOLATION_INSTRUCTION =
+  'ISOLATION — decide for yourself how to isolate this work before changing files: ' +
+  '(a) create a new git worktree for larger or parallelizable work, ' +
+  '(b) create and switch to a new branch for a focused change, or ' +
+  '(c) work directly on the current branch only for a tiny edit. ' +
+  'Set it up with git yourself (e.g. `git worktree add` or `git switch -c`), then proceed. ' +
+  'Do not commit unless asked.'
+
 /** Human names for the AI to write generated content in the user's language. */
 const LOCALE_NAMES: Record<RLocale, string> = {
   en: 'English',
@@ -67,6 +76,8 @@ interface NewSessionForm {
   providerId: string
   modelId: string
   worktree: boolean
+  /** Let the agent choose its own isolation (worktree / branch / current). Overrides `worktree`. */
+  aiIsolation: boolean
   skipPerms: boolean
   mode: SessionMode
   notify: boolean
@@ -524,6 +535,7 @@ export const useStore = create<AppState>((set, get) => {
     model: s.model,
     branch: s.branch,
     worktree: s.worktree,
+    aiIsolation: s.aiIsolation,
     cwd: s.cwd,
     mode: s.mode,
     skipPermissions: s.skipPermissions,
@@ -555,6 +567,7 @@ export const useStore = create<AppState>((set, get) => {
       status: 'idle',
       branch: str(r.branch, 'main'),
       worktree: typeof r.worktree === 'string' ? r.worktree : null,
+      aiIsolation: r.aiIsolation === true,
       duration: '0m',
       task: '',
       tokens: (r.tokens as Session['tokens']) ?? { used: 0, limit: 200 },
@@ -638,7 +651,8 @@ export const useStore = create<AppState>((set, get) => {
     let cwd = st.activeWorktreePath ?? project?.path
     let cwdReady: Promise<unknown> | undefined
 
-    if (form.worktree && project?.path && project.path.startsWith('/')) {
+    // "Let AI decide" skips pre-creating any isolation — the agent sets it up itself.
+    if (form.worktree && !form.aiIsolation && project?.path && project.path.startsWith('/')) {
       const parent = project.path.replace(/\/[^/]+$/, '')
       worktree = `${parent}/${project.name}.wt/${slug}`
       cwd = worktree
@@ -666,6 +680,7 @@ export const useStore = create<AppState>((set, get) => {
       startedAt: Date.now(),
       mode: form.mode,
       notify: form.notify,
+      aiIsolation: form.aiIsolation,
       // Structured sessions start with no context sources — zero added cost until
       // the user opts one in. (Start-task seeds the card source itself.)
       contextSources: form.mode === 'structured' ? [] : undefined
@@ -684,7 +699,12 @@ export const useStore = create<AppState>((set, get) => {
    */
   const startStructured = (session: Session, firstTurn?: string, cwdReady?: Promise<unknown>, resumeId?: string): void => {
     const repoPath = realPath()
-    const launch = (preamble: string): void => {
+    const launch = (rawPreamble: string): void => {
+      // When the user chose "Let AI decide", lead the preamble with the isolation
+      // instruction so the agent sets up its own worktree/branch/current.
+      const preamble = session.aiIsolation && !resumeId
+        ? [AI_ISOLATION_INSTRUCTION, rawPreamble].filter((p) => p.trim()).join('\n\n---\n\n')
+        : rawPreamble
       void window.api?.agent
         .start({
           id: session.id,
@@ -839,7 +859,7 @@ export const useStore = create<AppState>((set, get) => {
     branches: [],
     projectSettingsOpen: false,
 
-    newSession: { name: '', providerId: DEFAULT_PROVIDER_ID, modelId: 'sonnet', worktree: false, skipPerms: false, mode: 'structured', notify: false },
+    newSession: { name: '', providerId: DEFAULT_PROVIDER_ID, modelId: 'sonnet', worktree: false, aiIsolation: false, skipPerms: false, mode: 'structured', notify: false },
     newWs: { name: '', useWorktree: false },
     newBoard: { name: '', scope: 'feature' },
     genText: '',
@@ -1078,14 +1098,17 @@ export const useStore = create<AppState>((set, get) => {
         // Default the worktree toggle from the active workspace's opt-in, falling
         // back to the repo-level task strategy. Only meaningful in a git repo.
         const ws = st.workspaces.find((w) => w.id === st.activeWorkspaceId)
+        const isAuto = st.projectConfig.taskStrategy === 'auto'
         const wantWorktree = ws?.useWorktree ?? st.projectConfig.taskStrategy === 'worktree'
+        const isRepo = !!st.project?.isGitRepo
         return {
           newSessionOpen: true,
           newSession: {
             name: '',
             providerId: st.defaultProviderId,
             modelId: st.defaultModelId,
-            worktree: wantWorktree && !!st.project?.isGitRepo,
+            worktree: !isAuto && wantWorktree && isRepo,
+            aiIsolation: isAuto && isRepo,
             skipPerms: false,
             mode: 'structured',
             notify: false
@@ -1806,6 +1829,7 @@ export const useStore = create<AppState>((set, get) => {
       const project = st.project
       const strategy = st.projectConfig.taskStrategy
       const isRepo = !!project?.path && project.path.startsWith('/') && project.isGitRepo !== false
+      const isAuto = isRepo && strategy === 'auto'
       let worktree: string | null = null
       let cwd = project?.path
       let cwdReady: Promise<unknown> | undefined
@@ -1827,8 +1851,9 @@ export const useStore = create<AppState>((set, get) => {
       // preamble, so the opening turn is just the marching orders — kept
       // self-contained (no skill dependency) and not assuming the board files are
       // reachable from a worktree checkout.
-      const firstTurn =
-        "Please complete the task described in the context above. Stay on this branch and don't commit — I'll review and move the card on the board. Summarize what you changed when you're done."
+      const firstTurn = isAuto
+        ? "Please complete the task described in the context above. First set up isolation as instructed, then do the work. Don't commit — I'll review and move the card on the board. Summarize what you changed when you're done."
+        : "Please complete the task described in the context above. Stay on this branch and don't commit — I'll review and move the card on the board. Summarize what you changed when you're done."
       const session: Session = {
         id: sessionId,
         wsId: st.activeWorkspaceId,
@@ -1839,6 +1864,7 @@ export const useStore = create<AppState>((set, get) => {
         status: 'running',
         branch,
         worktree,
+        aiIsolation: isAuto,
         duration: '0m',
         task: card.title,
         tokens: { used: 0, limit: 200 },

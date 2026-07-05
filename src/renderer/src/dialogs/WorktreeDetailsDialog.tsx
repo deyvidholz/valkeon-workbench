@@ -16,6 +16,7 @@ export function WorktreeDetailsDialog() {
   const go = useStore((s) => s.go)
   const removeWorktree = useStore((s) => s.removeWorktree)
   const mergeBranchToBase = useStore((s) => s.mergeBranchToBase)
+  const askConfirm = useStore((s) => s.askConfirm)
   const [details, setDetails] = useState<WorktreeDetails | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -101,7 +102,14 @@ export function WorktreeDetailsDialog() {
         {actionBtn('folder_open', t('worktreeDetail.openFolder', 'Open folder'), () => void window.api?.shell.openPath(path))}
         {details?.branch && actionBtn('merge', t('worktreeDetail.merge', 'Merge into base'), () => { mergeBranchToBase(details.branch, path); close() })}
         <div style={{ flex: 1 }} />
-        {details?.branch && actionBtn('delete_outline', t('worktreeDetail.delete', 'Delete'), () => { removeWorktree(path, details.branch); close() }, true)}
+        {details?.branch && actionBtn('delete_outline', t('worktreeDetail.delete', 'Delete'), () => {
+          askConfirm({
+            title: t('worktrees.removeWorktree', 'Remove worktree'),
+            message: t('worktrees.removeConfirmMsg', 'Remove the worktree for {{branch}}? The branch is kept — only the working copy is deleted.', { branch: details.branch }),
+            confirmLabel: t('worktrees.removeWorktree', 'Remove worktree'),
+            onConfirm: () => { removeWorktree(path, details.branch); close() }
+          })
+        }, true)}
       </div>
     </Modal>
   )

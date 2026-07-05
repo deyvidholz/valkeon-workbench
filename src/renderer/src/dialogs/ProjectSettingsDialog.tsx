@@ -9,7 +9,8 @@ import type { TaskStrategy } from '@shared/project'
 const STRATEGIES: { id: TaskStrategy; label: string; desc: string; icon: string }[] = [
   { id: 'branch', label: 'New branch', desc: 'Create feat/<task> in the main checkout', icon: 'fork_right' },
   { id: 'worktree', label: 'Worktree', desc: 'Isolated checkout on a new branch — parallel-safe', icon: 'account_tree' },
-  { id: 'current', label: 'Current branch', desc: 'Work in place, no new branch', icon: 'edit' }
+  { id: 'current', label: 'Current branch', desc: 'Work in place, no new branch', icon: 'edit' },
+  { id: 'auto', label: 'Let AI decide', desc: 'The agent picks worktree, branch, or current per task', icon: 'auto_awesome' }
 ]
 
 export function ProjectSettingsDialog() {
@@ -37,7 +38,7 @@ export function ProjectSettingsDialog() {
                 <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t(`projectSettings.strategy_${s.id}_label`, s.label)}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{t(`projectSettings.strategy_${s.id}_desc`, s.desc)}</div>
               </div>
-              <Icon name={on ? 'radio_button_checked' : 'radio_button_unchecked'} size={17} color={on ? 'var(--accent-hi)' : '#3a3a42'} />
+              <Icon name={on ? 'radio_button_checked' : 'radio_button_unchecked'} size={17} color={on ? 'var(--accent-hi)' : 'var(--surface-4)'} />
             </Hover>
           )
         })}

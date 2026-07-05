@@ -62,25 +62,39 @@ export function NewSessionDialog() {
           : t('newSession.interactiveDesc', 'The raw agent terminal — full CLI feel, slash commands, the TUI.')}
       </div>
 
+      {!notRepo && (
+        <div
+          onClick={() => setForm({ aiIsolation: !form.aiIsolation })}
+          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 13px', borderRadius: 10, background: form.aiIsolation ? 'var(--accent-soft)' : 'var(--surface)', border: `1px solid ${form.aiIsolation ? 'var(--accent-line)' : 'var(--line)'}`, cursor: 'pointer', marginBottom: 10 }}
+        >
+          <Icon name="auto_awesome" size={19} color="var(--accent-hi)" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t('newSession.aiIsolation', 'Let AI decide')}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{t('newSession.aiIsolationHint', 'The agent picks a worktree, a new branch, or the current branch per task')}</div>
+          </div>
+          <Toggle on={form.aiIsolation} onClick={() => setForm({ aiIsolation: !form.aiIsolation })} />
+        </div>
+      )}
+
       <div
-        onClick={() => !notRepo && setForm({ worktree: !form.worktree })}
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 13px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--line)', cursor: notRepo ? 'default' : 'pointer', marginBottom: 20, opacity: notRepo ? 0.55 : 1 }}
+        onClick={() => !notRepo && !form.aiIsolation && setForm({ worktree: !form.worktree })}
+        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 13px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--line)', cursor: notRepo || form.aiIsolation ? 'default' : 'pointer', marginBottom: 20, opacity: notRepo || form.aiIsolation ? 0.5 : 1 }}
       >
         <Icon name="account_tree" size={19} color="var(--ai)" />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t('newSession.useWorktree', 'Use a git worktree')}</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-            {notRepo ? t('newSession.notRepoHint', 'Folder isn’t a git repo — initialize it in Worktrees first') : t('newSession.worktreeHint', 'Isolated checkout so this session won’t collide with others')}
+            {notRepo ? t('newSession.notRepoHint', 'Folder isn’t a git repo — initialize it in Worktrees first') : form.aiIsolation ? t('newSession.decidedByAi', 'Decided by the agent') : t('newSession.worktreeHint', 'Isolated checkout so this session won’t collide with others')}
           </div>
         </div>
-        <Toggle on={form.worktree && !notRepo} onClick={() => !notRepo && setForm({ worktree: !form.worktree })} />
+        <Toggle on={form.worktree && !notRepo && !form.aiIsolation} onClick={() => !notRepo && !form.aiIsolation && setForm({ worktree: !form.worktree })} />
       </div>
 
-      <div onClick={() => setForm({ skipPerms: !form.skipPerms })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 13px', borderRadius: 10, background: '#100c0c', border: '1px solid #2a1a1a', cursor: 'pointer', marginBottom: 12 }}>
+      <div onClick={() => setForm({ skipPerms: !form.skipPerms })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 13px', borderRadius: 10, background: 'color-mix(in srgb, var(--warn) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--warn) 30%, var(--line))', cursor: 'pointer', marginBottom: 12 }}>
         <Icon name="gpp_maybe" size={19} color="var(--warn)" />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t('newSession.skipPerms', 'Skip permission prompts')}</div>
-          <div style={{ fontSize: 11, color: '#8a7a5e', marginTop: 2, fontFamily: "'Geist Mono', monospace" }}>--dangerously-skip-permissions</div>
+          <div style={{ fontSize: 11, color: 'var(--warn)', marginTop: 2, fontFamily: "'Geist Mono', monospace" }}>--dangerously-skip-permissions</div>
         </div>
         <Toggle on={form.skipPerms} danger onClick={() => setForm({ skipPerms: !form.skipPerms })} />
       </div>
