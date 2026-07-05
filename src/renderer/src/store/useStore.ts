@@ -93,6 +93,11 @@ interface AppState {
   localePref: LocalePref
   /** The detected OS locale, mapped to a supported one; used to resolve `system`. */
   systemLocale: ResolvedLocale
+  /** Resizable pane widths (px), persisted to settings. */
+  sidebarWidth: number
+  exploreTreeWidth: number
+  /** Whether VS Code is installed (drives the "Open in VS Code" action). */
+  hasVscode: boolean
   userName: string
   fontSize: number
   defaultProviderId: string
@@ -178,11 +183,15 @@ interface AppState {
   setLayout: (layout: LayoutMode) => void
   openSession: (id: string) => void
   setRecents: (recents: Recent[]) => void
-  hydrateSettings: (s: { userName: string; accent: string; themePref: ThemePref; localePref: LocalePref; defaultProviderId: string; defaultModelId: string; fontSize: number }) => void
+  hydrateSettings: (s: { userName: string; accent: string; themePref: ThemePref; localePref: LocalePref; defaultProviderId: string; defaultModelId: string; fontSize: number; sidebarWidth?: number; exploreTreeWidth?: number }) => void
   setThemePref: (pref: ThemePref) => void
   setSystemTheme: (theme: ResolvedTheme) => void
   setLocalePref: (pref: LocalePref) => void
   setSystemLocale: (locale: ResolvedLocale) => void
+  setSidebarWidth: (w: number) => void
+  setExploreTreeWidth: (w: number) => void
+  persistPaneWidths: () => void
+  setHasVscode: (v: boolean) => void
   /** One-shot AI completion using the default provider/model, scoped to the project. */
   aiComplete: (prompt: string, opts?: { system?: string; cwd?: string; modelId?: string; timeoutMs?: number }) => Promise<AgentCompleteResult>
   loadNotifications: () => Promise<void>
@@ -771,6 +780,9 @@ export const useStore = create<AppState>((set, get) => {
     systemTheme: 'dark',
     localePref: 'system',
     systemLocale: 'en',
+    sidebarWidth: 264,
+    exploreTreeWidth: 264,
+    hasVscode: false,
     userName: '',
     fontSize: 12,
     defaultProviderId: DEFAULT_PROVIDER_ID,
@@ -947,7 +959,7 @@ export const useStore = create<AppState>((set, get) => {
     setLayout: (layout) => set({ layout }),
     openSession: (id) => set({ activeSessionId: id, view: 'session', wsMenuOpen: false, paletteOpen: false }),
     setRecents: (recents) => set({ recents }),
-    hydrateSettings: (s) => set({ userName: s.userName, accent: s.accent, themePref: s.themePref, localePref: s.localePref, defaultProviderId: s.defaultProviderId, defaultModelId: s.defaultModelId, fontSize: s.fontSize, nameDialogOpen: !s.userName }),
+    hydrateSettings: (s) => set({ userName: s.userName, accent: s.accent, themePref: s.themePref, localePref: s.localePref, defaultProviderId: s.defaultProviderId, defaultModelId: s.defaultModelId, fontSize: s.fontSize, sidebarWidth: s.sidebarWidth ?? 264, exploreTreeWidth: s.exploreTreeWidth ?? 264, nameDialogOpen: !s.userName }),
     setUserName: (name) => {
       const trimmed = name.trim()
       set({ userName: trimmed, nameDialogOpen: false })
@@ -2097,6 +2109,14 @@ Write every title and body in ${langName}. Return at most ${count} items. JSON a
       void window.api?.settings.set({ localePref: pref } as never).catch(() => {})
     },
     setSystemLocale: (locale) => set({ systemLocale: locale }),
+    // Live during drag (state only); persistPaneWidths writes on drag end.
+    setSidebarWidth: (w) => set({ sidebarWidth: Math.max(200, Math.min(480, Math.round(w))) }),
+    setExploreTreeWidth: (w) => set({ exploreTreeWidth: Math.max(180, Math.min(560, Math.round(w))) }),
+    persistPaneWidths: () => {
+      const st = get()
+      void window.api?.settings.set({ sidebarWidth: st.sidebarWidth, exploreTreeWidth: st.exploreTreeWidth } as never).catch(() => {})
+    },
+    setHasVscode: (v) => set({ hasVscode: v }),
     setFontSize: (n) => set({ fontSize: n }),
     setDefaultModel: (id) => set({ defaultModelId: id }),
 

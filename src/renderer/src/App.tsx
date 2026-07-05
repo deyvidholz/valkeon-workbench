@@ -96,13 +96,18 @@ export function App() {
     window.api?.system?.locale().then((l) => useStore.getState().setSystemLocale(mapOsLocale(l))).catch(() => {})
   }, [])
 
+  // Detect VS Code once (drives the "Open in VS Code" action in Explore).
+  useEffect(() => {
+    window.api?.system?.hasVscode().then((v) => useStore.getState().setHasVscode(v)).catch(() => {})
+  }, [])
+
   // Hydrate persisted global state (accent + recent projects) on boot.
   useEffect(() => {
     let active = true
     window.api?.settings
       .get()
       .then((s) => {
-        if (active && s) hydrateSettings({ userName: s.userName, accent: s.accent, themePref: s.themePref ?? 'system', localePref: s.localePref ?? 'system', defaultProviderId: s.defaultProviderId, defaultModelId: s.defaultModelId, fontSize: s.terminalFontSize })
+        if (active && s) hydrateSettings({ userName: s.userName, accent: s.accent, themePref: s.themePref ?? 'system', localePref: s.localePref ?? 'system', defaultProviderId: s.defaultProviderId, defaultModelId: s.defaultModelId, fontSize: s.terminalFontSize, sidebarWidth: s.sidebarWidth, exploreTreeWidth: s.exploreTreeWidth })
       })
       .catch(() => {})
     window.api?.recents

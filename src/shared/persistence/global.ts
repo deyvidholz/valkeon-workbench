@@ -29,6 +29,9 @@ export interface AppSettings {
   restoreSessions: boolean
   confirmBeforeClosingRunning: boolean
   launchAtLogin: boolean
+  /** Persisted widths for the resizable app sidebar + Explore file tree (px). */
+  sidebarWidth: number
+  exploreTreeWidth: number
   /** Where board content is stored: in the repo (`.valkeon/`) or app-data. */
   boardStorage: BoardStorageMode
 }

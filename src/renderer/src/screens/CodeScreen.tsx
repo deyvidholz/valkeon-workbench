@@ -6,6 +6,7 @@ import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
 import { FileTree } from '../components/FileTree'
 import { CodeViewer } from '../components/CodeViewer'
+import { ResizeHandle } from '../ui/ResizeHandle'
 import type { FileNode } from '@shared/files'
 
 interface PromptCfg {
@@ -25,6 +26,10 @@ export function CodeScreen() {
   const activeWorktreePath = useStore((s) => s.activeWorktreePath)
   const openContextMenu = useStore((s) => s.openContextMenu)
   const askConfirm = useStore((s) => s.askConfirm)
+  const treeWidth = useStore((s) => s.exploreTreeWidth)
+  const setExploreTreeWidth = useStore((s) => s.setExploreTreeWidth)
+  const persistPaneWidths = useStore((s) => s.persistPaneWidths)
+  const hasVscode = useStore((s) => s.hasVscode)
   const repoPath = activeWorktreePath ?? (project?.path && project.path.startsWith('/') ? project.path : null)
 
   const [tree, setTree] = useState<FileNode[] | null>(null)
@@ -166,7 +171,7 @@ export function CodeScreen() {
   if (!repoPath) {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--text-muted)' }}>
-        <Icon name="code_off" size={26} color="#33333a" />
+        <Icon name="code_off" size={26} color="var(--text-faint)" />
         <div style={{ fontSize: 13 }}>{t('code.emptyProject', 'Open a project folder to explore its code.')}</div>
       </div>
     )
@@ -174,7 +179,8 @@ export function CodeScreen() {
 
   return (
     <div style={{ display: 'flex', height: '100%', minHeight: 0, position: 'relative' }}>
-      <div style={{ width: 264, flexShrink: 0, borderRight: '1px solid var(--line)', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div style={{ position: 'relative', width: treeWidth, flexShrink: 0, borderRight: '1px solid var(--line)', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <ResizeHandle side="left" onResize={(dx) => setExploreTreeWidth(treeWidth + dx)} onEnd={persistPaneWidths} onReset={() => { setExploreTreeWidth(264); persistPaneWidths() }} />
         <div style={{ height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px 0 14px', borderBottom: '1px solid var(--line)' }}>
           <Icon name="folder_open" size={16} color="var(--info)" />
           <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginLeft: 3 }}>{project?.name ?? t('code.files', 'Files')}</span>
@@ -202,8 +208,19 @@ export function CodeScreen() {
 
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0, background: 'var(--bg)' }}>
         {selected && (
-          <div style={{ height: 34, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 7, padding: '0 14px', borderBottom: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 11.5, color: 'var(--text-dim)', fontFamily: "'Geist Mono', monospace" }}>{selected}</span>
+          <div style={{ height: 34, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px 0 14px', borderBottom: '1px solid var(--line)' }}>
+            <span style={{ fontSize: 11.5, color: 'var(--text-dim)', fontFamily: "'Geist Mono', monospace", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selected}</span>
+            <div style={{ flex: 1 }} />
+            {[
+              ...(hasVscode ? [{ icon: 'code_blocks', title: t('code.openInVscode', 'Open project in VS Code'), on: () => repoPath && window.api?.system?.openInVscode(repoPath) }] : []),
+              { icon: 'folder_open', title: t('code.revealInFinder', 'Reveal in file manager'), on: () => repoPath && window.api?.shell?.showItem(`${repoPath}/${selected}`) },
+              { icon: 'content_copy', title: t('code.copyPath', 'Copy path'), on: () => void navigator.clipboard?.writeText(`${repoPath}/${selected}`).catch(() => {}) },
+              { icon: 'close', title: t('code.closeFile', 'Close file'), on: () => { setSelected(null); setContent('') } }
+            ].map((b) => (
+              <Hover key={b.title} as="span" title={b.title} onClick={b.on} style={{ display: 'flex', width: 26, height: 26, borderRadius: 6, alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
+                <Icon name={b.icon} size={15} />
+              </Hover>
+            ))}
           </div>
         )}
         <div style={{ flex: 1, minHeight: 0 }}>

@@ -13,6 +13,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   restoreSessions: true,
   confirmBeforeClosingRunning: true,
   launchAtLogin: false,
+  sidebarWidth: 264,
+  exploreTreeWidth: 264,
   boardStorage: 'repo'
 }
 

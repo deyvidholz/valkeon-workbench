@@ -3,6 +3,8 @@ import { useCallback, useRef, useState } from 'react'
 interface ResizeHandleProps {
   /** Called with the pointer delta (px) since the drag started, throttled to frames. */
   onResize: (deltaX: number) => void
+  /** Fired once when the drag ends (good place to persist the final width). */
+  onEnd?: () => void
   /** Optional: reset to default width on double-click. */
   onReset?: () => void
   /** Which side of the handle the resized pane sits on (affects cursor only). */
@@ -14,7 +16,7 @@ interface ResizeHandleProps {
  * from drag-start; the parent clamps and applies it. Highlights on hover/drag
  * with the accent line.
  */
-export function ResizeHandle({ onResize, onReset, side = 'left' }: ResizeHandleProps) {
+export function ResizeHandle({ onResize, onEnd, onReset, side = 'left' }: ResizeHandleProps) {
   const [active, setActive] = useState(false)
   const startX = useRef(0)
 
@@ -33,13 +35,14 @@ export function ResizeHandle({ onResize, onReset, side = 'left' }: ResizeHandleP
         window.removeEventListener('pointerup', up)
         document.body.style.cursor = ''
         document.body.style.userSelect = ''
+        onEnd?.()
       }
       document.body.style.cursor = 'col-resize'
       document.body.style.userSelect = 'none'
       window.addEventListener('pointermove', move)
       window.addEventListener('pointerup', up)
     },
-    [onResize, side]
+    [onResize, onEnd, side]
   )
 
   return (
