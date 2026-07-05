@@ -16,7 +16,7 @@ export function Toggle({ on, onClick, danger }: ToggleProps) {
         width: 34,
         height: 20,
         borderRadius: 11,
-        background: on ? (danger ? '#e0a05b' : 'var(--accent)') : '#26262d',
+        background: on ? (danger ? 'var(--warn)' : 'var(--accent)') : 'var(--surface-3)',
         position: 'relative',
         cursor: 'pointer',
         transition: 'background .15s',
@@ -34,7 +34,7 @@ export function Toggle({ on, onClick, danger }: ToggleProps) {
           borderRadius: '50%',
           background: '#fff',
           transition: 'left .15s',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.4)'
+          boxShadow: '0 1px 2px var(--shadow)'
         }}
       />
     </span>

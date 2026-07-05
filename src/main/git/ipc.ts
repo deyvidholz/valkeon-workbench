@@ -5,6 +5,7 @@ import type { ProjectConfig } from '@shared/project'
 import type { GlobalStore } from '../persistence/globalStore'
 import { assertAllowedRepo } from '../security'
 import { addWorktree, initRepo, isGitRepo, listWorktrees, removeWorktree, listBranches, createBranch, mergeBranch, deleteBranch } from './worktrees'
+import { ensureLocalExcludes } from './localExclude'
 import { ensureBuiltinSkills } from '../skills/reader'
 import { loadProjectConfig, saveProjectConfig } from '../persistence/projectConfigStore'
 
@@ -47,7 +48,13 @@ export function registerGitIpc(globalStore: GlobalStore): void {
     return removeWorktree(repo, assertSafeWorktreeDir(repo, dir))
   })
   ipcMain.handle(IpcChannels.gitIsRepo, (_e, repoPath: string) => isGitRepo(guard(repoPath)))
-  ipcMain.handle(IpcChannels.gitInit, (_e, repoPath: string) => initRepo(guard(repoPath)))
+  ipcMain.handle(IpcChannels.gitInit, async (_e, repoPath: string) => {
+    const repo = guard(repoPath)
+    const res = await initRepo(repo)
+    // A brand-new repo: exclude Valkeon's machine-local files right away.
+    await ensureLocalExcludes(repo, ['.valkeon/']).catch(() => {})
+    return res
+  })
   ipcMain.handle(IpcChannels.gitBranches, (_e, repoPath: string) => listBranches(guard(repoPath)))
   ipcMain.handle(IpcChannels.gitCreateBranch, (_e, repoPath: string, branch: string) =>
     createBranch(guard(repoPath), assertSafeBranch(branch))

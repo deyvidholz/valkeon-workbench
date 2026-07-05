@@ -38,11 +38,11 @@ export function FileTree({ nodes, depth = 0, selected, expanded, onSelect, onTog
               <Hover
                 onClick={() => onToggle(n.path)}
                 onContextMenu={onContext ? (e) => onContext(e, n) : undefined}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: `4px 8px 4px ${pad}px`, borderRadius: 6, cursor: 'pointer', color: '#b7b7c0', fontSize: 12.5, whiteSpace: 'nowrap' }}
-                hover={{ background: '#141419' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: `4px 8px 4px ${pad}px`, borderRadius: 6, cursor: 'pointer', color: 'var(--text-2)', fontSize: 12.5, whiteSpace: 'nowrap' }}
+                hover={{ background: 'var(--surface)' }}
               >
-                <Icon name={open ? 'expand_more' : 'chevron_right'} size={16} color="#6b6b74" />
-                <Icon name={open ? 'folder_open' : 'folder'} size={15} color="#7c9bd0" />
+                <Icon name={open ? 'expand_more' : 'chevron_right'} size={16} color="var(--text-muted)" />
+                <Icon name={open ? 'folder_open' : 'folder'} size={15} color="var(--info)" />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.name}</span>
               </Hover>
               {open && n.children && n.children.length > 0 && (
@@ -57,10 +57,10 @@ export function FileTree({ nodes, depth = 0, selected, expanded, onSelect, onTog
             key={n.path}
             onClick={() => onSelect(n.path)}
             onContextMenu={onContext ? (e) => onContext(e, n) : undefined}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: `4px 8px 4px ${pad + 16}px`, borderRadius: 6, cursor: 'pointer', color: on ? '#ededf0' : '#9a9aa3', background: on ? '#15151c' : 'transparent', fontSize: 12.5, whiteSpace: 'nowrap' }}
-            hover={on ? undefined : { background: '#111116' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: `4px 8px 4px ${pad + 16}px`, borderRadius: 6, cursor: 'pointer', color: on ? 'var(--text)' : 'var(--text-dim)', background: on ? 'var(--surface)' : 'transparent', fontSize: 12.5, whiteSpace: 'nowrap' }}
+            hover={on ? undefined : { background: 'var(--surface)' }}
           >
-            <Icon name={iconFor(n.name)} size={15} color={on ? 'var(--accent-hi)' : '#6f6f78'} />
+            <Icon name={iconFor(n.name)} size={15} color={on ? 'var(--accent-hi)' : 'var(--text-muted)'} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.name}</span>
           </Hover>
         )

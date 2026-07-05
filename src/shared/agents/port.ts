@@ -1,4 +1,4 @@
-import type { AgentEvent, AgentProviderMeta, AgentSessionSpec } from './types'
+import type { AgentCompleteSpec, AgentCompleteResult, AgentEvent, AgentProviderMeta, AgentSessionSpec } from './types'
 
 /**
  * Handle to one running agent session. The renderer never sees this directly —
@@ -26,4 +26,10 @@ export interface AgentProvider {
   isAvailable(): Promise<boolean>
   /** Start a session, streaming events back through `onEvent`. */
   start(spec: AgentSessionSpec, onEvent: (event: AgentEvent) => void): Promise<AgentSessionHandle>
+  /**
+   * One-shot completion: send a single prompt, resolve with the whole answer.
+   * Optional — providers that can't do a non-interactive single call omit it, and
+   * callers fall back gracefully.
+   */
+  complete?(spec: AgentCompleteSpec): Promise<AgentCompleteResult>
 }

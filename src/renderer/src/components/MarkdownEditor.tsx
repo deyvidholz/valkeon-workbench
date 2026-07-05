@@ -78,25 +78,25 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 200 }
       onChange(v ? `${v}\n\n${md}` : md)
     })
 
-  const tabStyle = (on: boolean): CSSProperties => ({ padding: '4px 11px', borderRadius: 6, fontSize: 11.5, fontWeight: 500, cursor: 'pointer', color: on ? '#0a1018' : '#9a9aa3', background: on ? 'var(--accent)' : 'transparent' })
-  const toolBtn: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 27, height: 27, borderRadius: 6, color: '#9a9aa3', cursor: 'pointer' }
+  const tabStyle = (on: boolean): CSSProperties => ({ padding: '4px 11px', borderRadius: 6, fontSize: 11.5, fontWeight: 500, cursor: 'pointer', color: on ? 'var(--on-accent)' : 'var(--text-dim)', background: on ? 'var(--accent)' : 'transparent' })
+  const toolBtn: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 27, height: 27, borderRadius: 6, color: 'var(--text-dim)', cursor: 'pointer' }
 
   return (
     <div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, padding: '5px 6px', background: '#0c0c0f', border: '1px solid #1c1c22', borderBottom: 'none', borderRadius: '9px 9px 0 0' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, padding: '5px 6px', background: 'var(--bg)', border: '1px solid var(--line)', borderBottom: 'none', borderRadius: '9px 9px 0 0' }}>
         {TOOLS.map((t) => (
-          <Hover key={t.title} as="span" title={t.title} onClick={() => t.run(applier)} style={toolBtn} hover={{ background: '#1a1a20', color: '#e4e4ea' }}>
+          <Hover key={t.title} as="span" title={t.title} onClick={() => t.run(applier)} style={toolBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
             {t.icon ? <Icon name={t.icon} size={17} /> : <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Geist Mono', monospace" }}>{t.text}</span>}
           </Hover>
         ))}
-        <Hover as="span" title="Table builder" onClick={() => { registerAppend(); openTable() }} style={toolBtn} hover={{ background: '#1a1a20', color: '#e4e4ea' }}>
+        <Hover as="span" title="Table builder" onClick={() => { registerAppend(); openTable() }} style={toolBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
           <Icon name="table_chart" size={17} />
         </Hover>
-        <Hover as="span" title="Diagram builder" onClick={() => { registerAppend(); openDiag() }} style={toolBtn} hover={{ background: '#1a1a20', color: '#e4e4ea' }}>
+        <Hover as="span" title="Diagram builder" onClick={() => { registerAppend(); openDiag() }} style={toolBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
           <Icon name="schema" size={17} />
         </Hover>
         <div style={{ flex: 1 }} />
-        <div style={{ display: 'flex', background: '#0e0e12', border: '1px solid #1c1c22', borderRadius: 7, padding: 2, gap: 2 }}>
+        <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 7, padding: 2, gap: 2 }}>
           <span onClick={() => setTab('write')} style={tabStyle(tab === 'write')}>Write</span>
           <span onClick={() => setTab('preview')} style={tabStyle(tab === 'preview')}>Preview</span>
         </div>
@@ -107,11 +107,11 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 200 }
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          style={{ width: '100%', minHeight, resize: 'vertical', background: '#0c0c0f', border: '1px solid #1c1c22', borderRadius: '0 0 9px 9px', padding: 12, color: '#cdd3da', fontSize: 12.5, lineHeight: 1.6, fontFamily: "'Geist Mono', monospace" }}
+          style={{ width: '100%', minHeight, resize: 'vertical', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: '0 0 9px 9px', padding: 12, color: 'var(--text-2)', fontSize: 12.5, lineHeight: 1.6, fontFamily: "'Geist Mono', monospace" }}
         />
       ) : (
-        <div style={{ minHeight, background: '#0c0c0f', border: '1px solid #1c1c22', borderTop: 'none', borderRadius: '0 0 9px 9px', padding: 14 }}>
-          {value.trim() ? <Markdown source={value} /> : <div style={{ fontSize: 12.5, color: '#56565e' }}>Nothing to preview yet.</div>}
+        <div style={{ minHeight, background: 'var(--bg)', border: '1px solid var(--line)', borderTop: 'none', borderRadius: '0 0 9px 9px', padding: 14 }}>
+          {value.trim() ? <Markdown source={value} /> : <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>Nothing to preview yet.</div>}
         </div>
       )}
     </div>

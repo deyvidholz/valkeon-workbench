@@ -68,7 +68,7 @@ export function WorkspaceScreen() {
         style={{
           height: 53,
           flexShrink: 0,
-          borderBottom: '1px solid #16161a',
+          borderBottom: '1px solid var(--line)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -77,8 +77,8 @@ export function WorkspaceScreen() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-          <span style={{ fontSize: 15, fontWeight: 600, color: '#ededf0' }}>{ws?.name}</span>
-          <span style={{ fontSize: 12, color: '#6b6b74' }}>{activeCount} sessions active</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{ws?.name}</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{activeCount} sessions active</span>
           {worktreesInUse > 0 && (
             <Hover
               as="span"
@@ -89,14 +89,14 @@ export function WorkspaceScreen() {
                 gap: 5,
                 padding: '3px 9px',
                 borderRadius: 7,
-                background: 'rgba(184,156,240,0.1)',
-                border: '1px solid rgba(184,156,240,0.22)',
-                color: '#b89cf0',
+                background: 'color-mix(in srgb, var(--ai) 10%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--ai) 22%, transparent)',
+                color: 'var(--ai)',
                 fontSize: 11,
                 fontFamily: "'Geist Mono', monospace",
                 cursor: 'pointer'
               }}
-              hover={{ background: 'rgba(184,156,240,0.18)' }}
+              hover={{ background: 'color-mix(in srgb, var(--ai) 18%, transparent)' }}
             >
               <Icon name="account_tree" size={13} />
               {worktreesInUse} worktrees
@@ -104,7 +104,7 @@ export function WorkspaceScreen() {
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ display: 'flex', background: '#0e0e12', border: '1px solid #1c1c22', borderRadius: 9, padding: 3, gap: 2 }}>
+          <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 9, padding: 3, gap: 2 }}>
             {LAYOUTS.map((o) => {
               const on = layout === o.id
               return (
@@ -122,10 +122,10 @@ export function WorkspaceScreen() {
                     cursor: 'pointer',
                     fontSize: 12,
                     fontWeight: 500,
-                    color: on ? '#0a1018' : '#8a8a93',
+                    color: on ? 'var(--on-accent)' : 'var(--text-dim)',
                     background: on ? 'var(--accent)' : 'transparent'
                   }}
-                  hover={on ? undefined : { color: '#cfcfd6' }}
+                  hover={on ? undefined : { color: 'var(--text-2)' }}
                 >
                   <Icon name={o.icon} size={16} />
                   {o.label}
@@ -143,7 +143,7 @@ export function WorkspaceScreen() {
               padding: '7px 13px',
               borderRadius: 8,
               background: 'var(--accent)',
-              color: '#0a1018',
+              color: 'var(--on-accent)',
               fontSize: 12.5,
               fontWeight: 600,
               cursor: 'pointer'
@@ -170,17 +170,17 @@ export function WorkspaceScreen() {
               textAlign: 'center'
             }}
           >
-            <div style={{ width: 46, height: 46, borderRadius: 12, background: '#101015', border: '1px solid #1d1d23', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="grid_view" size={24} color="#56565e" />
+            <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name="grid_view" size={24} color="var(--text-faint)" />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#cbcbd2' }}>No sessions in {ws?.name}</div>
-              <div style={{ fontSize: 12, color: '#6b6b74', marginTop: 4 }}>Start a session to begin working in this workspace.</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>No sessions in {ws?.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Start a session to begin working in this workspace.</div>
             </div>
             <Hover
               as="span"
               onClick={openNewSession}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, background: 'var(--accent)', color: '#0a1018', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}
               hover={{ filter: 'brightness(1.08)' }}
             >
               <Icon name="add" size={16} />
@@ -210,13 +210,13 @@ export function WorkspaceScreen() {
               {active && <SessionCard session={active} />}
             </div>
             <div onMouseDown={startDrag} style={{ width: 10, flexShrink: 0, cursor: 'col-resize', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ width: 3, height: 34, borderRadius: 3, background: '#26262e' }} />
+              <span style={{ width: 3, height: 34, borderRadius: 3, background: 'var(--surface-3)' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0, height: '100%' }}>
               {splitRight ? (
                 <SessionCard session={splitRight} />
               ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0c0c0f', border: '1px solid #1b1b21', borderRadius: 12, color: '#56565e', fontSize: 12.5, textAlign: 'center', padding: 20 }}>
+                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 12, color: 'var(--text-faint)', fontSize: 12.5, textAlign: 'center', padding: 20 }}>
                   Add another session to use Split.
                 </div>
               )}
@@ -241,9 +241,9 @@ export function WorkspaceScreen() {
                       fontSize: 12.5,
                       fontWeight: 500,
                       whiteSpace: 'nowrap',
-                      color: on ? '#ededf0' : '#9a9aa3',
-                      background: on ? '#15151b' : 'transparent',
-                      border: on ? '1px solid #24242c' : '1px solid transparent'
+                      color: on ? 'var(--text)' : 'var(--text-dim)',
+                      background: on ? 'var(--surface)' : 'transparent',
+                      border: on ? '1px solid var(--line-2)' : '1px solid transparent'
                     }}
                   >
                     <StatusDot status={s.status} />
@@ -251,7 +251,7 @@ export function WorkspaceScreen() {
                   </span>
                 )
               })}
-              <Hover as="span" onClick={openNewSession} title="New session" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, color: 'var(--accent-hi)', cursor: 'pointer', flexShrink: 0 }} hover={{ background: '#15151b' }}>
+              <Hover as="span" onClick={openNewSession} title="New session" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, color: 'var(--accent-hi)', cursor: 'pointer', flexShrink: 0 }} hover={{ background: 'var(--surface)' }}>
                 <Icon name="add" size={17} />
               </Hover>
             </div>

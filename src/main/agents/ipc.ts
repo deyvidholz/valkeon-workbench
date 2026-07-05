@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { IpcChannels } from '@shared/ipc'
 import type { AgentStartSpec } from '@shared/ipc'
+import type { AgentCompleteSpec } from '@shared/agents/types'
 import type { ContextBuildRequest } from '@shared/context'
 import type { StructuredAgentManager } from './manager'
 import type { GlobalStore } from '../persistence/globalStore'
@@ -20,6 +21,7 @@ export function registerAgentIpc(manager: StructuredAgentManager, globalStore: G
   ipcMain.on(IpcChannels.agentSend, (_e, id: string, text: string) => manager.send(id, text))
   ipcMain.handle(IpcChannels.agentStop, (_e, id: string) => manager.stop(id))
   ipcMain.on(IpcChannels.agentDispose, (_e, id: string) => manager.dispose(id))
+  ipcMain.handle(IpcChannels.agentComplete, (_e, spec: AgentCompleteSpec) => manager.complete(spec))
 
   ipcMain.handle(IpcChannels.contextBuild, async (_e, req: ContextBuildRequest) => {
     assertAllowedRepo(globalStore, req.repoPath)

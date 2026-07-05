@@ -44,8 +44,14 @@ export function languageForPath(path: string): string {
 }
 
 export const MONACO_THEME = 'valkeon-dark'
+export const MONACO_THEME_LIGHT = 'valkeon-light'
 
-/** Define a dark theme tuned to the app palette (idempotent). */
+/** Pick the Monaco theme id for the resolved app theme. */
+export function monacoThemeFor(resolved: 'dark' | 'light'): string {
+  return resolved === 'light' ? MONACO_THEME_LIGHT : MONACO_THEME
+}
+
+/** Define both app-tuned Monaco themes (idempotent). */
 export function defineMonacoTheme(m: typeof monaco): void {
   m.editor.defineTheme(MONACO_THEME, {
     base: 'vs-dark',
@@ -62,6 +68,23 @@ export function defineMonacoTheme(m: typeof monaco): void {
       'diffEditor.removedTextBackground': '#3a1f2255',
       'editorWidget.background': '#101014',
       'editorWidget.border': '#25252d'
+    }
+  })
+  m.editor.defineTheme(MONACO_THEME_LIGHT, {
+    base: 'vs',
+    inherit: true,
+    rules: [],
+    colors: {
+      'editor.background': '#ffffff',
+      'editorGutter.background': '#ffffff',
+      'editor.lineHighlightBackground': '#f2f2f6',
+      'editorLineNumber.foreground': '#c0c0c8',
+      'editorLineNumber.activeForeground': '#66666f',
+      'editor.selectionBackground': '#cfe0ff',
+      'diffEditor.insertedTextBackground': '#2e9e6322',
+      'diffEditor.removedTextBackground': '#cf524522',
+      'editorWidget.background': '#f4f4f6',
+      'editorWidget.border': '#d7d7df'
     }
   })
 }

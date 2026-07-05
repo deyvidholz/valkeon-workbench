@@ -4,6 +4,15 @@ import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import '@xterm/xterm/css/xterm.css'
 import type { PtyCreateSpec } from '@shared/pty'
+import type { ITheme } from '@xterm/xterm'
+import { useResolvedTheme } from '../theme/useResolvedTheme'
+
+/** xterm color theme per resolved app theme. Cursor uses the live accent var. */
+function termTheme(resolved: 'dark' | 'light', accent: string): ITheme {
+  if (resolved === 'light')
+    return { background: '#ffffff', foreground: '#26262c', cursor: accent, cursorAccent: '#ffffff', selectionBackground: 'rgba(0,0,0,0.12)' }
+  return { background: '#0a0a0c', foreground: '#c8c8d0', cursor: accent, cursorAccent: '#0a0a0c', selectionBackground: 'rgba(255,255,255,0.16)' }
+}
 
 interface XTermProps {
   /** Stable PTY id. Changing it (e.g. on restart) remounts and respawns. */
@@ -22,9 +31,19 @@ interface XTermProps {
  */
 export function XTerm({ ptyId, spec, fontSize = 12.5, onExit, onInitialInputSent }: XTermProps) {
   const hostRef = useRef<HTMLDivElement>(null)
+  const termRef = useRef<Terminal | null>(null)
+  const resolved = useResolvedTheme()
   // Keep the latest callback without re-running the (ptyId-keyed) effect.
   const onSentRef = useRef(onInitialInputSent)
   onSentRef.current = onInitialInputSent
+
+  // Repaint a live terminal when the app theme flips.
+  useEffect(() => {
+    const term = termRef.current
+    if (!term) return
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#e0574d'
+    term.options.theme = termTheme(resolved, accent)
+  }, [resolved])
 
   useEffect(() => {
     const host = hostRef.current
@@ -37,17 +56,12 @@ export function XTerm({ ptyId, spec, fontSize = 12.5, onExit, onInitialInputSent
       fontFamily: "'Geist Mono', ui-monospace, monospace",
       fontSize,
       lineHeight: 1.2,
-      theme: {
-        background: '#0a0a0c',
-        foreground: '#c8c8d0',
-        cursor: accent,
-        cursorAccent: '#0a0a0c',
-        selectionBackground: 'rgba(255,255,255,0.16)'
-      },
+      theme: termTheme(resolved, accent),
       cursorBlink: true,
       allowProposedApi: true,
       scrollback: 8000
     })
+    termRef.current = term
     const fit = new FitAddon()
     term.loadAddon(fit)
     term.loadAddon(new WebLinksAddon())
@@ -111,6 +125,7 @@ export function XTerm({ ptyId, spec, fontSize = 12.5, onExit, onInitialInputSent
       offData?.()
       offExit?.()
       term.dispose()
+      termRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ptyId])

@@ -7,6 +7,75 @@
   --accent-soft: rgba(224, 87, 77, 0.13);
   --accent-line: rgba(224, 87, 77, 0.34);
   --accent-glow: rgba(224, 87, 77, 0.24);
+  /* Text color that sits on top of an accent-filled surface (buttons/chips). */
+  --on-accent: #0a1018;
+
+  /* ---- Semantic theme tokens (dark = default). A light override lives in the
+     [data-theme='light'] block below; applyTheme() sets that attribute. ---- */
+  /* Surfaces, darkest → lightest */
+  --bg: #0b0b0d;
+  --surface: #101014;
+  --surface-2: #16161c;
+  --surface-3: #1f1f26;
+  --surface-4: #2c2c35;
+  /* Borders / dividers */
+  --line: #16161a;
+  --line-2: #232329;
+  /* Text, brightest → faintest */
+  --text: #ededf0;
+  --text-2: #cbcbd2;
+  --text-dim: #9a9aa3;
+  --text-muted: #6b6b74;
+  --text-faint: #56565e;
+  /* Status / semantic */
+  --ok: #5cc98a;
+  --ok-2: #7dd99a;
+  --warn: #e0b15e;
+  --danger: #e07a6e;
+  --info: #5b9dd9;
+  --info-2: #7cb3e6;
+  --ai: #b89cf0;
+  /* Overlays & window chrome */
+  --scrim: rgba(0, 0, 0, 0.6);
+  --shadow: rgba(4, 4, 6, 0.6);
+  --app-bg: #0b0b0d;
+  --app-border: #1e1e24;
+  --scrollbar: #262630;
+  --scrollbar-hover: #35353f;
+}
+
+/* Light theme — a curated inversion of the token palette. Neutral accents keep
+   their hue but darken for legibility on light surfaces. Accent-derived vars
+   (--accent-soft/line/glow) are recomputed by applyAccent() at runtime and work
+   over either background, so they aren't overridden here. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --on-accent: #fff;
+  --bg: #f4f4f6;
+  --surface: #ffffff;
+  --surface-2: #f2f2f6;
+  --surface-3: #e9e9ee;
+  --surface-4: #dcdce3;
+  --line: #e7e7ec;
+  --line-2: #d7d7df;
+  --text: #17171b;
+  --text-2: #3d3d45;
+  --text-dim: #66666f;
+  --text-muted: #86868f;
+  --text-faint: #a6a6ae;
+  --ok: #2e9e63;
+  --ok-2: #2e9e63;
+  --warn: #a8781f;
+  --danger: #cf5245;
+  --info: #3a72c0;
+  --info-2: #3a72c0;
+  --ai: #7c5cc0;
+  --scrim: rgba(20, 20, 25, 0.3);
+  --shadow: rgba(0, 0, 0, 0.12);
+  --app-bg: #f4f4f6;
+  --app-border: #d7d7df;
+  --scrollbar: #cfcfd6;
+  --scrollbar-hover: #b7b7c0;
 }
 
 * {
@@ -26,7 +95,7 @@ body {
   font-family: 'Geist', -apple-system, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  color: #ededf0;
+  color: var(--text);
   overflow: hidden;
 }
 
@@ -54,13 +123,13 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #262630;
+  background: var(--scrollbar);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #35353f;
+  background: var(--scrollbar-hover);
   background-clip: content-box;
 }
 
@@ -72,7 +141,7 @@ button {
 }
 input::placeholder,
 textarea::placeholder {
-  color: #56565e;
+  color: var(--text-faint);
 }
 input:focus,
 textarea:focus {
@@ -130,8 +199,8 @@ button {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #0b0b0d;
-  border: 1px solid #1e1e24;
+  background: var(--app-bg);
+  border: 1px solid var(--app-border);
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02) inset;

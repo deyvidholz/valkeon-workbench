@@ -5,6 +5,8 @@ import { CLAUDE_PROVIDER, DEFAULT_PROVIDER_ID } from '@shared/agents/providers'
 export const DEFAULT_SETTINGS: AppSettings = {
   userName: '',
   accent: '#e0574d',
+  themePref: 'system',
+  localePref: 'system',
   defaultProviderId: DEFAULT_PROVIDER_ID,
   defaultModelId: CLAUDE_PROVIDER.defaultModelId,
   terminalFontSize: 12,

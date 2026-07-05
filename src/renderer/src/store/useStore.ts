@@ -4,10 +4,12 @@ import { DEFAULT_PROVIDER_ID, getProviderMeta } from '@shared/agents/providers'
 import type { BoardCard, WorkspaceRecord } from '@shared/persistence/types'
 import type { SkillSave } from '@shared/skills'
 import type { WorktreeInfo } from '@shared/git'
-import type { AgentEvent } from '@shared/agents/types'
+import type { AgentEvent, AgentCompleteResult } from '@shared/agents/types'
 import type { ContextSourceId } from '@shared/context'
 import type { ProjectConfig } from '@shared/project'
 import { DEFAULT_PROJECT_CONFIG } from '@shared/project'
+import type { ThemePref, ResolvedTheme, LocalePref } from '@shared/persistence/global'
+import type { NotificationRecord, NotificationAction, NotificationKind } from '@shared/notifications'
 import type {
   Board,
   BoardScope,
@@ -75,6 +77,10 @@ interface AppState {
   skillEditorId: string | null
   layout: LayoutMode
   accent: string
+  themePref: ThemePref
+  /** The current OS appearance, pushed from main; used to resolve `system`. */
+  systemTheme: ResolvedTheme
+  localePref: LocalePref
   userName: string
   fontSize: number
   defaultProviderId: string
@@ -139,6 +145,8 @@ interface AppState {
   skills: Skill[]
   history: HistoryEntry[]
   worktrees: WorktreeInfo[]
+  notifications: NotificationRecord[]
+  notificationsOpen: boolean
 
   /** Append callback registered by the currently-focused markdown editor (for the Table/Diagram builders). */
   mdAppend: ((md: string) => void) | null
@@ -154,7 +162,22 @@ interface AppState {
   setLayout: (layout: LayoutMode) => void
   openSession: (id: string) => void
   setRecents: (recents: Recent[]) => void
-  hydrateSettings: (s: { userName: string; accent: string; defaultProviderId: string; defaultModelId: string; fontSize: number }) => void
+  hydrateSettings: (s: { userName: string; accent: string; themePref: ThemePref; localePref: LocalePref; defaultProviderId: string; defaultModelId: string; fontSize: number }) => void
+  setThemePref: (pref: ThemePref) => void
+  setSystemTheme: (theme: ResolvedTheme) => void
+  setLocalePref: (pref: LocalePref) => void
+  /** One-shot AI completion using the default provider/model, scoped to the project. */
+  aiComplete: (prompt: string, opts?: { system?: string; cwd?: string; modelId?: string; timeoutMs?: number }) => Promise<AgentCompleteResult>
+  loadNotifications: () => Promise<void>
+  pushNotification: (n: { kind: NotificationKind; title: string; body: string; action?: NotificationAction; wsId?: string | null }) => void
+  markNotificationViewed: (id: string) => void
+  markAllNotificationsViewed: () => void
+  clearNotifications: () => void
+  openNotifications: () => void
+  closeNotifications: () => void
+  runNotificationAction: (id: string) => void
+  /** Open the worktree-cleanup decide dialog for a run (fleshed out in the worktrees milestone). */
+  openCleanupRun: (runId: string) => void
   setUserName: (name: string) => void
   openNameDialog: () => void
   closeNameDialog: () => void
@@ -391,13 +414,13 @@ export const useStore = create<AppState>((set, get) => {
     const updated: Card = {
       ...card,
       column: 'in-review',
-      activity: [{ icon: 'rate_review', text: `Agent finished — moved to ${colName}`, time: 'now', color: '#e0b15e' }, ...card.activity]
+      activity: [{ icon: 'rate_review', text: `Agent finished — moved to ${colName}`, time: 'now', color: 'var(--warn)' }, ...card.activity]
     }
     set((s) => ({
       boards: s.boards.map((b) => (b.id === boardId ? { ...b, cards: b.cards.map((c) => (c.id === cardId ? updated : c)) } : b))
     }))
     persistCard(boardId, updated)
-    log({ kind: 'card', icon: 'east', color: '#e0b15e', label: `Moved card #${card.code} to ${colName}`, detail: board.name, target: { kind: 'card', id: cardId, boardId } })
+    log({ kind: 'card', icon: 'east', color: 'var(--warn)', label: `Moved card #${card.code} to ${colName}`, detail: board.name, target: { kind: 'card', id: cardId, boardId } })
   }
 
   /** Drop a just-created card if the drawer closes while it's still an empty default. */
@@ -603,7 +626,7 @@ export const useStore = create<AppState>((set, get) => {
     set({ sessions: [...st.sessions, session], newSessionOpen: false, view: 'session', activeSessionId: id })
     if (form.mode === 'structured') startStructured(session, undefined, cwdReady)
     persistSessions()
-    log({ kind: 'session', icon: 'add_circle', color: '#7cb3e6', label: `Started session ${name}`, detail: branch, target: { kind: 'session', id } })
+    log({ kind: 'session', icon: 'add_circle', color: 'var(--info-2)', label: `Started session ${name}`, detail: branch, target: { kind: 'session', id } })
   }
 
   /**
@@ -676,7 +699,7 @@ export const useStore = create<AppState>((set, get) => {
       get().applyAgentEvent(id, { kind: 'line', line: { type: 'sys', text: `Switched model to ${model.label}${updated.claudeSessionId ? ' — resuming context.' : '.'}` } })
       return () => startStructured(get().sessions.find((x) => x.id === id) ?? updated, undefined, undefined, updated.claudeSessionId)
     })
-    log({ kind: 'session', icon: 'tune', color: '#7cb3e6', label: `Set ${s.name} model to ${model.label}`, detail: '', target: { kind: 'session', id } })
+    log({ kind: 'session', icon: 'tune', color: 'var(--info-2)', label: `Set ${s.name} model to ${model.label}`, detail: '', target: { kind: 'session', id } })
   }
 
   /** `/clear`: drop context — a fresh agent (no resume) and an empty transcript. */
@@ -724,6 +747,9 @@ export const useStore = create<AppState>((set, get) => {
     skillEditorId: null,
     layout: 'grid',
     accent: DEFAULT_ACCENT,
+    themePref: 'system',
+    systemTheme: 'dark',
+    localePref: 'system',
     userName: '',
     fontSize: 12,
     defaultProviderId: DEFAULT_PROVIDER_ID,
@@ -781,6 +807,8 @@ export const useStore = create<AppState>((set, get) => {
     skills: [],
     history: [],
     worktrees: [],
+    notifications: [],
+    notificationsOpen: false,
     mdAppend: null,
 
     go: (view) => set({ view, wsMenuOpen: false, boardMenuOpen: false, projectMenuOpen: false, drawerCardId: null }),
@@ -806,6 +834,7 @@ export const useStore = create<AppState>((set, get) => {
       })
       if (project.path && project.path.startsWith('/')) {
         void window.api?.history.load(project.path).then((h) => set({ history: h as HistoryEntry[] })).catch(() => {})
+        void window.api?.notifications.load(project.path).then((n) => set({ notifications: n })).catch(() => {})
         get().loadWorktrees()
         get().loadProjectConfig()
         void window.api?.boards
@@ -893,7 +922,7 @@ export const useStore = create<AppState>((set, get) => {
     setLayout: (layout) => set({ layout }),
     openSession: (id) => set({ activeSessionId: id, view: 'session', wsMenuOpen: false, paletteOpen: false }),
     setRecents: (recents) => set({ recents }),
-    hydrateSettings: (s) => set({ userName: s.userName, accent: s.accent, defaultProviderId: s.defaultProviderId, defaultModelId: s.defaultModelId, fontSize: s.fontSize, nameDialogOpen: !s.userName }),
+    hydrateSettings: (s) => set({ userName: s.userName, accent: s.accent, themePref: s.themePref, localePref: s.localePref, defaultProviderId: s.defaultProviderId, defaultModelId: s.defaultModelId, fontSize: s.fontSize, nameDialogOpen: !s.userName }),
     setUserName: (name) => {
       const trimmed = name.trim()
       set({ userName: trimmed, nameDialogOpen: false })
@@ -1013,7 +1042,7 @@ export const useStore = create<AppState>((set, get) => {
         view: s.view === 'session' && s.activeSessionId === id ? 'workspace' : s.view
       }))
       persistSessions()
-      if (session) log({ kind: 'session', icon: 'stop_circle', color: '#9a9aa3', label: `Ended session ${session.name}`, detail: session.branch })
+      if (session) log({ kind: 'session', icon: 'stop_circle', color: 'var(--text-dim)', label: `Ended session ${session.name}`, detail: session.branch })
     },
     restartSession: (id) => {
       const st = get()
@@ -1040,7 +1069,7 @@ export const useStore = create<AppState>((set, get) => {
           sessions: s.sessions.map((x) => (x.id === id ? { ...x, status: 'running', live: true, startedAt: Date.now() } : x))
         }))
       }
-      if (session) log({ kind: 'session', icon: 'restart_alt', color: '#7cb3e6', label: `Restarted session ${session.name}`, detail: session.branch, target: { kind: 'session', id } })
+      if (session) log({ kind: 'session', icon: 'restart_alt', color: 'var(--info-2)', label: `Restarted session ${session.name}`, detail: session.branch, target: { kind: 'session', id } })
     },
     // Called once the start-task prompt has actually been typed into the PTY, so
     // a later restart spawns a clean agent instead of re-submitting the task.
@@ -1092,11 +1121,11 @@ export const useStore = create<AppState>((set, get) => {
           if (s.notify === true && !viewing) {
             const lastText = [...s.lines].reverse().find((l) => l.type === 'text')
             const asking = !!lastText && /\?\s*$/.test(lastText.text.trim())
-            window.api?.notify.show({
-              title: asking ? `${s.name} needs your input` : `${s.name} finished`,
-              body: lastText ? lastText.text.replace(/\s+/g, ' ').slice(0, 200) : asking ? 'The agent is waiting on your decision.' : 'The agent completed its turn.',
-              sessionId: id
-            })
+            const title = asking ? `${s.name} needs your input` : `${s.name} finished`
+            const body = lastText ? lastText.text.replace(/\s+/g, ' ').slice(0, 200) : asking ? 'The agent is waiting on your decision.' : 'The agent completed its turn.'
+            window.api?.notify.show({ title, body, sessionId: id })
+            // Mirror it into the in-app notification center.
+            get().pushNotification({ kind: 'session', title, body, action: { type: 'open-session', sessionId: id }, wsId: s.wsId })
           }
         }
       }
@@ -1253,7 +1282,7 @@ export const useStore = create<AppState>((set, get) => {
       const name = `terminal ${n}`
       const term: Terminal = { id, wsId: st.activeWorkspaceId, name, cwd: st.activeWorktreePath ?? st.project?.path ?? '~', running: true }
       set({ terminals: [...st.terminals, term], view: 'terminals' })
-      log({ kind: 'terminal', icon: 'terminal', color: '#5cc98a', label: `Opened ${name}`, detail: term.cwd })
+      log({ kind: 'terminal', icon: 'terminal', color: 'var(--ok)', label: `Opened ${name}`, detail: term.cwd })
     },
     closeTerminal: (id) => {
       const t = get().terminals.find((x) => x.id === id)
@@ -1268,7 +1297,7 @@ export const useStore = create<AppState>((set, get) => {
       const t = get().terminals.find((x) => x.id === id)
       killPty(id)
       set((st) => ({ terminals: st.terminals.filter((x) => x.id !== id) }))
-      if (t) log({ kind: 'terminal', icon: 'terminal', color: '#9a9aa3', label: `Closed ${t.name}`, detail: t.cwd })
+      if (t) log({ kind: 'terminal', icon: 'terminal', color: 'var(--text-dim)', label: `Closed ${t.name}`, detail: t.cwd })
     },
     reorderTerminals: (fromId, toId) => set((st) => ({ terminals: arrayMove(st.terminals, fromId, toId) })),
     closeAllTerminals: () => {
@@ -1326,7 +1355,7 @@ export const useStore = create<AppState>((set, get) => {
           set((s) => ({ worktreesVersion: s.worktreesVersion + 1 }))
         })
         .catch(() => {})
-      log({ kind: 'worktree', icon: 'account_tree', color: '#b89cf0', label: `Created worktree ${branch}`, detail: dir })
+      log({ kind: 'worktree', icon: 'account_tree', color: 'var(--ai)', label: `Created worktree ${branch}`, detail: dir })
     },
     loadWorktrees: () => {
       const path = realPath()
@@ -1354,7 +1383,7 @@ export const useStore = create<AppState>((set, get) => {
           set((s) => ({ worktreesVersion: s.worktreesVersion + 1 }))
         })
         .catch(() => {})
-      log({ kind: 'worktree', icon: 'delete_outline', color: '#e07a6e', label: `Removed worktree ${branch}`, detail: dir })
+      log({ kind: 'worktree', icon: 'delete_outline', color: 'var(--danger)', label: `Removed worktree ${branch}`, detail: dir })
     },
     loadProjectConfig: () => {
       const path = realPath()
@@ -1370,7 +1399,7 @@ export const useStore = create<AppState>((set, get) => {
       set({ projectConfig: next })
       const path = realPath()
       if (path) void window.api?.projectConfig.save(path, next).catch(() => {})
-      log({ kind: 'board', icon: 'tune', color: '#7cb3e6', label: 'Updated project settings', detail: '' })
+      log({ kind: 'board', icon: 'tune', color: 'var(--info-2)', label: 'Updated project settings', detail: '' })
     },
     openProjectSettings: () => {
       get().loadProjectConfig()
@@ -1386,7 +1415,7 @@ export const useStore = create<AppState>((set, get) => {
         confirmLabel: 'Delete branch',
         onConfirm: () => {
           void window.api?.git.deleteBranch(path, branch).then((b) => set({ branches: b })).catch(() => {})
-          log({ kind: 'worktree', icon: 'delete_outline', color: '#e07a6e', label: `Deleted branch ${branch}`, detail: '' })
+          log({ kind: 'worktree', icon: 'delete_outline', color: 'var(--danger)', label: `Deleted branch ${branch}`, detail: '' })
         }
       })
     },
@@ -1404,7 +1433,7 @@ export const useStore = create<AppState>((set, get) => {
             .mergeBranch(path, branch, target)
             .then((res) => {
               if (res?.ok) {
-                log({ kind: 'worktree', icon: 'merge', color: '#5cc98a', label: `Merged ${branch} → ${target}`, detail: '' })
+                log({ kind: 'worktree', icon: 'merge', color: 'var(--ok)', label: `Merged ${branch} → ${target}`, detail: '' })
                 // Clean up the worktree now that it's merged, and refresh branches.
                 if (worktreeDir) get().removeWorktree(worktreeDir, branch)
                 else set((s) => ({ worktreesVersion: s.worktreesVersion + 1 }))
@@ -1422,7 +1451,7 @@ export const useStore = create<AppState>((set, get) => {
       set({ activeWorktreePath: path })
       const wts = get().worktrees
       const label = path ? wts.find((w) => w.path === path)?.branch ?? path : wts.find((w) => w.isMain)?.branch ?? 'main'
-      log({ kind: 'worktree', icon: 'account_tree', color: '#b89cf0', label: `Switched to worktree ${label}`, detail: 'New sessions & terminals open here' })
+      log({ kind: 'worktree', icon: 'account_tree', color: 'var(--ai)', label: `Switched to worktree ${label}`, detail: 'New sessions & terminals open here' })
     },
 
     openNewWs: () => set({ newWsOpen: true, newWs: { name: '', useWorktree: false }, wsMenuOpen: false }),
@@ -1441,7 +1470,7 @@ export const useStore = create<AppState>((set, get) => {
         view: 'workspace',
         newWsOpen: false
       })
-      log({ kind: 'board', icon: 'workspaces', color: '#7cb3e6', label: `Created workspace ${name}`, detail: '' })
+      log({ kind: 'board', icon: 'workspaces', color: 'var(--info-2)', label: `Created workspace ${name}`, detail: '' })
       persistWorkspaces()
     },
 
@@ -1472,7 +1501,7 @@ export const useStore = create<AppState>((set, get) => {
         void window.api?.boards.saveBoard(path, { ...meta, cards: [] }).catch(() => {})
       }
       persistWorkspaces()
-      log({ kind: 'board', icon: 'view_kanban', color: '#7cb3e6', label: `Created board ${name}`, detail: st.newBoard.scope, target: { kind: 'board', id } })
+      log({ kind: 'board', icon: 'view_kanban', color: 'var(--info-2)', label: `Created board ${name}`, detail: st.newBoard.scope, target: { kind: 'board', id } })
     },
     addCardTo: (col) => {
       const st = get()
@@ -1493,7 +1522,7 @@ export const useStore = create<AppState>((set, get) => {
         attachments: [],
         sessionId: null,
         agent: false,
-        activity: [{ icon: 'add', text: 'Card created', time: 'now', color: '#5f5f68' }]
+        activity: [{ icon: 'add', text: 'Card created', time: 'now', color: 'var(--text-muted)' }]
       }
       updateActiveBoard((b) => ({ ...b, cards: [...b.cards, newCard] }))
       // Draft: not persisted or logged until it has real content (see updateCard / closeDrawer).
@@ -1534,7 +1563,7 @@ export const useStore = create<AppState>((set, get) => {
       }
       if (card.column !== 'in-progress') get().moveCard(card.id, 'in-progress')
       set({ reviewCardId: null })
-      log({ kind: 'card', icon: 'rate_review', color: '#e0b15e', label: `Requested changes on #${card.code}`, detail: canDeliver ? 'sent to the agent' : 'saved to the card', target: { kind: 'card', id: card.id, boardId: board.id } })
+      log({ kind: 'card', icon: 'rate_review', color: 'var(--warn)', label: `Requested changes on #${card.code}`, detail: canDeliver ? 'sent to the agent' : 'saved to the card', target: { kind: 'card', id: card.id, boardId: board.id } })
     },
     reviewByAi: () => {
       const st = get()
@@ -1569,7 +1598,7 @@ export const useStore = create<AppState>((set, get) => {
       const prompt = `Please review the uncommitted changes in this working tree — run \`git diff\` (and \`git status\` for new files). The task being reviewed was:\n\n# ${card.title}\n\n${card.body || '(no description)'}\n\nReport bugs, missing requirements, and concrete improvements. Do NOT change any code — this is a review only.`
       startStructured(session, prompt)
       persistSessions()
-      log({ kind: 'card', icon: 'reviews', color: '#7cb3e6', label: `AI review of #${card.code}`, detail: board.name, target: { kind: 'session', id: sid } })
+      log({ kind: 'card', icon: 'reviews', color: 'var(--info-2)', label: `AI review of #${card.code}`, detail: board.name, target: { kind: 'session', id: sid } })
     },
     closeDrawer: () => {
       maybeDiscardDraft()
@@ -1595,7 +1624,7 @@ export const useStore = create<AppState>((set, get) => {
         const meaningful = (c.title.trim() !== '' && c.title.trim() !== 'New card') || c.body.trim() !== '' || c.labels.length > 0
         if (meaningful) {
           set({ draftCardId: null })
-          log({ kind: 'card', icon: 'add', color: '#5f5f68', label: `Added card #${c.code}`, detail: board.name, target: { kind: 'card', id, boardId: board.id } })
+          log({ kind: 'card', icon: 'add', color: 'var(--text-muted)', label: `Added card #${c.code}`, detail: board.name, target: { kind: 'card', id, boardId: board.id } })
         }
       }
     },
@@ -1619,7 +1648,7 @@ export const useStore = create<AppState>((set, get) => {
           updateActiveBoard((b) => ({ ...b, cards: b.cards.filter((c) => c.id !== id) }))
           set({ drawerCardId: null })
           persistDeleteCard(board.id, id)
-          if (card) log({ kind: 'card', icon: 'delete_outline', color: '#e07a6e', label: `Deleted card #${card.code}`, detail: board.name })
+          if (card) log({ kind: 'card', icon: 'delete_outline', color: 'var(--danger)', label: `Deleted card #${card.code}`, detail: board.name })
         }
       })
     },
@@ -1631,7 +1660,7 @@ export const useStore = create<AppState>((set, get) => {
       get().updateCard(id, { column: col, order })
       const card = board.cards.find((c) => c.id === id)
       const colName = board.columns.find((c) => c.id === col)?.name ?? col
-      if (card) log({ kind: 'card', icon: 'east', color: '#9a9aa3', label: `Moved card #${card.code} to ${colName}`, detail: board.name, target: { kind: 'card', id, boardId: board.id } })
+      if (card) log({ kind: 'card', icon: 'east', color: 'var(--text-dim)', label: `Moved card #${card.code} to ${colName}`, detail: board.name, target: { kind: 'card', id, boardId: board.id } })
     },
     moveCardTo: (id, col, beforeCardId) => {
       const st = get()
@@ -1642,7 +1671,7 @@ export const useStore = create<AppState>((set, get) => {
       get().updateCard(id, { column: col, order })
       if (prev && prev.column !== col) {
         const colName = board.columns.find((c) => c.id === col)?.name ?? col
-        log({ kind: 'card', icon: 'east', color: '#9a9aa3', label: `Moved card #${prev.code} to ${colName}`, detail: board.name, target: { kind: 'card', id, boardId: board.id } })
+        log({ kind: 'card', icon: 'east', color: 'var(--text-dim)', label: `Moved card #${prev.code} to ${colName}`, detail: board.name, target: { kind: 'card', id, boardId: board.id } })
       }
     },
     reorderColumns: (fromId, toId) =>
@@ -1712,13 +1741,13 @@ export const useStore = create<AppState>((set, get) => {
         sessionId,
         link: { branch, worktree },
         activity: [
-          { icon: 'rocket_launch', text: 'Started task', time: 'now', color: '#7cb3e6' },
-          ...(worktree ? [{ icon: 'account_tree', text: `Created worktree on ${branch}`, time: 'now', color: '#b89cf0' }] : []),
-          { icon: 'east', text: 'Moved to In Progress', time: 'now', color: '#9a9aa3' },
+          { icon: 'rocket_launch', text: 'Started task', time: 'now', color: 'var(--info-2)' },
+          ...(worktree ? [{ icon: 'account_tree', text: `Created worktree on ${branch}`, time: 'now', color: 'var(--ai)' }] : []),
+          { icon: 'east', text: 'Moved to In Progress', time: 'now', color: 'var(--text-dim)' },
           ...card.activity
         ]
       })
-      log({ kind: 'card', icon: 'rocket_launch', color: '#7cb3e6', label: `Started task on #${card.code}`, detail: branch, target: { kind: 'session', id: sessionId } })
+      log({ kind: 'card', icon: 'rocket_launch', color: 'var(--info-2)', label: `Started task on #${card.code}`, detail: branch, target: { kind: 'session', id: sessionId } })
     },
     toggleLabelMenu: (open) => set((st) => ({ labelMenuOpen: open ?? !st.labelMenuOpen })),
     toggleCardLabel: (labelId) => {
@@ -1763,12 +1792,12 @@ export const useStore = create<AppState>((set, get) => {
         attachments: [],
         sessionId: null,
         agent: false,
-        activity: [{ icon: 'auto_awesome', text: 'Drafted by AI', time: 'now', color: '#7cb3e6' }]
+        activity: [{ icon: 'auto_awesome', text: 'Drafted by AI', time: 'now', color: 'var(--info-2)' }]
       }))
       updateActiveBoard((b) => ({ ...b, cards: [...b.cards, ...created] }))
       created.forEach((c) => persistCard(board.id, c))
       set({ genOpen: false, genText: '', view: 'board' })
-      log({ kind: 'card', icon: 'auto_awesome', color: '#7cb3e6', label: `Generated ${created.length} cards`, detail: board.name, target: { kind: 'board', id: board.id } })
+      log({ kind: 'card', icon: 'auto_awesome', color: 'var(--info-2)', label: `Generated ${created.length} cards`, detail: board.name, target: { kind: 'board', id: board.id } })
     },
 
     openLabelMgr: () => set({ labelMgrOpen: true, labelMenuOpen: false, newLabel: { name: '', color: LABEL_PALETTE[0] } }),
@@ -1874,7 +1903,7 @@ export const useStore = create<AppState>((set, get) => {
       set((s2) => ({ sessions: [...s2.sessions, session], activeSessionId: sid, view: 'session' }))
       startStructured(session, `Please run the "${sk.name}" skill (${sk.id}).`)
       persistSessions()
-      log({ kind: 'skill', icon: 'play_circle', color: '#7cb3e6', label: `Run skill ${sk.name}`, detail: 'in a new session' })
+      log({ kind: 'skill', icon: 'play_circle', color: 'var(--info-2)', label: `Run skill ${sk.name}`, detail: 'in a new session' })
     },
     openSkillEditor: (id) => set({ skillEditorId: id }),
     closeSkillEditor: () => set({ skillEditorId: null }),
@@ -1888,7 +1917,7 @@ export const useStore = create<AppState>((set, get) => {
       } else {
         set({ skillEditorId: null })
       }
-      log({ kind: 'skill', icon: 'auto_awesome', color: '#7cb3e6', label: `Saved skill ${save.name}`, detail: '' })
+      log({ kind: 'skill', icon: 'auto_awesome', color: 'var(--info-2)', label: `Saved skill ${save.name}`, detail: '' })
     },
     reloadSkills: () => {
       const path = realPath()
@@ -1904,6 +1933,80 @@ export const useStore = create<AppState>((set, get) => {
 
     // Live preview only — the Settings screen persists on its explicit Save.
     setAccent: (accent) => set({ accent }),
+    // Theme/locale apply and persist immediately (no Save gate) so the OS-default
+    // and manual choices take effect the moment they're picked.
+    setThemePref: (pref) => {
+      set({ themePref: pref })
+      void window.api?.settings.set({ themePref: pref } as never).catch(() => {})
+    },
+    setSystemTheme: (theme) => set({ systemTheme: theme }),
+    aiComplete: async (prompt, opts) => {
+      const st = get()
+      const res = await window.api?.agent.complete({
+        providerId: st.defaultProviderId,
+        modelId: opts?.modelId ?? st.defaultModelId,
+        cwd: opts?.cwd ?? st.project?.path ?? '~',
+        prompt,
+        system: opts?.system,
+        timeoutMs: opts?.timeoutMs
+      })
+      return res ?? { ok: false, text: '', error: 'AI bridge unavailable.' }
+    },
+
+    loadNotifications: async () => {
+      const path = get().project?.path
+      if (!path) return
+      const n = await window.api?.notifications.load(path).catch(() => [])
+      set({ notifications: n ?? [] })
+    },
+    pushNotification: (n) => {
+      const st = get()
+      const record: NotificationRecord = {
+        id: `n${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`,
+        wsId: n.wsId === undefined ? st.activeWorkspaceId : n.wsId,
+        kind: n.kind,
+        title: n.title,
+        body: n.body,
+        createdAt: Date.now(),
+        viewed: false,
+        action: n.action ?? { type: 'none' }
+      }
+      set({ notifications: [record, ...st.notifications].slice(0, 500) })
+      const path = st.project?.path
+      if (path) void window.api?.notifications.add(path, record).catch(() => {})
+    },
+    markNotificationViewed: (id) => {
+      set((st) => ({ notifications: st.notifications.map((n) => (n.id === id ? { ...n, viewed: true } : n)) }))
+      const st = get()
+      if (st.project?.path) void window.api?.notifications.save(st.project.path, st.notifications).catch(() => {})
+    },
+    markAllNotificationsViewed: () => {
+      set((st) => ({ notifications: st.notifications.map((n) => ({ ...n, viewed: true })) }))
+      const st = get()
+      if (st.project?.path) void window.api?.notifications.save(st.project.path, st.notifications).catch(() => {})
+    },
+    clearNotifications: () => {
+      set({ notifications: [] })
+      const st = get()
+      if (st.project?.path) void window.api?.notifications.save(st.project.path, []).catch(() => {})
+    },
+    openNotifications: () => set({ notificationsOpen: true }),
+    closeNotifications: () => set({ notificationsOpen: false }),
+    runNotificationAction: (id) => {
+      const st = get()
+      const n = st.notifications.find((x) => x.id === id)
+      if (!n) return
+      get().markNotificationViewed(id)
+      set({ notificationsOpen: false })
+      if (n.action.type === 'open-session') get().openSession(n.action.sessionId)
+      else if (n.action.type === 'open-worktree-cleanup') get().openCleanupRun(n.action.runId)
+    },
+    // Placeholder until the worktrees-cleanup milestone wires the decide dialog.
+    openCleanupRun: (runId) => set({ cleanupRunId: runId, cleanupOpen: true } as never),
+    setLocalePref: (pref) => {
+      set({ localePref: pref })
+      void window.api?.settings.set({ localePref: pref } as never).catch(() => {})
+    },
     setFontSize: (n) => set({ fontSize: n }),
     setDefaultModel: (id) => set({ defaultModelId: id }),
 

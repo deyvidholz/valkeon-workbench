@@ -31,6 +31,8 @@ import {
   type MergeResult,
   type UpdaterEvent
 } from '@shared/ipc'
+import type { AgentCompleteSpec, AgentCompleteResult } from '@shared/agents/types'
+import type { NotificationRecord } from '@shared/notifications'
 
 const api = {
   platform: process.platform,
@@ -75,7 +77,19 @@ const api = {
     list: (): Promise<ProviderStatus[]> => ipcRenderer.invoke(IpcChannels.agentsList)
   },
   shell: {
-    openPath: (target: string): Promise<string> => ipcRenderer.invoke(IpcChannels.shellOpenPath, target)
+    openPath: (target: string): Promise<string> => ipcRenderer.invoke(IpcChannels.shellOpenPath, target),
+    showItem: (target: string): Promise<void> => ipcRenderer.invoke(IpcChannels.shellShowItem, target)
+  },
+  system: {
+    theme: (): Promise<'dark' | 'light'> => ipcRenderer.invoke(IpcChannels.systemTheme),
+    onThemeChanged: (cb: (theme: 'dark' | 'light') => void): (() => void) => {
+      const listener = (_e: unknown, theme: 'dark' | 'light'): void => cb(theme)
+      ipcRenderer.on(IpcChannels.systemThemeChanged, listener)
+      return () => ipcRenderer.removeListener(IpcChannels.systemThemeChanged, listener)
+    },
+    locale: (): Promise<string> => ipcRenderer.invoke(IpcChannels.systemLocale),
+    hasVscode: (): Promise<boolean> => ipcRenderer.invoke(IpcChannels.systemHasVscode),
+    openInVscode: (target: string): Promise<boolean> => ipcRenderer.invoke(IpcChannels.systemOpenInVscode, target)
   },
   skills: {
     list: (repoPath: string): Promise<Skill[]> => ipcRenderer.invoke(IpcChannels.skillsList, repoPath),
@@ -118,6 +132,13 @@ const api = {
     deleteCard: (repoPath: string, boardId: string, cardId: string): Promise<void> =>
       ipcRenderer.invoke(IpcChannels.cardDelete, repoPath, boardId, cardId)
   },
+  notifications: {
+    load: (repoPath: string): Promise<NotificationRecord[]> => ipcRenderer.invoke(IpcChannels.notificationsLoad, repoPath),
+    add: (repoPath: string, record: NotificationRecord): Promise<NotificationRecord[]> =>
+      ipcRenderer.invoke(IpcChannels.notificationsAdd, repoPath, record),
+    save: (repoPath: string, records: NotificationRecord[]): Promise<NotificationRecord[]> =>
+      ipcRenderer.invoke(IpcChannels.notificationsSave, repoPath, records)
+  },
   history: {
     load: (repoPath: string): Promise<unknown[]> => ipcRenderer.invoke(IpcChannels.historyLoad, repoPath),
     save: (repoPath: string, entries: unknown[]): Promise<void> =>
@@ -152,6 +173,8 @@ const api = {
     send: (id: string, text: string): void => ipcRenderer.send(IpcChannels.agentSend, id, text),
     stop: (id: string): Promise<void> => ipcRenderer.invoke(IpcChannels.agentStop, id),
     dispose: (id: string): void => ipcRenderer.send(IpcChannels.agentDispose, id),
+    complete: (spec: AgentCompleteSpec): Promise<AgentCompleteResult> =>
+      ipcRenderer.invoke(IpcChannels.agentComplete, spec),
     onEvent: (cb: (e: AgentEventPayload) => void): (() => void) => {
       const listener = (_e: unknown, payload: AgentEventPayload): void => cb(payload)
       ipcRenderer.on(IpcChannels.agentEvent, listener)

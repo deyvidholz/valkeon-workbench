@@ -56,7 +56,7 @@ export function SkillEditor() {
   const targetId = isNew ? slugify(name) : skill!.id
   const canSave = name.trim().length > 0 && (!isNew || targetId.length > 0)
 
-  const segStyle = (on: boolean): React.CSSProperties => ({ padding: '6px 13px', borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: 'pointer', color: on ? '#0a1018' : '#9a9aa3', background: on ? 'var(--accent)' : '#0e0e12', border: `1px solid ${on ? 'transparent' : '#1c1c22'}` })
+  const segStyle = (on: boolean): React.CSSProperties => ({ padding: '6px 13px', borderRadius: 7, fontSize: 12, fontWeight: 500, cursor: 'pointer', color: on ? 'var(--on-accent)' : 'var(--text-dim)', background: on ? 'var(--accent)' : 'var(--surface)', border: `1px solid ${on ? 'transparent' : 'var(--line)'}` })
 
   const onSave = (): void => {
     if (!canSave) return
@@ -65,13 +65,13 @@ export function SkillEditor() {
 
   return (
     <Modal onClose={close} width={680} zIndex={60} panelStyle={{ maxHeight: '88%' }}>
-      <div style={{ padding: '15px 18px', borderBottom: '1px solid #16161a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '15px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Icon name="auto_awesome" size={19} color="var(--accent)" />
-          <span style={{ fontSize: 15, fontWeight: 600, color: '#ededf0' }}>{isNew ? 'New skill' : 'Edit skill'}</span>
-          <span style={{ fontSize: 11, color: '#56565e', fontFamily: "'Geist Mono', monospace" }}>{targetId || 'skill-id'}</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{isNew ? 'New skill' : 'Edit skill'}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace" }}>{targetId || 'skill-id'}</span>
         </div>
-        <Hover as="span" onClick={close} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: '#6f6f78', cursor: 'pointer' }} hover={{ background: '#16161c', color: '#cfcfd6' }}>
+        <Hover as="span" onClick={close} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
           <Icon name="close" size={19} />
         </Hover>
       </div>
@@ -90,9 +90,9 @@ export function SkillEditor() {
         <MarkdownEditor key={id} value={instructions} onChange={setInstructions} minHeight={240} placeholder="Write the skill instructions in markdown…" />
       </div>
 
-      <div style={{ flexShrink: 0, borderTop: '1px solid #16161a', background: '#0b0b0e', padding: '13px 18px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 9 }}>
-        <Hover as="span" onClick={close} style={{ padding: '8px 14px', borderRadius: 8, color: '#9a9aa3', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: '#16161c' }}>Cancel</Hover>
-        <Hover as="span" onClick={onSave} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', borderRadius: 8, background: 'var(--accent)', color: '#0a1018', fontSize: 12.5, fontWeight: 600, cursor: canSave ? 'pointer' : 'not-allowed', opacity: canSave ? 1 : 0.5 }} hover={canSave ? { filter: 'brightness(1.08)' } : {}}>
+      <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '13px 18px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 9 }}>
+        <Hover as="span" onClick={close} style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>Cancel</Hover>
+        <Hover as="span" onClick={onSave} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: canSave ? 'pointer' : 'not-allowed', opacity: canSave ? 1 : 0.5 }} hover={canSave ? { filter: 'brightness(1.08)' } : {}}>
           <Icon name="check" size={16} />Save skill
         </Hover>
       </div>

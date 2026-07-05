@@ -19,7 +19,7 @@ export function Modal({ onClose, width, zIndex = 50, children, panelStyle }: Mod
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(4,4,6,0.62)'
+        background: 'var(--scrim)'
       }}
     >
       <div onClick={onClose} style={{ position: 'absolute', inset: 0 }} />
@@ -28,10 +28,10 @@ export function Modal({ onClose, width, zIndex = 50, children, panelStyle }: Mod
           position: 'relative',
           width,
           maxHeight: '88%',
-          background: '#0d0d11',
-          border: '1px solid #25252d',
+          background: 'var(--bg)',
+          border: '1px solid var(--line-2)',
           borderRadius: 14,
-          boxShadow: '0 30px 80px rgba(0,0,0,0.6)',
+          boxShadow: '0 30px 80px var(--shadow)',
           animation: 'fadein .2s ease',
           display: 'flex',
           flexDirection: 'column',

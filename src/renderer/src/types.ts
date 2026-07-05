@@ -149,5 +149,11 @@ export interface ContextMenuItem {
   label: string
   icon: string
   danger?: boolean
-  onClick: () => void
+  /** A divider above this item (label/icon/onClick ignored when true). */
+  divider?: boolean
+  /** Disabled items are shown greyed and don't fire. */
+  disabled?: boolean
+  /** A nested flyout — hovering opens it; leaf items still use onClick. */
+  submenu?: ContextMenuItem[]
+  onClick?: () => void
 }

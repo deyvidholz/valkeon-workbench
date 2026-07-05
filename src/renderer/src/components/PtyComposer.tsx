@@ -26,7 +26,7 @@ export function PtyComposer({ ptyId, prompt, promptColor, placeholder, focusToke
   }
 
   return (
-    <div style={{ flexShrink: 0, borderTop: '1px solid #16161a', background: '#0c0c0f', padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
       <span style={{ color: promptColor, fontFamily: "'Geist Mono', monospace", fontSize: 13, fontWeight: 600 }}>{prompt}</span>
       <input
         ref={inputRef}
@@ -39,9 +39,9 @@ export function PtyComposer({ ptyId, prompt, promptColor, placeholder, focusToke
           }
         }}
         placeholder={placeholder}
-        style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', color: '#e4e4ea', fontSize: 12.5, fontFamily: "'Geist Mono', monospace" }}
+        style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 12.5, fontFamily: "'Geist Mono', monospace" }}
       />
-      <Hover as="span" onClick={send} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 7, background: 'var(--accent-soft)', color: 'var(--accent)', cursor: 'pointer' }} hover={{ background: 'var(--accent)', color: '#0a1018' }}>
+      <Hover as="span" onClick={send} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 7, background: 'var(--accent-soft)', color: 'var(--accent)', cursor: 'pointer' }} hover={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
         <Icon name="arrow_upward" size={16} />
       </Hover>
     </div>

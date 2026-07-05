@@ -69,10 +69,10 @@ export function Launcher() {
           >
             Valkeon Workbench
           </div>
-          <div style={{ fontSize: 29, fontWeight: 600, letterSpacing: '-0.02em', color: '#f1f1f4' }}>
+          <div style={{ fontSize: 29, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text)' }}>
             Open a project
           </div>
-          <div style={{ fontSize: 14, color: '#8a8a93', marginTop: 9 }}>
+          <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 9 }}>
             Every AI coding session for your repo, in one window.
           </div>
         </div>
@@ -87,7 +87,7 @@ export function Launcher() {
               padding: '10px 17px',
               borderRadius: 9,
               background: 'var(--accent,#5b9dd9)',
-              color: '#0a1018',
+              color: 'var(--on-accent)',
               fontSize: 13.5,
               fontWeight: 600,
               cursor: 'pointer'
@@ -106,14 +106,14 @@ export function Launcher() {
               gap: 8,
               padding: '10px 17px',
               borderRadius: 9,
-              background: '#121216',
-              border: '1px solid #232329',
-              color: '#cfcfd6',
+              background: 'var(--surface)',
+              border: '1px solid var(--line-2)',
+              color: 'var(--text-2)',
               fontSize: 13.5,
               fontWeight: 500,
               cursor: 'pointer'
             }}
-            hover={{ background: '#17171c' }}
+            hover={{ background: 'var(--surface-2)' }}
           >
             <Icon name="cloud_download" size={18} />
             Clone from Git
@@ -128,7 +128,7 @@ export function Launcher() {
             fontSize: 11,
             fontWeight: 600,
             letterSpacing: '0.09em',
-            color: '#62626b',
+            color: 'var(--text-muted)',
             marginBottom: 11
           }}
         >
@@ -145,18 +145,18 @@ export function Launcher() {
                 gap: 13,
                 padding: '13px 15px',
                 borderRadius: 11,
-                background: '#0d0d10',
-                border: '1px solid #1a1a1f',
+                background: 'var(--bg)',
+                border: '1px solid var(--line)',
                 cursor: 'pointer'
               }}
-              hover={{ background: '#121217', border: '1px solid #27272f' }}
+              hover={{ background: 'var(--surface)', border: '1px solid var(--line-2)' }}
             >
               <div
                 style={{
                   width: 34,
                   height: 34,
                   borderRadius: 9,
-                  background: '#16161c',
+                  background: 'var(--surface-2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -166,11 +166,11 @@ export function Launcher() {
                 <Icon name="folder" size={19} color="var(--accent,#5b9dd9)" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4ea' }}>{r.name}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{r.name}</div>
                 <div
                   style={{
                     fontSize: 11.5,
-                    color: '#6b6b74',
+                    color: 'var(--text-muted)',
                     fontFamily: "'Geist Mono', monospace",
                     marginTop: 2
                   }}
@@ -179,7 +179,7 @@ export function Launcher() {
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-                <span style={{ fontSize: 11.5, color: '#73737c' }}>{r.sessions} sessions</span>
+                <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{r.sessions} sessions</span>
                 <span
                   style={{
                     display: 'flex',
@@ -187,9 +187,9 @@ export function Launcher() {
                     gap: 3,
                     fontFamily: "'Geist Mono', monospace",
                     fontSize: 10.5,
-                    color: '#6b6b74',
-                    background: '#141419',
-                    border: '1px solid #222229',
+                    color: 'var(--text-muted)',
+                    background: 'var(--surface)',
+                    border: '1px solid var(--line-2)',
                     padding: '2px 7px',
                     borderRadius: 5
                   }}
@@ -197,7 +197,7 @@ export function Launcher() {
                   <Icon name="fork_right" size={12} />
                   {r.branch}
                 </span>
-                <Icon name="chevron_right" size={18} color="#4d4d55" />
+                <Icon name="chevron_right" size={18} color="var(--text-faint)" />
               </div>
             </Hover>
           ))}

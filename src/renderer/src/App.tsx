@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useStore } from './store/useStore'
 import { applyAccent } from './theme/applyAccent'
+import { applyTheme, resolveTheme } from './theme/applyTheme'
 import { TitleBar } from './components/TitleBar'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { SearchPalette } from './components/SearchPalette'
@@ -61,6 +62,8 @@ function MainView({ view }: { view: ViewId }) {
 export function App() {
   const view = useStore((s) => s.view)
   const accent = useStore((s) => s.accent)
+  const themePref = useStore((s) => s.themePref)
+  const systemTheme = useStore((s) => s.systemTheme)
   const setRecents = useStore((s) => s.setRecents)
   const hydrateSettings = useStore((s) => s.hydrateSettings)
   const [maximized, setMaximized] = useState(false)
@@ -69,13 +72,24 @@ export function App() {
     applyAccent(accent)
   }, [accent])
 
+  // Resolve theme preference against the OS appearance and apply it.
+  useEffect(() => {
+    applyTheme(resolveTheme(themePref, systemTheme === 'dark'))
+  }, [themePref, systemTheme])
+
+  // Seed the OS appearance and track live changes (so `system` mode follows it).
+  useEffect(() => {
+    window.api?.system?.theme().then((t) => useStore.getState().setSystemTheme(t)).catch(() => {})
+    return window.api?.system?.onThemeChanged((t) => useStore.getState().setSystemTheme(t))
+  }, [])
+
   // Hydrate persisted global state (accent + recent projects) on boot.
   useEffect(() => {
     let active = true
     window.api?.settings
       .get()
       .then((s) => {
-        if (active && s) hydrateSettings({ userName: s.userName, accent: s.accent, defaultProviderId: s.defaultProviderId, defaultModelId: s.defaultModelId, fontSize: s.terminalFontSize })
+        if (active && s) hydrateSettings({ userName: s.userName, accent: s.accent, themePref: s.themePref ?? 'system', localePref: s.localePref ?? 'system', defaultProviderId: s.defaultProviderId, defaultModelId: s.defaultModelId, fontSize: s.terminalFontSize })
       })
       .catch(() => {})
     window.api?.recents
@@ -196,7 +210,7 @@ export function App() {
         ) : (
           <>
             <Sidebar />
-            <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: '#08080a' }}>
+            <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: 'var(--bg)' }}>
               <MainView view={view} />
             </main>
           </>

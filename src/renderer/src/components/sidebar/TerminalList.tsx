@@ -10,7 +10,7 @@ const addBtn = {
   width: 20,
   height: 20,
   borderRadius: 6,
-  color: '#6f6f78',
+  color: 'var(--text-muted)',
   cursor: 'pointer'
 } as const
 
@@ -34,10 +34,10 @@ export function TerminalList() {
           justifyContent: 'space-between'
         }}
       >
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#62626b' }}>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)' }}>
           TERMINALS
         </span>
-        <Hover as="span" title="New terminal" onClick={newTerminal} style={addBtn} hover={{ background: '#16161d', color: '#cfcfd6' }}>
+        <Hover as="span" title="New terminal" onClick={newTerminal} style={addBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
           <Icon name="add" size={16} />
         </Hover>
       </div>
@@ -55,15 +55,15 @@ export function TerminalList() {
               ])
             }}
             style={{ display: 'flex', gap: 9, padding: 9, borderRadius: 8, cursor: 'pointer', alignItems: 'center' }}
-            hover={{ background: '#121217' }}
+            hover={{ background: 'var(--surface)' }}
           >
-            <Icon name="terminal" size={16} color="#73737c" style={{ flexShrink: 0 }} />
+            <Icon name="terminal" size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div
                 style={{
                   fontSize: 12.5,
                   fontWeight: 500,
-                  color: '#dcdce2',
+                  color: 'var(--text-2)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis'
@@ -74,7 +74,7 @@ export function TerminalList() {
               <div
                 style={{
                   fontSize: 11,
-                  color: '#73737c',
+                  color: 'var(--text-muted)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -90,7 +90,7 @@ export function TerminalList() {
                 width: 7,
                 height: 7,
                 borderRadius: '50%',
-                background: t.running ? '#5cc98a' : '#56565e',
+                background: t.running ? 'var(--ok)' : 'var(--text-faint)',
                 display: 'inline-block',
                 flexShrink: 0,
                 ...(t.running ? { animation: 'pulse 2s infinite' } : null)

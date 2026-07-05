@@ -60,20 +60,20 @@ export function NavList() {
               cursor: 'pointer',
               fontSize: 13,
               fontWeight: active ? 500 : 450,
-              color: active ? '#ededf0' : '#9a9aa3',
-              background: active ? '#141419' : 'transparent'
+              color: active ? 'var(--text)' : 'var(--text-dim)',
+              background: active ? 'var(--surface)' : 'transparent'
             }}
-            hover={active ? undefined : { background: '#101014' }}
+            hover={active ? undefined : { background: 'var(--surface)' }}
           >
-            <Icon name={n.icon} size={19} color={active ? 'var(--accent,#5b9dd9)' : '#74747d'} />
+            <Icon name={n.icon} size={19} color={active ? 'var(--accent,#5b9dd9)' : 'var(--text-muted)'} />
             <span style={{ flex: 1 }}>{n.label}</span>
             {badge != null && (
               <span
                 style={{
                   fontSize: 10.5,
                   fontWeight: 600,
-                  color: '#9a9aa3',
-                  background: '#16161d',
+                  color: 'var(--text-dim)',
+                  background: 'var(--surface-2)',
                   padding: '1px 7px',
                   borderRadius: 9,
                   fontFamily: "'Geist Mono', monospace"

@@ -3,7 +3,7 @@ import { promisify } from 'node:util'
 import { homedir } from 'node:os'
 import { existsSync } from 'node:fs'
 import type { AgentProvider, AgentSessionHandle } from '@shared/agents/port'
-import type { AgentEvent, AgentSessionSpec } from '@shared/agents/types'
+import type { AgentCompleteSpec, AgentCompleteResult, AgentEvent, AgentSessionSpec } from '@shared/agents/types'
 import { CLAUDE_PROVIDER } from '@shared/agents/providers'
 import { getSpawnEnv } from '../../env'
 import { waitForDir } from '../../fs-wait'
@@ -42,6 +42,62 @@ export class ClaudeCodeAdapter implements AgentProvider {
     } catch {
       return false
     }
+  }
+
+  /**
+   * One-shot completion via the CLI's non-interactive `--print` mode with a plain
+   * `text` output format. No persistent process, no tools loop expectation — just
+   * a single prompt in, the model's answer out. Used for structured JSON tasks.
+   */
+  async complete(spec: AgentCompleteSpec): Promise<AgentCompleteResult> {
+    const env = getSpawnEnv() as NodeJS.ProcessEnv
+    const cwd = resolveCwd(spec.cwd)
+    const args = ['--print', '--output-format', 'text', '--model', spec.modelId, '--permission-mode', 'plan']
+    if (spec.system) args.push('--append-system-prompt', spec.system)
+
+    return new Promise<AgentCompleteResult>((resolve) => {
+      let child: ChildProcessWithoutNullStreams
+      try {
+        child = spawn(this.meta.cli, args, { cwd, env })
+      } catch (err) {
+        resolve({ ok: false, text: '', error: (err as Error).message })
+        return
+      }
+      let out = ''
+      let errOut = ''
+      let settled = false
+      const finish = (r: AgentCompleteResult): void => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        try {
+          child.kill('SIGTERM')
+        } catch {
+          /* already gone */
+        }
+        resolve(r)
+      }
+      const timer = setTimeout(
+        () => finish({ ok: false, text: '', error: 'Completion timed out.' }),
+        spec.timeoutMs ?? 60_000
+      )
+      child.stdout.setEncoding('utf8')
+      child.stdout.on('data', (d: string) => (out += d))
+      child.stderr.setEncoding('utf8')
+      child.stderr.on('data', (d: string) => (errOut += d))
+      child.on('error', (err) => finish({ ok: false, text: '', error: err.message }))
+      child.stdin.on('error', () => {})
+      child.on('close', (code) => {
+        if (code === 0 || out.trim()) finish({ ok: true, text: out.trim() })
+        else finish({ ok: false, text: '', error: (errOut.trim().split('\n')[0] || `Exited with code ${code}`).slice(0, 200) })
+      })
+      try {
+        child.stdin.write(spec.prompt)
+        child.stdin.end()
+      } catch {
+        /* stdin closed — the close handler resolves */
+      }
+    })
   }
 
   async start(

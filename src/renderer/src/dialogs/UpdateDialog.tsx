@@ -84,11 +84,11 @@ export function UpdateDialog() {
         right: 16,
         zIndex: 65,
         width: 344,
-        background: '#0d0d11',
-        border: '1px solid #25252d',
+        background: 'var(--bg)',
+        border: '1px solid var(--line-2)',
         borderRadius: 13,
         padding: 16,
-        boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+        boxShadow: '0 24px 60px var(--shadow)',
         animation: 'fadein .16s ease'
       }}
     >
@@ -108,20 +108,20 @@ export function UpdateDialog() {
           <Icon name={s.phase === 'downloaded' ? 'restart_alt' : s.phase === 'error' ? 'error' : 'download'} size={18} />
         </span>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#ededf0' }}>{title}</span>
-          <span style={{ fontSize: 11.5, color: '#8a8a93' }}>Valkeon Workbench {s.version}</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{title}</span>
+          <span style={{ fontSize: 11.5, color: 'var(--text-dim)' }}>Valkeon Workbench {s.version}</span>
         </div>
       </div>
 
       {s.phase === 'error' && s.message && (
-        <div style={{ fontSize: 12, color: '#e07a6e', lineHeight: 1.5, marginBottom: 12 }}>{s.message}</div>
+        <div style={{ fontSize: 12, color: 'var(--danger)', lineHeight: 1.5, marginBottom: 12 }}>{s.message}</div>
       )}
 
       {s.notes && s.phase === 'available' && (
         <div
           style={{
             fontSize: 12,
-            color: '#9a9aa3',
+            color: 'var(--text-dim)',
             lineHeight: 1.5,
             marginBottom: 12,
             maxHeight: 96,
@@ -135,7 +135,7 @@ export function UpdateDialog() {
 
       {s.phase === 'downloading' && (
         <div style={{ marginBottom: 12 }}>
-          <div style={{ height: 6, borderRadius: 4, background: '#1c1c22', overflow: 'hidden' }}>
+          <div style={{ height: 6, borderRadius: 4, background: 'var(--surface-3)', overflow: 'hidden' }}>
             <div
               style={{
                 height: '100%',
@@ -145,7 +145,7 @@ export function UpdateDialog() {
               }}
             />
           </div>
-          <div style={{ fontSize: 11, color: '#8a8a93', marginTop: 6 }}>{s.percent}%</div>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}>{s.percent}%</div>
         </div>
       )}
 
@@ -155,23 +155,23 @@ export function UpdateDialog() {
             <Hover
               as="span"
               onClick={skip}
-              style={{ padding: '7px 11px', borderRadius: 7, color: '#9a9aa3', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
-              hover={{ color: '#cbcbd2' }}
+              style={{ padding: '7px 11px', borderRadius: 7, color: 'var(--text-dim)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
+              hover={{ color: 'var(--text-2)' }}
             >
               Skip this version
             </Hover>
             <Hover
               as="span"
               onClick={hide}
-              style={{ padding: '7px 12px', borderRadius: 7, color: '#cbcbd2', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: '#16161c', border: '1px solid #232329' }}
-              hover={{ background: '#1c1c22' }}
+              style={{ padding: '7px 12px', borderRadius: 7, color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line-2)' }}
+              hover={{ background: 'var(--surface-3)' }}
             >
               Later
             </Hover>
             <Hover
               as="span"
               onClick={primary}
-              style={{ padding: '7px 13px', borderRadius: 7, background: 'var(--accent, #4d7ce0)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              style={{ padding: '7px 13px', borderRadius: 7, background: 'var(--accent, #4d7ce0)', color: 'var(--text)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
               hover={{ filter: 'brightness(1.08)' }}
             >
               {primaryLabel}
@@ -183,8 +183,8 @@ export function UpdateDialog() {
           <Hover
             as="span"
             onClick={hide}
-            style={{ padding: '7px 12px', borderRadius: 7, color: '#cbcbd2', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: '#16161c', border: '1px solid #232329' }}
-            hover={{ background: '#1c1c22' }}
+            style={{ padding: '7px 12px', borderRadius: 7, color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line-2)' }}
+            hover={{ background: 'var(--surface-3)' }}
           >
             Hide
           </Hover>
@@ -195,15 +195,15 @@ export function UpdateDialog() {
             <Hover
               as="span"
               onClick={hide}
-              style={{ padding: '7px 12px', borderRadius: 7, color: '#cbcbd2', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: '#16161c', border: '1px solid #232329' }}
-              hover={{ background: '#1c1c22' }}
+              style={{ padding: '7px 12px', borderRadius: 7, color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line-2)' }}
+              hover={{ background: 'var(--surface-3)' }}
             >
               Later
             </Hover>
             <Hover
               as="span"
               onClick={() => void window.api?.updater?.install()}
-              style={{ padding: '7px 13px', borderRadius: 7, background: 'var(--accent, #4d7ce0)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              style={{ padding: '7px 13px', borderRadius: 7, background: 'var(--accent, #4d7ce0)', color: 'var(--text)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
               hover={{ filter: 'brightness(1.08)' }}
             >
               Restart & install
@@ -216,16 +216,16 @@ export function UpdateDialog() {
             <Hover
               as="span"
               onClick={() => void window.api?.updater?.openReleases()}
-              style={{ padding: '7px 12px', borderRadius: 7, color: '#cbcbd2', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: '#16161c', border: '1px solid #232329' }}
-              hover={{ background: '#1c1c22' }}
+              style={{ padding: '7px 12px', borderRadius: 7, color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line-2)' }}
+              hover={{ background: 'var(--surface-3)' }}
             >
               Open Releases
             </Hover>
             <Hover
               as="span"
               onClick={hide}
-              style={{ padding: '7px 13px', borderRadius: 7, background: '#16161c', border: '1px solid #232329', color: '#cbcbd2', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-              hover={{ background: '#1c1c22' }}
+              style={{ padding: '7px 13px', borderRadius: 7, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              hover={{ background: 'var(--surface-3)' }}
             >
               Dismiss
             </Hover>

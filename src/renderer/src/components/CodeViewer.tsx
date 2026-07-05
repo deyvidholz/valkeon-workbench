@@ -1,5 +1,6 @@
 import Editor from '@monaco-editor/react'
-import { setupMonaco, languageForPath, MONACO_THEME, defineMonacoTheme } from '../lib/monaco'
+import { setupMonaco, languageForPath, monacoThemeFor, defineMonacoTheme } from '../lib/monaco'
+import { useResolvedTheme } from '../theme/useResolvedTheme'
 
 setupMonaco()
 
@@ -12,15 +13,16 @@ interface CodeViewerProps {
 
 /** A single-file Monaco viewer with app-tuned dark theme + syntax highlighting. */
 export function CodeViewer({ path, content, readOnly = true }: CodeViewerProps) {
+  const resolved = useResolvedTheme()
   return (
     <Editor
       height="100%"
       path={path}
-      theme={MONACO_THEME}
+      theme={monacoThemeFor(resolved)}
       language={languageForPath(path)}
       value={content}
       beforeMount={(m) => defineMonacoTheme(m)}
-      loading={<div style={{ color: '#56565e', fontSize: 12 }}>Loading editor…</div>}
+      loading={<div style={{ color: 'var(--text-faint)', fontSize: 12 }}>Loading editor…</div>}
       options={{
         readOnly,
         domReadOnly: readOnly,

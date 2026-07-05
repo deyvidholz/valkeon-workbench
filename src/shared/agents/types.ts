@@ -53,6 +53,31 @@ export interface AgentSessionSpec {
   resumeId?: string
 }
 
+/**
+ * A one-shot, non-streaming completion request. Unlike a session, this sends a
+ * single prompt and resolves with the whole answer — used for structured tasks
+ * (generate board cards, analyse worktrees) where the app wants JSON back, not an
+ * interactive coding agent. Provider-neutral.
+ */
+export interface AgentCompleteSpec {
+  providerId: AgentProviderId
+  modelId: string
+  /** Working dir for the model (context/tools scope). Falls back to $HOME if absent. */
+  cwd: string
+  prompt: string
+  /** Optional system-prompt addendum steering format/behaviour. */
+  system?: string
+  /** Hard timeout; defaults to 60s. */
+  timeoutMs?: number
+}
+
+export interface AgentCompleteResult {
+  ok: boolean
+  /** The model's final text (empty on error). */
+  text: string
+  error?: string
+}
+
 /** Events an adapter streams back while a session runs. */
 export type AgentEvent =
   | { kind: 'line'; line: TranscriptLine }

@@ -20,14 +20,14 @@ export function GenerateCardsDialog() {
       <DialogHeader
         icon="auto_awesome"
         title="Generate cards with AI"
-        subtitle={<>Describe a feature or paste a spec. Tasks are drafted into <span style={{ color: '#9a9aa3' }}>{board?.name}</span> · Backlog.</>}
+        subtitle={<>Describe a feature or paste a spec. Tasks are drafted into <span style={{ color: 'var(--text-dim)' }}>{board?.name}</span> · Backlog.</>}
       />
       <textarea
         value={genText}
         onChange={(e) => setGenText(e.target.value)}
         placeholder="e.g. Add SSO with Google and Okta, including session handling and an admin toggle…"
         autoFocus
-        style={{ width: '100%', minHeight: 108, resize: 'vertical', background: '#0a0a0d', border: '1px solid #1d1d23', borderRadius: 10, padding: 13, color: '#e8e8ee', fontSize: 13, lineHeight: 1.55, fontFamily: "'Geist', sans-serif", marginBottom: 14 }}
+        style={{ width: '100%', minHeight: 108, resize: 'vertical', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 10, padding: 13, color: 'var(--text)', fontSize: 13, lineHeight: 1.55, fontFamily: "'Geist', sans-serif", marginBottom: 14 }}
       />
       <DialogActions onCancel={close} onConfirm={generate} confirmLabel="Generate cards" confirmIcon="auto_awesome" />
     </Modal>

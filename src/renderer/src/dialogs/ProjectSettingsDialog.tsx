@@ -22,18 +22,18 @@ export function ProjectSettingsDialog() {
 
   return (
     <Modal onClose={close} width={520} zIndex={58} panelStyle={{ padding: 20 }}>
-      <DialogHeader icon="tune" title="Project settings" subtitle={<>How Valkeon drives git for <span style={{ color: '#9a9aa3' }}>{project?.name}</span>. Saved to <span style={{ fontFamily: "'Geist Mono', monospace" }}>.valkeon/config.json</span>.</>} />
+      <DialogHeader icon="tune" title="Project settings" subtitle={<>How Valkeon drives git for <span style={{ color: 'var(--text-dim)' }}>{project?.name}</span>. Saved to <span style={{ fontFamily: "'Geist Mono', monospace" }}>.valkeon/config.json</span>.</>} />
 
       <div style={eyebrow}>DEFAULT TASK STRATEGY</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 18 }}>
         {STRATEGIES.map((s) => {
           const on = config.taskStrategy === s.id
           return (
-            <Hover key={s.id} onClick={() => save({ taskStrategy: s.id })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 10, cursor: 'pointer', background: on ? 'var(--accent-soft)' : '#0e0e12', border: `1px solid ${on ? 'var(--accent-line)' : '#1c1c22'}` }} hover={on ? undefined : { border: '1px solid #2c2c35' }}>
-              <Icon name={s.icon} size={19} color={on ? 'var(--accent-hi)' : '#7c9bd0'} />
+            <Hover key={s.id} onClick={() => save({ taskStrategy: s.id })} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 10, cursor: 'pointer', background: on ? 'var(--accent-soft)' : 'var(--surface)', border: `1px solid ${on ? 'var(--accent-line)' : 'var(--line)'}` }} hover={on ? undefined : { border: '1px solid var(--line-2)' }}>
+              <Icon name={s.icon} size={19} color={on ? 'var(--accent-hi)' : 'var(--info)'} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, color: '#e4e4ea', fontWeight: 500 }}>{s.label}</div>
-                <div style={{ fontSize: 11, color: '#6b6b74', marginTop: 2 }}>{s.desc}</div>
+                <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{s.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{s.desc}</div>
               </div>
               <Icon name={on ? 'radio_button_checked' : 'radio_button_unchecked'} size={17} color={on ? 'var(--accent-hi)' : '#3a3a42'} />
             </Hover>
@@ -42,7 +42,7 @@ export function ProjectSettingsDialog() {
       </div>
 
       <div style={eyebrow}>BASE BRANCH</div>
-      <div style={{ fontSize: 11, color: '#6b6b74', lineHeight: 1.5, marginBottom: 8 }}>Finished work merges into this branch (from the Worktrees view).</div>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 8 }}>Finished work merges into this branch (from the Worktrees view).</div>
       <input
         list="vw-branch-list"
         value={config.baseBranch}
@@ -64,7 +64,7 @@ export function ProjectSettingsDialog() {
       )}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
-        <Hover as="span" onClick={close} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', borderRadius: 8, background: 'var(--accent)', color: '#0a1018', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>
+        <Hover as="span" onClick={close} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>
           <Icon name="check" size={16} />Done
         </Hover>
       </div>

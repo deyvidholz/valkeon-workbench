@@ -70,7 +70,7 @@ export function AgentComposer({ sessionId, placeholder, focusToken }: AgentCompo
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
       {showSug && (
-        <div style={{ position: 'absolute', bottom: '100%', left: 12, right: 12, marginBottom: 4, background: '#101014', border: '1px solid #25252d', borderRadius: 10, padding: 5, boxShadow: '0 -12px 40px rgba(0,0,0,0.5)', zIndex: 5 }}>
+        <div style={{ position: 'absolute', bottom: '100%', left: 12, right: 12, marginBottom: 4, background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 10, padding: 5, boxShadow: '0 -12px 40px var(--shadow)', zIndex: 5 }}>
           {suggestions.map((c, i) => (
             <div
               key={c.cmd}
@@ -79,17 +79,17 @@ export function AgentComposer({ sessionId, placeholder, focusToken }: AgentCompo
                 e.preventDefault()
                 complete(c)
               }}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 9px', borderRadius: 7, cursor: 'pointer', background: i === sel ? '#17171d' : 'transparent' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 9px', borderRadius: 7, cursor: 'pointer', background: i === sel ? 'var(--surface-2)' : 'transparent' }}
             >
               <Icon name="bolt" size={14} color="var(--accent-hi)" />
-              <span style={{ fontSize: 12.5, color: '#e4e4ea', fontFamily: "'Geist Mono', monospace" }}>{c.cmd}</span>
+              <span style={{ fontSize: 12.5, color: 'var(--text)', fontFamily: "'Geist Mono', monospace" }}>{c.cmd}</span>
               <span style={{ flex: 1 }} />
-              <span style={{ fontSize: 11, color: '#6b6b74' }}>{c.hint}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.hint}</span>
             </div>
           ))}
         </div>
       )}
-      <div style={{ borderTop: '1px solid #16161a', background: '#0c0c0f', padding: '8px 12px 10px', display: 'flex', alignItems: 'flex-end', gap: 9 }}>
+      <div style={{ borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '8px 12px 10px', display: 'flex', alignItems: 'flex-end', gap: 9 }}>
         <span style={{ color: 'var(--accent)', fontFamily: "'Geist Mono', monospace", fontSize: 14, fontWeight: 600, lineHeight: '22px' }}>›</span>
         <textarea
           ref={ref}
@@ -116,9 +116,9 @@ export function AgentComposer({ sessionId, placeholder, focusToken }: AgentCompo
             }
           }}
           placeholder={placeholder}
-          style={{ flex: 1, minWidth: 0, resize: 'none', background: 'transparent', border: 'none', color: '#e4e4ea', fontSize: 13, lineHeight: '22px', fontFamily: "'Geist Mono', monospace", maxHeight: 140 }}
+          style={{ flex: 1, minWidth: 0, resize: 'none', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, lineHeight: '22px', fontFamily: "'Geist Mono', monospace", maxHeight: 140 }}
         />
-        <Hover as="span" onClick={submit} title="Send (Enter)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: 'var(--accent-soft)', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }} hover={{ background: 'var(--accent)', color: '#0a1018' }}>
+        <Hover as="span" onClick={submit} title="Send (Enter)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: 'var(--accent-soft)', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }} hover={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
           <Icon name="arrow_upward" size={16} />
         </Hover>
       </div>

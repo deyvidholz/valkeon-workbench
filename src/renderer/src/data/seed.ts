@@ -24,6 +24,6 @@ export const LABEL_PALETTE = [
 export const DEFAULT_LABELS: Label[] = [
   { id: 'feature', name: 'feature', color: '#5b9dd9' },
   { id: 'bug', name: 'bug', color: '#e07a6e' },
-  { id: 'chore', name: 'chore', color: '#8a8a93' },
+  { id: 'chore', name: 'chore', color: 'var(--text-dim)' },
   { id: 'ai', name: 'ai', color: '#e0b15e' }
 ]

@@ -2,7 +2,7 @@ import type { WebContents } from 'electron'
 import { IpcChannels } from '@shared/ipc'
 import type { AgentStartResult } from '@shared/ipc'
 import type { AgentProvider, AgentSessionHandle } from '@shared/agents/port'
-import type { AgentSessionSpec } from '@shared/agents/types'
+import type { AgentCompleteSpec, AgentCompleteResult, AgentSessionSpec } from '@shared/agents/types'
 
 /**
  * Owns every live **structured** agent session (the stream-json driver), mirroring
@@ -47,6 +47,15 @@ export class StructuredAgentManager {
 
   send(id: string, text: string): void {
     this.handles.get(id)?.send(text)
+  }
+
+  /** One-shot completion (no persistent session) for structured JSON tasks. */
+  async complete(spec: AgentCompleteSpec): Promise<AgentCompleteResult> {
+    const provider = this.getProvider(spec.providerId)
+    if (!provider) return { ok: false, text: '', error: `Unknown provider: ${spec.providerId}` }
+    if (!provider.complete) return { ok: false, text: '', error: `${provider.meta.cli} has no one-shot mode.` }
+    if (!(await provider.isAvailable())) return { ok: false, text: '', error: `${provider.meta.cli} CLI not found on PATH.` }
+    return provider.complete(spec)
   }
 
   async stop(id: string): Promise<void> {

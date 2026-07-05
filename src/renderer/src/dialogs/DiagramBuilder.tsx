@@ -21,41 +21,41 @@ export function DiagramBuilder() {
 
   return (
     <Modal onClose={close} width={760} zIndex={64} panelStyle={{ maxHeight: '86%' }}>
-      <div style={{ padding: '15px 18px', borderBottom: '1px solid #16161a', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '15px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Icon name="schema" size={19} color="var(--accent)" />
-          <span style={{ fontSize: 15, fontWeight: 600, color: '#ededf0' }}>Diagram builder</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Diagram builder</span>
         </div>
-        <Hover as="span" onClick={close} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: '#6f6f78', cursor: 'pointer' }} hover={{ background: '#16161c', color: '#cfcfd6' }}>
+        <Hover as="span" onClick={close} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
           <Icon name="close" size={19} />
         </Hover>
       </div>
 
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '11px 18px', borderBottom: '1px solid #16161a' }}>
-        <span style={{ fontSize: 11, color: '#62626b', marginRight: 2 }}>Templates:</span>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '11px 18px', borderBottom: '1px solid var(--line)' }}>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 2 }}>Templates:</span>
         {TEMPLATES.map((t) => (
-          <Hover key={t.label} as="span" onClick={() => setDiagText(t.src)} style={{ padding: '5px 11px', borderRadius: 7, background: '#141419', border: '1px solid #232329', color: '#cbcbd2', fontSize: 11.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: '#1a1a20', border: '1px solid #2c2c35' }}>
+          <Hover key={t.label} as="span" onClick={() => setDiagText(t.src)} style={{ padding: '5px 11px', borderRadius: 7, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', border: '1px solid var(--line-2)' }}>
             {t.label}
           </Hover>
         ))}
       </div>
 
       <div style={{ flex: 1, minHeight: 0, display: 'flex', height: 380 }}>
-        <div style={{ width: 300, flexShrink: 0, borderRight: '1px solid #16161a', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ padding: '9px 14px', fontSize: 10.5, color: '#62626b', letterSpacing: '0.06em', borderBottom: '1px solid #141418' }}>MERMAID SOURCE</div>
-          <textarea value={diagText} onChange={(e) => setDiagText(e.target.value)} style={{ flex: 1, minHeight: 0, resize: 'none', background: '#0a0a0d', border: 'none', padding: 13, color: '#cdd3da', fontSize: 12, lineHeight: 1.6, fontFamily: "'Geist Mono', monospace" }} />
+        <div style={{ width: 300, flexShrink: 0, borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ padding: '9px 14px', fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', borderBottom: '1px solid var(--line)' }}>MERMAID SOURCE</div>
+          <textarea value={diagText} onChange={(e) => setDiagText(e.target.value)} style={{ flex: 1, minHeight: 0, resize: 'none', background: 'var(--bg)', border: 'none', padding: 13, color: 'var(--text-2)', fontSize: 12, lineHeight: 1.6, fontFamily: "'Geist Mono', monospace" }} />
         </div>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0, background: '#0a0a0c' }}>
-          <div style={{ padding: '9px 14px', fontSize: 10.5, color: '#62626b', letterSpacing: '0.06em', borderBottom: '1px solid #141418' }}>PREVIEW</div>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0, background: 'var(--bg)' }}>
+          <div style={{ padding: '9px 14px', fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', borderBottom: '1px solid var(--line)' }}>PREVIEW</div>
           <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: 16 }}>
             <Markdown source={'```mermaid\n' + diagText + '\n```'} />
           </div>
         </div>
       </div>
 
-      <div style={{ flexShrink: 0, borderTop: '1px solid #16161a', background: '#0b0b0e', padding: '13px 18px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 9 }}>
-        <Hover as="span" onClick={close} style={{ padding: '8px 14px', borderRadius: 8, color: '#9a9aa3', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: '#16161c' }}>Cancel</Hover>
-        <Hover as="span" onClick={insert} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', borderRadius: 8, background: 'var(--accent)', color: '#0a1018', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>
+      <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '13px 18px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 9 }}>
+        <Hover as="span" onClick={close} style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>Cancel</Hover>
+        <Hover as="span" onClick={insert} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>
           <Icon name="check" size={16} />Insert diagram
         </Hover>
       </div>

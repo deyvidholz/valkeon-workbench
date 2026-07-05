@@ -5,8 +5,11 @@ import type { Board, BoardCard, WorkspaceRecord } from '@shared/persistence/type
 import type { GlobalStore } from './globalStore'
 import { createBoardStore } from './boardStoreFactory'
 import { assertAllowedRepo } from '../security'
+import { ensureLocalExcludes } from '../git/localExclude'
 import { loadHistory, saveHistory } from './historyStore'
 import { loadSessions, saveSessions } from './sessionsStore'
+import { loadNotifications, addNotification, saveNotifications } from './notificationsStore'
+import type { NotificationRecord } from '@shared/notifications'
 
 /**
  * Wire settings / recents / board persistence to IPC, delegating to the stores.
@@ -32,7 +35,13 @@ export function registerPersistenceIpc(globalStore: GlobalStore): void {
     globalStore.addRecent(recent)
   )
 
-  ipcMain.handle(IpcChannels.boardsLoad, (_e, repoPath: string) => storeFor(repoPath).load())
+  ipcMain.handle(IpcChannels.boardsLoad, (_e, repoPath: string) => {
+    const store = storeFor(repoPath)
+    // Opening a project: keep Valkeon's own machine-local files out of git via
+    // `.git/info/exclude` (uncommitted, per-clone). Idempotent, fire-and-forget.
+    void ensureLocalExcludes(repoPath, ['.valkeon/']).catch(() => {})
+    return store.load()
+  })
   ipcMain.handle(IpcChannels.workspacesSave, (_e, repoPath: string, workspaces: WorkspaceRecord[]) =>
     storeFor(repoPath).saveWorkspaces(workspaces)
   )
@@ -58,5 +67,15 @@ export function registerPersistenceIpc(globalStore: GlobalStore): void {
   )
   ipcMain.handle(IpcChannels.sessionsSave, (_e, repoPath: string, sessions: unknown[]) =>
     saveSessions(assertAllowedRepo(globalStore, repoPath), sessions)
+  )
+
+  ipcMain.handle(IpcChannels.notificationsLoad, (_e, repoPath: string) =>
+    loadNotifications(assertAllowedRepo(globalStore, repoPath))
+  )
+  ipcMain.handle(IpcChannels.notificationsAdd, (_e, repoPath: string, record: NotificationRecord) =>
+    addNotification(assertAllowedRepo(globalStore, repoPath), record)
+  )
+  ipcMain.handle(IpcChannels.notificationsSave, (_e, repoPath: string, records: NotificationRecord[]) =>
+    saveNotifications(assertAllowedRepo(globalStore, repoPath), records)
   )
 }

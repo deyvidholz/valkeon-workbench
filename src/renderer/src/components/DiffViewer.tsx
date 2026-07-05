@@ -29,7 +29,7 @@ export function DiffViewer({ path, original, modified, onLine }: DiffViewerProps
         const mod = ed.getModifiedEditor()
         mod.onDidChangeCursorPosition((e: editor.ICursorPositionChangedEvent) => onLine(e.position.lineNumber))
       }}
-      loading={<div style={{ color: '#56565e', fontSize: 12 }}>Loading diff…</div>}
+      loading={<div style={{ color: 'var(--text-faint)', fontSize: 12 }}>Loading diff…</div>}
       options={{
         readOnly: true,
         renderSideBySide: true,

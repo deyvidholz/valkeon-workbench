@@ -11,17 +11,17 @@ export function Sidebar() {
       style={{
         width: 264,
         flexShrink: 0,
-        background: '#0a0a0c',
-        borderRight: '1px solid #16161a',
+        background: 'var(--bg)',
+        borderRight: '1px solid var(--line)',
         display: 'flex',
         flexDirection: 'column',
         minHeight: 0
       }}
     >
       <WorkspaceSwitcher />
-      <div style={{ height: 1, background: '#15151a', margin: '2px 14px 6px' }} />
+      <div style={{ height: 1, background: 'var(--line)', margin: '2px 14px 6px' }} />
       <NavList />
-      <div style={{ height: 1, background: '#15151a', margin: '6px 14px' }} />
+      <div style={{ height: 1, background: 'var(--line)', margin: '6px 14px' }} />
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingBottom: 8 }}>
         <SessionList />
         <TerminalList />

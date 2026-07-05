@@ -161,7 +161,7 @@ export function CodeScreen() {
 
   if (!repoPath) {
     return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#6b6b74' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--text-muted)' }}>
         <Icon name="code_off" size={26} color="#33333a" />
         <div style={{ fontSize: 13 }}>Open a project folder to explore its code.</div>
       </div>
@@ -170,45 +170,45 @@ export function CodeScreen() {
 
   return (
     <div style={{ display: 'flex', height: '100%', minHeight: 0, position: 'relative' }}>
-      <div style={{ width: 264, flexShrink: 0, borderRight: '1px solid #16161a', background: '#0a0a0c', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        <div style={{ height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px 0 14px', borderBottom: '1px solid #16161a' }}>
-          <Icon name="folder_open" size={16} color="#7c9bd0" />
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: '#cbcbd2', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginLeft: 3 }}>{project?.name ?? 'Files'}</span>
+      <div style={{ width: 264, flexShrink: 0, borderRight: '1px solid var(--line)', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px 0 14px', borderBottom: '1px solid var(--line)' }}>
+          <Icon name="folder_open" size={16} color="var(--info)" />
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginLeft: 3 }}>{project?.name ?? 'Files'}</span>
           <div style={{ flex: 1 }} />
           {[
             { icon: 'note_add', title: 'New file', on: () => createFileIn('') },
             { icon: 'create_new_folder', title: 'New folder', on: () => createFolderIn('') },
             { icon: 'refresh', title: 'Reload', on: reloadTree }
           ].map((b) => (
-            <Hover key={b.title} as="span" title={b.title} onClick={b.on} style={{ display: 'flex', width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center', color: '#6f6f78', cursor: 'pointer' }} hover={{ background: '#16161d', color: '#cfcfd6' }}>
+            <Hover key={b.title} as="span" title={b.title} onClick={b.on} style={{ display: 'flex', width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
               <Icon name={b.icon} size={15} />
             </Hover>
           ))}
         </div>
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '6px 6px 16px' }}>
           {tree === null ? (
-            <div style={{ padding: 12, fontSize: 12, color: '#56565e' }}>Loading…</div>
+            <div style={{ padding: 12, fontSize: 12, color: 'var(--text-faint)' }}>Loading…</div>
           ) : tree.length === 0 ? (
-            <div style={{ padding: 12, fontSize: 12, color: '#56565e' }}>Empty folder.</div>
+            <div style={{ padding: 12, fontSize: 12, color: 'var(--text-faint)' }}>Empty folder.</div>
           ) : (
             <FileTree nodes={tree} selected={selected} expanded={expanded} onSelect={openFile} onToggle={toggle} onContext={onContext} />
           )}
         </div>
       </div>
 
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0, background: '#0a0a0c' }}>
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0, background: 'var(--bg)' }}>
         {selected && (
-          <div style={{ height: 34, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 7, padding: '0 14px', borderBottom: '1px solid #16161a' }}>
-            <span style={{ fontSize: 11.5, color: '#8a8a93', fontFamily: "'Geist Mono', monospace" }}>{selected}</span>
+          <div style={{ height: 34, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 7, padding: '0 14px', borderBottom: '1px solid var(--line)' }}>
+            <span style={{ fontSize: 11.5, color: 'var(--text-dim)', fontFamily: "'Geist Mono', monospace" }}>{selected}</span>
           </div>
         )}
         <div style={{ flex: 1, minHeight: 0 }}>
           {!selected ? (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4d4d55', fontSize: 12.5 }}>Select a file to view it</div>
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>Select a file to view it</div>
           ) : state === 'binary' ? (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#56565e', fontSize: 12.5 }}>Binary or file too large to display.</div>
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>Binary or file too large to display.</div>
           ) : state === 'loading' ? (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#56565e', fontSize: 12.5 }}>Loading…</div>
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>Loading…</div>
           ) : (
             <CodeViewer path={selected} content={content} />
           )}
@@ -216,10 +216,10 @@ export function CodeScreen() {
       </div>
 
       {prompt && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 120, background: 'rgba(4,4,6,0.55)' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 120, background: 'var(--scrim)' }}>
           <div onClick={() => setPrompt(null)} style={{ position: 'absolute', inset: 0 }} />
-          <div style={{ position: 'relative', width: 380, background: '#0e0e12', border: '1px solid #25252d', borderRadius: 12, padding: 16, boxShadow: '0 24px 70px rgba(0,0,0,0.6)' }}>
-            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#ededf0', marginBottom: 10 }}>{prompt.title}</div>
+          <div style={{ position: 'relative', width: 380, background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 12, padding: 16, boxShadow: '0 24px 70px var(--shadow)' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', marginBottom: 10 }}>{prompt.title}</div>
             <input
               ref={promptRef}
               value={promptValue}
@@ -230,11 +230,11 @@ export function CodeScreen() {
               }}
               placeholder={prompt.placeholder}
               autoFocus
-              style={{ width: '100%', background: '#0a0a0c', border: '1px solid #2a2a32', borderRadius: 8, padding: '9px 11px', color: '#e4e4ea', fontSize: 13, fontFamily: "'Geist Mono', monospace" }}
+              style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--line-2)', borderRadius: 8, padding: '9px 11px', color: 'var(--text)', fontSize: 13, fontFamily: "'Geist Mono', monospace" }}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 9, marginTop: 13 }}>
-              <Hover as="span" onClick={() => setPrompt(null)} style={{ padding: '7px 13px', borderRadius: 8, color: '#9a9aa3', fontSize: 12.5, cursor: 'pointer' }} hover={{ background: '#16161c' }}>Cancel</Hover>
-              <Hover as="span" onClick={() => { const v = promptValue.trim(); setPrompt(null); if (v) prompt.onSubmit(v) }} style={{ padding: '7px 15px', borderRadius: 8, background: 'var(--accent)', color: '#0a1018', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>{prompt.confirmLabel}</Hover>
+              <Hover as="span" onClick={() => setPrompt(null)} style={{ padding: '7px 13px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>Cancel</Hover>
+              <Hover as="span" onClick={() => { const v = promptValue.trim(); setPrompt(null); if (v) prompt.onSubmit(v) }} style={{ padding: '7px 15px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>{prompt.confirmLabel}</Hover>
             </div>
           </div>
         </div>

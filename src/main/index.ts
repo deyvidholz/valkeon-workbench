@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, session, shell, Notification, nativeImage } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, session, shell, Notification, nativeImage, nativeTheme } from 'electron'
 import { join, basename, isAbsolute, resolve } from 'node:path'
 import { statSync } from 'node:fs'
 import { execFile } from 'node:child_process'
@@ -42,6 +42,78 @@ let allowClose = false
 /** Live work that should block a quick quit: interactive terminals + agents. */
 function liveProcessCount(): number {
   return (ptyManager?.count() ?? 0) + (agentManager?.count() ?? 0)
+}
+
+// Cache the VS Code lookup — the answer doesn't change during a session.
+let vscodeAvailable: boolean | null = null
+
+/** Well-known VS Code install locations per platform (fallback when `code` isn't on PATH). */
+function vscodeAppPaths(): string[] {
+  if (process.platform === 'darwin')
+    return ['/Applications/Visual Studio Code.app', join(app.getPath('home'), 'Applications/Visual Studio Code.app')]
+  if (process.platform === 'win32') {
+    const local = process.env.LOCALAPPDATA
+    return [
+      'C:/Program Files/Microsoft VS Code/Code.exe',
+      local ? join(local, 'Programs/Microsoft VS Code/Code.exe') : ''
+    ].filter(Boolean)
+  }
+  return ['/usr/bin/code', '/usr/share/code/code', '/snap/bin/code', '/var/lib/flatpak/exports/bin/com.visualstudio.code']
+}
+
+/** True if a `code` CLI resolves or a known VS Code app is installed. */
+async function detectVscode(): Promise<boolean> {
+  if (vscodeAvailable !== null) return vscodeAvailable
+  const probe = process.platform === 'win32' ? 'where' : 'which'
+  try {
+    await exec(probe, ['code'], { timeout: 3000 })
+    vscodeAvailable = true
+    return true
+  } catch {
+    // Fall back to filesystem checks for the app bundle / binary.
+  }
+  vscodeAvailable = vscodeAppPaths().some((p) => {
+    try {
+      statSync(p)
+      return true
+    } catch {
+      return false
+    }
+  })
+  return vscodeAvailable
+}
+
+/** Open a path in VS Code, preferring the `code` CLI, falling back to the app. */
+async function openInVscode(target: string): Promise<boolean> {
+  try {
+    await exec('code', [target], { timeout: 5000 })
+    return true
+  } catch {
+    // No CLI on PATH — try launching the installed app with the path argument.
+  }
+  if (process.platform === 'darwin') {
+    try {
+      await exec('open', ['-a', 'Visual Studio Code', target], { timeout: 5000 })
+      return true
+    } catch {
+      return false
+    }
+  }
+  const bin = vscodeAppPaths().find((p) => {
+    try {
+      statSync(p)
+      return true
+    } catch {
+      return false
+    }
+  })
+  if (!bin) return false
+  try {
+    await exec(bin, [target], { timeout: 5000 })
+    return true
+  } catch {
+    return false
+  }
 }
 
 function contentSecurityPolicy(): string {
@@ -264,6 +336,27 @@ function registerIpc(): void {
   })
 
   ipcMain.handle(IpcChannels.shellOpenPath, (_e, target: string) => shell.openPath(target))
+  ipcMain.handle(IpcChannels.shellShowItem, (_e, target: string) => {
+    if (typeof target === 'string' && target) shell.showItemInFolder(target)
+  })
+
+  // Theme: report the current OS appearance and push live changes so `system`
+  // mode tracks the OS. The renderer resolves its own preference against this.
+  ipcMain.handle(IpcChannels.systemTheme, () => (nativeTheme.shouldUseDarkColors ? 'dark' : 'light'))
+  nativeTheme.on('updated', () => {
+    if (mainWindow && !mainWindow.isDestroyed())
+      mainWindow.webContents.send(IpcChannels.systemThemeChanged, nativeTheme.shouldUseDarkColors ? 'dark' : 'light')
+  })
+
+  // Locale: the OS locale (e.g. "pt-BR", "es-AR", "en-US"); renderer maps it.
+  ipcMain.handle(IpcChannels.systemLocale, () => app.getLocale())
+
+  // VS Code integration: detect an installed `code` CLI / app, and open a path.
+  ipcMain.handle(IpcChannels.systemHasVscode, () => detectVscode())
+  ipcMain.handle(IpcChannels.systemOpenInVscode, async (_e, target: string) => {
+    if (typeof target !== 'string' || !target) return false
+    return openInVscode(target)
+  })
 
   ipcMain.handle(IpcChannels.gitClone, async (_e, url: string): Promise<CloneResult> => {
     if (!mainWindow || typeof url !== 'string') return { ok: false, error: 'No window available.' }

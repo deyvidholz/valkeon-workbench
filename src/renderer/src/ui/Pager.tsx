@@ -13,9 +13,9 @@ const btn = (disabled: boolean): React.CSSProperties => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: '#121216',
-  border: '1px solid #232329',
-  color: disabled ? '#3f3f47' : '#cbcbd2',
+  background: 'var(--surface)',
+  border: '1px solid var(--line-2)',
+  color: disabled ? '#3f3f47' : 'var(--text-2)',
   cursor: disabled ? 'default' : 'pointer',
   fontFamily: "'Material Symbols Rounded'",
   fontSize: 18
@@ -28,13 +28,13 @@ export function Pager({ page, pageCount, setPage }: PagerProps) {
   const atEnd = page === pageCount - 1
   return (
     <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-      <Hover as="span" onClick={atStart ? undefined : () => setPage(page - 1)} style={btn(atStart)} hover={atStart ? undefined : { background: '#17171c' }}>
+      <Hover as="span" onClick={atStart ? undefined : () => setPage(page - 1)} style={btn(atStart)} hover={atStart ? undefined : { background: 'var(--surface-2)' }}>
         chevron_left
       </Hover>
-      <span style={{ fontSize: 12, color: '#73737c', fontFamily: "'Geist Mono', monospace" }}>
+      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Geist Mono', monospace" }}>
         {page + 1} / {pageCount}
       </span>
-      <Hover as="span" onClick={atEnd ? undefined : () => setPage(page + 1)} style={btn(atEnd)} hover={atEnd ? undefined : { background: '#17171c' }}>
+      <Hover as="span" onClick={atEnd ? undefined : () => setPage(page + 1)} style={btn(atEnd)} hover={atEnd ? undefined : { background: 'var(--surface-2)' }}>
         chevron_right
       </Hover>
     </div>

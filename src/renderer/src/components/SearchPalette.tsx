@@ -59,28 +59,28 @@ export function SearchPalette() {
   if (!open) return null
 
   return (
-    <div style={{ position: 'absolute', inset: 0, zIndex: 65, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'rgba(4,4,6,0.55)', paddingTop: '12vh' }}>
+    <div style={{ position: 'absolute', inset: 0, zIndex: 65, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', background: 'var(--scrim)', paddingTop: '12vh' }}>
       <div onClick={close} style={{ position: 'absolute', inset: 0 }} />
-      <div style={{ position: 'relative', width: 560, maxHeight: '70%', background: '#0d0d11', border: '1px solid #25252d', borderRadius: 13, boxShadow: '0 30px 80px rgba(0,0,0,0.6)', animation: 'fadein .15s ease', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 15px', borderBottom: '1px solid #16161a' }}>
-          <Icon name="search" size={17} color="#5f5f68" />
-          <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search sessions, terminals, boards, cards…" style={{ flex: 1, background: 'transparent', border: 'none', color: '#e8e8ee', fontSize: 14 }} />
-          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10.5, color: '#56565e', background: '#16161c', padding: '1px 5px', borderRadius: 4 }}>ESC</span>
+      <div style={{ position: 'relative', width: 560, maxHeight: '70%', background: 'var(--bg)', border: '1px solid var(--line-2)', borderRadius: 13, boxShadow: '0 30px 80px var(--shadow)', animation: 'fadein .15s ease', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 15px', borderBottom: '1px solid var(--line)' }}>
+          <Icon name="search" size={17} color="var(--text-muted)" />
+          <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search sessions, terminals, boards, cards…" style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 14 }} />
+          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10.5, color: 'var(--text-faint)', background: 'var(--surface-2)', padding: '1px 5px', borderRadius: 4 }}>ESC</span>
         </div>
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 6 }}>
           {results.length === 0 ? (
-            <div style={{ padding: '24px 14px', textAlign: 'center', fontSize: 13, color: '#56565e' }}>No matches{query ? ` for “${query}”` : ''}.</div>
+            <div style={{ padding: '24px 14px', textAlign: 'center', fontSize: 13, color: 'var(--text-faint)' }}>No matches{query ? ` for “${query}”` : ''}.</div>
           ) : (
             results.map((r) => (
-              <Hover key={r.id} onClick={r.onOpen} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 10px', borderRadius: 8, cursor: 'pointer' }} hover={{ background: '#17171c' }}>
-                <span style={{ width: 26, height: 26, borderRadius: 7, background: '#15151b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Hover key={r.id} onClick={r.onOpen} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 10px', borderRadius: 8, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>
+                <span style={{ width: 26, height: 26, borderRadius: 7, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Icon name={r.icon} size={15} color={r.color} />
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, color: '#e4e4ea', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
-                  <div style={{ fontSize: 11, color: '#6b6b74', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.sub}</div>
+                  <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.sub}</div>
                 </div>
-                <Icon name="north_east" size={15} color="#4d4d55" />
+                <Icon name="north_east" size={15} color="var(--text-faint)" />
               </Hover>
             ))
           )}

@@ -21,7 +21,7 @@ const addBtn = {
   width: 20,
   height: 20,
   borderRadius: 6,
-  color: '#6f6f78',
+  color: 'var(--text-muted)',
   cursor: 'pointer'
 } as const
 
@@ -54,10 +54,10 @@ export function SessionList() {
           justifyContent: 'space-between'
         }}
       >
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#62626b' }}>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)' }}>
           ACTIVE SESSIONS
         </span>
-        <Hover as="span" title="New session" onClick={openNewSession} style={addBtn} hover={{ background: '#16161d', color: '#cfcfd6' }}>
+        <Hover as="span" title="New session" onClick={openNewSession} style={addBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
           <Icon name="add" size={16} />
         </Hover>
       </div>
@@ -81,9 +81,9 @@ export function SessionList() {
               borderRadius: 8,
               cursor: 'pointer',
               alignItems: 'flex-start',
-              background: s.id === activeSessionId ? '#101015' : 'transparent'
+              background: s.id === activeSessionId ? 'var(--surface)' : 'transparent'
             }}
-            hover={{ background: '#121217' }}
+            hover={{ background: 'var(--surface)' }}
           >
             <StatusDot status={s.status} style={{ marginTop: 5 }} />
             <div style={{ minWidth: 0, flex: 1 }}>
@@ -92,7 +92,7 @@ export function SessionList() {
                   style={{
                     fontSize: 12.5,
                     fontWeight: 500,
-                    color: '#dcdce2',
+                    color: 'var(--text-2)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
@@ -105,7 +105,7 @@ export function SessionList() {
               <div
                 style={{
                   fontSize: 11.5,
-                  color: '#73737c',
+                  color: 'var(--text-muted)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -118,7 +118,7 @@ export function SessionList() {
             <span
               style={{
                 fontSize: 10.5,
-                color: '#56565e',
+                color: 'var(--text-faint)',
                 fontFamily: "'Geist Mono', monospace",
                 marginTop: 2,
                 flexShrink: 0
