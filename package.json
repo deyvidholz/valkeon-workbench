@@ -1,7 +1,7 @@
 {
   "name": "valkeon-workbench",
   "productName": "Valkeon Workbench",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Desktop command center for managing Claude Code (and future AI) sessions across a project.",
   "author": "Valkeon",
