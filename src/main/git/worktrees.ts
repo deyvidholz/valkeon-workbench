@@ -1,6 +1,57 @@
 import { simpleGit } from 'simple-git'
-import type { WorktreeInfo, WorktreeStatus } from '@shared/git'
+import type { WorktreeInfo, WorktreeStatus, WorktreeDetails } from '@shared/git'
 import type { MergeResult } from '@shared/project'
+
+const UNIT = '\x1f'
+
+/**
+ * Rich detail for one worktree: dirty files, ahead/behind vs base, whether it's
+ * fully merged, and recent commits. Powers the details dialog and the cleanup
+ * analysis (which decides if a worktree is "dead").
+ */
+export async function worktreeDetails(dir: string, baseBranch: string): Promise<WorktreeDetails> {
+  const git = simpleGit(dir)
+  const d: WorktreeDetails = {
+    path: dir, branch: '', head: '', headSubject: '', dirtyFiles: [],
+    ahead: 0, behind: 0, mergedIntoBase: false, recentCommits: [], lastCommitRelative: null
+  }
+  try {
+    const st = await git.status()
+    d.branch = st.current ?? ''
+    d.dirtyFiles = st.files.map((f) => f.path)
+  } catch {
+    /* not a repo / detached — leave defaults */
+  }
+  try {
+    d.head = (await git.raw(['rev-parse', '--short', 'HEAD'])).trim()
+    d.headSubject = (await git.raw(['log', '-1', '--pretty=%s'])).trim()
+    d.lastCommitRelative = (await git.raw(['log', '-1', '--pretty=%cr'])).trim() || null
+  } catch {
+    /* no commits yet */
+  }
+  // Ahead/behind vs the base branch (more useful than upstream for merge decisions).
+  try {
+    const counts = (await git.raw(['rev-list', '--left-right', '--count', `${baseBranch}...HEAD`])).trim().split(/\s+/)
+    d.behind = parseInt(counts[0] || '0', 10)
+    d.ahead = parseInt(counts[1] || '0', 10)
+    d.mergedIntoBase = d.ahead === 0 && d.dirtyFiles.length === 0
+  } catch {
+    /* base branch unknown — leave zeros */
+  }
+  try {
+    const logRaw = await git.raw(['log', '-10', `--pretty=%h${UNIT}%s${UNIT}%cr`])
+    d.recentCommits = logRaw
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => {
+        const [hash, subject, relative] = l.split(UNIT)
+        return { hash: hash ?? '', subject: subject ?? '', relative: relative ?? '' }
+      })
+  } catch {
+    /* no log */
+  }
+  return d
+}
 
 async function statusOf(dir: string): Promise<WorktreeStatus> {
   try {

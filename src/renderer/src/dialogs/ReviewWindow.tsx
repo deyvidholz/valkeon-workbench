@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -15,6 +16,7 @@ const STAT_COLOR: Record<DiffFile['status'], string> = { added: '#5cc98a', modif
 const STAT_GLYPH: Record<DiffFile['status'], string> = { added: 'A', modified: 'M', deleted: 'D' }
 
 export function ReviewWindow() {
+  const { t } = useTranslation()
   const reviewCardId = useStore((s) => s.reviewCardId)
   const boards = useStore((s) => s.boards)
   const activeBoardId = useStore((s) => s.activeBoardId)
@@ -99,20 +101,20 @@ export function ReviewWindow() {
           </span>
         )}
         <div style={{ flex: 1 }} />
-        <Hover as="span" onClick={close} title="Close review" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, color: 'var(--text-dim)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
+        <Hover as="span" onClick={close} title={t('review.closeReview', 'Close review')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, color: 'var(--text-dim)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
           <Icon name="close" size={19} />
         </Hover>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         <div style={{ width: 230, flexShrink: 0, borderRight: '1px solid var(--line)', background: 'var(--bg)', overflowY: 'auto', padding: '8px 8px 16px' }}>
-          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', padding: '6px 8px' }}>CHANGED FILES {files ? `· ${files.length}` : ''}</div>
-          {files === null && <div style={{ padding: 10, fontSize: 12, color: 'var(--text-faint)' }}>Loading diff…</div>}
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', padding: '6px 8px' }}>{t('review.changedFiles', 'CHANGED FILES')} {files ? `· ${files.length}` : ''}</div>
+          {files === null && <div style={{ padding: 10, fontSize: 12, color: 'var(--text-faint)' }}>{t('review.loadingDiff', 'Loading diff…')}</div>}
           {files?.length === 0 && (
             <div style={{ padding: 10, fontSize: 11.5, color: 'var(--text-faint)', lineHeight: 1.5 }}>
-              No uncommitted changes to review in
-              <div style={{ fontFamily: "'Geist Mono', monospace", color: 'var(--text-muted)', marginTop: 4, wordBreak: 'break-all' }}>{cwd ?? '(no working tree)'}</div>
-              <div style={{ marginTop: 6 }}>The agent may not have edited files, or the changes are elsewhere.</div>
+              {t('review.noUncommitted', 'No uncommitted changes to review in')}
+              <div style={{ fontFamily: "'Geist Mono', monospace", color: 'var(--text-muted)', marginTop: 4, wordBreak: 'break-all' }}>{cwd ?? t('review.noWorkingTree', '(no working tree)')}</div>
+              <div style={{ marginTop: 6 }}>{t('review.agentNoEdits', 'The agent may not have edited files, or the changes are elsewhere.')}</div>
             </div>
           )}
           {files?.map((f) => {
@@ -133,15 +135,15 @@ export function ReviewWindow() {
             <DiffViewer key={active.path} path={active.path} original={active.oldContent} modified={active.newContent} onLine={setCurLine} />
           ) : (
             <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>
-              {files === null ? 'Loading…' : 'No changes to review.'}
+              {files === null ? t('review.loading', 'Loading…') : t('review.noChanges', 'No changes to review.')}
             </div>
           )}
         </div>
 
         <div style={{ width: 300, flexShrink: 0, borderLeft: '1px solid var(--line)', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', padding: '12px 14px 8px' }}>REVIEW COMMENTS</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', padding: '12px 14px 8px' }}>{t('review.reviewComments', 'REVIEW COMMENTS')}</div>
           <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {comments.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--text-faint)', padding: '4px 2px', lineHeight: 1.5 }}>Click a line in the diff, write a note, and add it. On “Request changes” they’re sent to the agent.</div>}
+            {comments.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--text-faint)', padding: '4px 2px', lineHeight: 1.5 }}>{t('review.commentsHint', 'Click a line in the diff, write a note, and add it. On “Request changes” they’re sent to the agent.')}</div>}
             {comments.map((c, i) => (
               <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, padding: '8px 10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -153,25 +155,25 @@ export function ReviewWindow() {
             ))}
           </div>
           <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', padding: 10 }}>
-            {selected && <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace", marginBottom: 5 }}>on {selected.split('/').pop()}:{curLine}</div>}
+            {selected && <div style={{ fontSize: 10, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace", marginBottom: 5 }}>{t('review.onLoc', 'on {{file}}:{{line}}', { file: selected.split('/').pop(), line: curLine })}</div>}
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); addComment() } }}
-              placeholder="Add a review note… (⌘Enter)"
+              placeholder={t('review.notePlaceholder', 'Add a review note… (⌘Enter)')}
               style={{ width: '100%', minHeight: 52, resize: 'vertical', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 8, padding: 9, color: 'var(--text-2)', fontSize: 12, lineHeight: 1.5, fontFamily: "'Geist Mono', monospace" }}
             />
-            <Hover as="span" onClick={addComment} style={{ display: 'flex', justifyContent: 'center', marginTop: 7, padding: '7px', borderRadius: 7, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>Add comment</Hover>
+            <Hover as="span" onClick={addComment} style={{ display: 'flex', justifyContent: 'center', marginTop: 7, padding: '7px', borderRadius: 7, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>{t('review.addComment', 'Add comment')}</Hover>
           </div>
         </div>
       </div>
 
       <div style={{ height: 56, flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', display: 'flex', alignItems: 'center', gap: 9, padding: '0 16px' }}>
-        {actionBtn('reviews', 'AI review', aiReview)}
+        {actionBtn('reviews', t('review.aiReview', 'AI review'), aiReview)}
         <div style={{ flex: 1 }} />
-        {actionBtn('rate_review', comments.length ? `Request changes (${comments.length})` : 'Request changes', onRequestChanges, { disabled: comments.length === 0 })}
-        {actionBtn('close', 'Decline', decline)}
-        {actionBtn('check', 'Approve', approve, { accent: 'var(--accent)' })}
+        {actionBtn('rate_review', comments.length ? t('review.requestChangesN', 'Request changes ({{count}})', { count: comments.length }) : t('review.requestChanges', 'Request changes'), onRequestChanges, { disabled: comments.length === 0 })}
+        {actionBtn('close', t('review.decline', 'Decline'), decline)}
+        {actionBtn('check', t('review.approve', 'Approve'), approve, { accent: 'var(--accent)' })}
       </div>
     </div>
   )

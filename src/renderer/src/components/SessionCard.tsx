@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { getModelMeta } from '@shared/agents/providers'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
@@ -18,6 +19,7 @@ interface SessionCardProps {
 
 /** Grid/split tile for one live session: real agent PTY + an inline composer. */
 export function SessionCard({ session, onReorderStart, onReorderDrop }: SessionCardProps) {
+  const { t } = useTranslation()
   const openSession = useStore((s) => s.openSession)
   const fontSize = useStore((s) => s.fontSize)
   const nonce = useStore((s) => s.ptyNonce[session.id] ?? 0)
@@ -28,9 +30,9 @@ export function SessionCard({ session, onReorderStart, onReorderDrop }: SessionC
 
   const confirmClose = (): void =>
     askConfirm({
-      title: 'Close session',
-      message: `Close “${session.name}”? The agent process is terminated.`,
-      confirmLabel: 'Close session',
+      title: t('sessionCard.closeTitle', 'Close session'),
+      message: t('sessionCard.closeMessage', 'Close “{{name}}”? The agent process is terminated.', { name: session.name }),
+      confirmLabel: t('sessionCard.closeConfirm', 'Close session'),
       onConfirm: () => endSession(session.id)
     })
 
@@ -50,12 +52,12 @@ export function SessionCard({ session, onReorderStart, onReorderDrop }: SessionC
           <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{session.name}</span>
           <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Geist Mono', monospace" }}>{STATUS_LABEL[session.status].toLowerCase()}</span>
           <ModelChip label={short} />
-          {session.worktree && <Icon name="account_tree" size={14} color="var(--ai)" title="Uses a git worktree" />}
+          {session.worktree && <Icon name="account_tree" size={14} color="var(--ai)" title={t('sessionCard.usesWorktree', 'Uses a git worktree')} />}
         </div>
-        <Hover as="span" onClick={() => openSession(session.id)} title="Open session" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
+        <Hover as="span" onClick={() => openSession(session.id)} title={t('sessionCard.openSession', 'Open session')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
           <Icon name="open_in_full" size={15} />
         </Hover>
-        <Hover as="span" onClick={confirmClose} title="Close session" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--danger)' }}>
+        <Hover as="span" onClick={confirmClose} title={t('sessionCard.closeSession', 'Close session')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--danger)' }}>
           <Icon name="close" size={16} />
         </Hover>
       </div>
@@ -64,7 +66,7 @@ export function SessionCard({ session, onReorderStart, onReorderDrop }: SessionC
           <div style={{ flex: 1, minHeight: 0, background: 'var(--bg)', overflow: 'hidden' }}>
             <AgentTranscript lines={session.lines} status={session.status} sessionName={session.name} />
           </div>
-          <AgentComposer key={session.id} sessionId={session.id} placeholder={`Message ${session.name}…`} />
+          <AgentComposer key={session.id} sessionId={session.id} placeholder={t('sessionCard.messagePlaceholder', 'Message {{name}}…', { name: session.name })} />
         </>
       ) : (
         <>
@@ -79,7 +81,7 @@ export function SessionCard({ session, onReorderStart, onReorderDrop }: SessionC
               }}
             />
           </div>
-          <PtyComposer key={session.id} ptyId={ptyId} prompt="›" promptColor="var(--accent)" placeholder={`Reply to ${session.name}, or ask for a change…`} />
+          <PtyComposer key={session.id} ptyId={ptyId} prompt="›" promptColor="var(--accent)" placeholder={t('sessionCard.replyPlaceholder', 'Reply to {{name}}, or ask for a change…', { name: session.name })} />
         </>
       )}
     </div>

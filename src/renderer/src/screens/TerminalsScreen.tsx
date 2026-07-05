@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -7,6 +8,7 @@ import { XTerm } from '../components/XTerm'
 import { PtyComposer } from '../components/PtyComposer'
 
 export function TerminalsScreen() {
+  const { t: translate } = useTranslation()
   const terminals = useStore((s) => s.terminals)
   const wsId = useStore((s) => s.activeWorkspaceId)
   const fontSize = useStore((s) => s.fontSize)
@@ -25,7 +27,7 @@ export function TerminalsScreen() {
   const newBtn = (
     <Hover as="span" onClick={newTerminal} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>
       <Icon name="add" size={16} />
-      New terminal
+      {translate('terminals.newTerminal', 'New terminal')}
     </Hover>
   )
 
@@ -33,8 +35,8 @@ export function TerminalsScreen() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
       <div style={{ height: 53, flexShrink: 0, borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 18px', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 11 }}>
-          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>Terminals</span>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Plain shells — separate from AI sessions</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{translate('terminals.title', 'Terminals')}</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{translate('terminals.subtitle', 'Plain shells — separate from AI sessions')}</span>
         </div>
         {newBtn}
       </div>
@@ -46,8 +48,8 @@ export function TerminalsScreen() {
               <Icon name="terminal" size={24} color="var(--text-faint)" />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>No terminals open</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Open a real shell to run commands, dev servers, or anything else.</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>{translate('terminals.emptyTitle', 'No terminals open')}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{translate('terminals.emptyBody', 'Open a real shell to run commands, dev servers, or anything else.')}</div>
             </div>
             {newBtn}
           </div>
@@ -71,14 +73,14 @@ export function TerminalsScreen() {
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Geist Mono', monospace", background: 'var(--surface)', border: '1px solid var(--line-2)', padding: '1px 6px', borderRadius: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 170 }}>{t.cwd}</span>
                   </div>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: t.running ? 'var(--ok)' : 'var(--text-faint)', display: 'inline-block', flexShrink: 0, ...(t.running ? { animation: 'pulse 2s infinite' } : null) }} />
-                  <Hover as="span" onClick={() => closeTerminal(t.id)} title="Close terminal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--danger)' }}>
+                  <Hover as="span" onClick={() => closeTerminal(t.id)} title={translate('terminals.closeTerminal', 'Close terminal')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--danger)' }}>
                     <Icon name="close" size={16} />
                   </Hover>
                 </div>
                 <div style={{ flex: 1, minHeight: 0, background: 'var(--bg)', overflow: 'hidden' }}>
                   <XTerm ptyId={t.id} spec={{ kind: 'terminal', cwd: t.cwd }} fontSize={fontSize} onExit={() => endTerminal(t.id)} />
                 </div>
-                <PtyComposer ptyId={t.id} prompt="$" promptColor="var(--ok)" placeholder="Run a command…" />
+                <PtyComposer ptyId={t.id} prompt="$" promptColor="var(--ok)" placeholder={translate('terminals.runCommand', 'Run a command…')} />
               </div>
             ))}
             </div>

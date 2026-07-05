@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../../store/useStore'
 import { Icon } from '../../ui/Icon'
 import { Hover } from '../../ui/Hover'
@@ -21,6 +22,7 @@ const NAV: NavItem[] = [
 ]
 
 export function NavList() {
+  const { t } = useTranslation()
   const view = useStore((s) => s.view)
   const go = useStore((s) => s.go)
   const sessions = useStore((s) => s.sessions)
@@ -66,7 +68,7 @@ export function NavList() {
             hover={active ? undefined : { background: 'var(--surface)' }}
           >
             <Icon name={n.icon} size={19} color={active ? 'var(--accent,#5b9dd9)' : 'var(--text-muted)'} />
-            <span style={{ flex: 1 }}>{n.label}</span>
+            <span style={{ flex: 1 }}>{t(`nav.${n.id}`, n.label)}</span>
             {badge != null && (
               <span
                 style={{

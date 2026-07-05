@@ -14,6 +14,7 @@ import {
   type PtyDataEvent,
   type PtyExitEvent,
   type WorktreeInfo,
+  type WorktreeDetails,
   type Skill,
   type SkillSave,
   type MenuAction,
@@ -214,6 +215,8 @@ const api = {
       ipcRenderer.invoke(IpcChannels.gitWorktreeAdd, repoPath, branch, dir),
     removeWorktree: (repoPath: string, dir: string): Promise<WorktreeInfo[]> =>
       ipcRenderer.invoke(IpcChannels.gitWorktreeRemove, repoPath, dir),
+    worktreeDetails: (repoPath: string, dir: string, baseBranch: string): Promise<WorktreeDetails> =>
+      ipcRenderer.invoke(IpcChannels.gitWorktreeDetails, repoPath, dir, baseBranch),
     isRepo: (repoPath: string): Promise<boolean> => ipcRenderer.invoke(IpcChannels.gitIsRepo, repoPath),
     init: (repoPath: string): Promise<string> => ipcRenderer.invoke(IpcChannels.gitInit, repoPath),
     clone: (url: string): Promise<CloneResult> => ipcRenderer.invoke(IpcChannels.gitClone, url),

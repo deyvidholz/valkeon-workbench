@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -38,6 +39,7 @@ export function CardDrawer() {
   const openSession = useStore((s) => s.openSession)
   const closeDrawer = useStore((s) => s.closeDrawer)
   const askConfirm = useStore((s) => s.askConfirm)
+  const { t } = useTranslation()
 
   const board = boards.find((b) => b.id === activeBoardId) ?? boards.find((b) => b.wsId === wsId)
   const card: Card | undefined = board?.cards.find((c) => c.id === drawerCardId)
@@ -76,9 +78,9 @@ export function CardDrawer() {
   }
   const removeAttachment = (name: string): void => {
     askConfirm({
-      title: 'Remove attachment',
-      message: `Remove “${name}” from this card?`,
-      confirmLabel: 'Remove',
+      title: t('cardDrawer.removeAttachment', 'Remove attachment'),
+      message: t('cardDrawer.removeAttachmentQ', 'Remove “{{name}}” from this card?', { name }),
+      confirmLabel: t('cardDrawer.remove', 'Remove'),
       onConfirm: () => updateCard(card.id, { attachments: card.attachments.filter((a) => a.name !== name) })
     })
   }
@@ -91,7 +93,7 @@ export function CardDrawer() {
           <span style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace" }}>#{card.code}</span>
           <span style={{ fontSize: 10.5, fontWeight: 600, color: colColor, background: rgba(colColor, 0.13), border: `1px solid ${rgba(colColor, 0.3)}`, padding: '2px 8px', borderRadius: 5 }}>{colName}</span>
           <div style={{ flex: 1 }} />
-          <Hover as="span" onClick={() => deleteCard(card.id)} title="Delete card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 7, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: '#1a1216', color: 'var(--danger)' }}>
+          <Hover as="span" onClick={() => deleteCard(card.id)} title={t('cardDrawer.deleteCard', 'Delete card')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 7, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: '#1a1216', color: 'var(--danger)' }}>
             <Icon name="delete_outline" size={18} />
           </Hover>
           <Hover as="span" onClick={closeDrawer} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 7, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
@@ -100,7 +102,7 @@ export function CardDrawer() {
         </div>
 
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '18px 18px 26px' }}>
-          <input value={dTitle} onChange={(e) => setDTitle(e.target.value)} placeholder="Card title" style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 18, fontWeight: 600, marginBottom: 12 }} />
+          <input value={dTitle} onChange={(e) => setDTitle(e.target.value)} placeholder={t('cardDrawer.cardTitle', 'Card title')} style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 18, fontWeight: 600, marginBottom: 12 }} />
 
           <div style={{ position: 'relative', marginBottom: 18 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
@@ -109,7 +111,7 @@ export function CardDrawer() {
                 return l ? <LabelChip key={id} name={l.name} color={l.color} onRemove={() => toggleCardLabel(id)} /> : null
               })}
               <span onClick={() => toggleLabelMenu()} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, height: 18, boxSizing: 'border-box', fontSize: 9.5, fontWeight: 600, color: 'var(--text-dim)', background: 'var(--surface)', border: '1px dashed var(--line-2)', padding: '0 7px', borderRadius: 5, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                <Icon name="add" size={12} />Label
+                <Icon name="add" size={12} />{t('cardDrawer.label', 'Label')}
               </span>
             </div>
             {labelMenuOpen && (
@@ -128,14 +130,14 @@ export function CardDrawer() {
                   })}
                   <div style={{ height: 1, background: 'var(--line)', margin: '4px 6px' }} />
                   <Hover onClick={openLabelMgr} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 9px', borderRadius: 7, cursor: 'pointer', color: 'var(--text-dim)', fontSize: 12 }} hover={{ background: 'var(--surface-2)' }}>
-                    <Icon name="settings" size={15} />Manage labels
+                    <Icon name="settings" size={15} />{t('cardDrawer.manageLabels', 'Manage labels')}
                   </Hover>
                 </div>
               </>
             )}
           </div>
 
-          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>COLUMN</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>{t('cardDrawer.column', 'COLUMN')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 20 }}>
             {board.columns.map((col) => {
               const on = col.id === card.column
@@ -147,27 +149,27 @@ export function CardDrawer() {
             })}
           </div>
 
-          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>LINKED WORK</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>{t('cardDrawer.linkedWork', 'LINKED WORK')}</div>
           {card.link.branch || card.link.worktree || session ? (
             <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
               {card.link.branch && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                   <Icon name="fork_right" size={16} color="var(--text-dim)" />
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 70 }}>Branch</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 70 }}>{t('cardDrawer.branch', 'Branch')}</span>
                   <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace" }}>{card.link.branch}</span>
                 </div>
               )}
               {card.link.worktree && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                   <Icon name="account_tree" size={16} color="var(--ai)" />
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 70 }}>Worktree</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 70 }}>{t('cardDrawer.worktree', 'Worktree')}</span>
                   <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace", flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.link.worktree}</span>
                 </div>
               )}
               {session && (
                 <Hover onClick={() => openSession(session.id)} style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ok)', display: 'inline-block' }} />
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 70 }}>Session</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 70 }}>{t('cardDrawer.session', 'Session')}</span>
                   <span style={{ fontSize: 11.5, color: 'var(--accent-hi)', fontFamily: "'Geist Mono', monospace" }}>{session.name}</span>
                 </Hover>
               )}
@@ -175,23 +177,23 @@ export function CardDrawer() {
           ) : (
             <div style={{ marginBottom: 20 }}>
               <Hover as="span" onClick={() => saved && startTask(card.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 10, borderRadius: 9, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 13, fontWeight: 600, cursor: saved ? 'pointer' : 'not-allowed', opacity: saved ? 1 : 0.45 }} hover={saved ? { filter: 'brightness(1.08)' } : {}}>
-                <Icon name="rocket_launch" size={17} />Start task
+                <Icon name="rocket_launch" size={17} />{t('cardDrawer.startTask', 'Start task')}
               </Hover>
               <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 7, textAlign: 'center' }}>
-                {saved ? 'Creates a branch + worktree and hands the card to the agent' : 'Save the card first to start a task'}
+                {saved ? t('cardDrawer.startTaskHint', 'Creates a branch + worktree and hands the card to the agent') : t('cardDrawer.saveFirstHint', 'Save the card first to start a task')}
               </div>
             </div>
           )}
 
-          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>DESCRIPTION</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 8 }}>{t('cardDrawer.description', 'DESCRIPTION')}</div>
           <MarkdownEditor
             key={card.id}
             value={dBody}
             onChange={setDBody}
-            placeholder="Write the task in markdown…  **bold**  *italic*  - [ ] todo  ```mermaid …"
+            placeholder={t('cardDrawer.descriptionPlaceholder', 'Write the task in markdown…  **bold**  *italic*  - [ ] todo  ```mermaid …')}
           />
 
-          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', margin: '22px 0 9px' }}>ATTACHMENTS</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', margin: '22px 0 9px' }}>{t('cardDrawer.attachments', 'ATTACHMENTS')}</div>
           {card.attachments.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
               {card.attachments.map((at) => (
@@ -205,13 +207,13 @@ export function CardDrawer() {
             </div>
           )}
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}>
-            <Icon name="attach_file" size={16} />Add attachment
+            <Icon name="attach_file" size={16} />{t('cardDrawer.addAttachment', 'Add attachment')}
             <input type="file" multiple onChange={onAttach} style={{ display: 'none' }} />
           </label>
 
           {card.activity.length > 0 && (
             <>
-              <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', margin: '22px 0 11px' }}>ACTIVITY</div>
+              <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', margin: '22px 0 11px' }}>{t('cardDrawer.activity', 'ACTIVITY')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {card.activity.map((a, i) => (
                   <div key={i} style={{ display: 'flex', gap: 9, alignItems: 'flex-start' }}>
@@ -229,12 +231,12 @@ export function CardDrawer() {
 
         <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 11 }}>
           <span style={{ fontSize: 11.5, color: dirty ? 'var(--warn)' : 'var(--ok)' }}>
-            {dirty ? 'Unsaved changes' : titleOk ? 'Saved' : ''}
+            {dirty ? t('cardDrawer.unsavedChanges', 'Unsaved changes') : titleOk ? t('cardDrawer.saved', 'Saved') : ''}
           </span>
           <div style={{ flex: 1 }} />
-          <Hover as="span" onClick={closeDrawer} style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>Close</Hover>
+          <Hover as="span" onClick={closeDrawer} style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>{t('cardDrawer.close', 'Close')}</Hover>
           <Hover as="span" onClick={() => (titleOk && dirty ? save() : undefined)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: titleOk && dirty ? 'pointer' : 'not-allowed', opacity: titleOk && dirty ? 1 : 0.5 }} hover={titleOk && dirty ? { filter: 'brightness(1.08)' } : {}}>
-            <Icon name="check" size={16} />Save card
+            <Icon name="check" size={16} />{t('cardDrawer.saveCard', 'Save card')}
           </Hover>
         </div>
       </div>

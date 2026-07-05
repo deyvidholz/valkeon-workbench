@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../../store/useStore'
 import { Icon } from '../../ui/Icon'
 import { Hover } from '../../ui/Hover'
@@ -19,6 +20,7 @@ const basename = (p: string): string => p.replace(/[/\\]+$/, '').split(/[/\\]/).
  * worktree to choose between — otherwise there's nothing to switch.
  */
 export function WorktreeSwitcher() {
+  const { t } = useTranslation()
   const workspaces = useStore((s) => s.workspaces)
   const activeWorkspaceId = useStore((s) => s.activeWorkspaceId)
   const worktrees = useStore((s) => s.worktrees)
@@ -49,7 +51,7 @@ export function WorktreeSwitcher() {
           <Icon name="account_tree" size={16} color="var(--ai)" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>WORKTREE</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>{t('worktreeSwitcher.label', 'WORKTREE')}</div>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: "'Geist Mono', monospace" }}>
             {current.branch || basename(current.path)}
           </div>
@@ -77,10 +79,10 @@ export function WorktreeSwitcher() {
                       {w.branch || basename(w.path)}
                     </div>
                     <div style={{ fontSize: 10.5, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {w.isMain ? 'main checkout' : basename(w.path)}
+                      {w.isMain ? t('worktreeSwitcher.mainCheckout', 'main checkout') : basename(w.path)}
                     </div>
                   </div>
-                  {w.isMain && <Icon name="home" size={14} color="var(--text-muted)" title="Main checkout" />}
+                  {w.isMain && <Icon name="home" size={14} color="var(--text-muted)" title={t('worktreeSwitcher.mainCheckoutTitle', 'Main checkout')} />}
                   {on && <Icon name="check" size={16} color="var(--ai)" />}
                 </Hover>
               )

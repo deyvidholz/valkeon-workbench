@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../../store/useStore'
 import { Icon } from '../../ui/Icon'
 import { Hover } from '../../ui/Hover'
@@ -15,6 +16,7 @@ const addBtn = {
 } as const
 
 export function TerminalList() {
+  const { t } = useTranslation()
   const terminals = useStore((s) => s.terminals)
   const wsId = useStore((s) => s.activeWorkspaceId)
   const go = useStore((s) => s.go)
@@ -35,23 +37,23 @@ export function TerminalList() {
         }}
       >
         <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)' }}>
-          TERMINALS
+          {t('terminalList.title', 'TERMINALS')}
         </span>
-        <Hover as="span" title="New terminal" onClick={newTerminal} style={addBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
+        <Hover as="span" title={t('terminalList.newTerminal', 'New terminal')} onClick={newTerminal} style={addBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
           <Icon name="add" size={16} />
         </Hover>
       </div>
       <div style={{ padding: '0 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {scoped.map((t) => (
+        {scoped.map((term) => (
           <Hover
-            key={t.id}
+            key={term.id}
             onClick={() => go('terminals')}
             onContextMenu={(e) => {
               e.preventDefault()
               openContextMenu(e.clientX, e.clientY, [
-                { label: 'Open in Terminals', icon: 'open_in_full', onClick: () => go('terminals') },
-                { label: 'Close terminal', icon: 'close', danger: true, onClick: () => closeTerminal(t.id) },
-                { label: 'Close all terminals', icon: 'layers_clear', danger: true, onClick: closeAllTerminals }
+                { label: t('terminalList.openInTerminals', 'Open in Terminals'), icon: 'open_in_full', onClick: () => go('terminals') },
+                { label: t('terminalList.closeTerminal', 'Close terminal'), icon: 'close', danger: true, onClick: () => closeTerminal(term.id) },
+                { label: t('terminalList.closeAll', 'Close all terminals'), icon: 'layers_clear', danger: true, onClick: closeAllTerminals }
               ])
             }}
             style={{ display: 'flex', gap: 9, padding: 9, borderRadius: 8, cursor: 'pointer', alignItems: 'center' }}
@@ -69,7 +71,7 @@ export function TerminalList() {
                   textOverflow: 'ellipsis'
                 }}
               >
-                {t.name}
+                {term.name}
               </div>
               <div
                 style={{
@@ -82,7 +84,7 @@ export function TerminalList() {
                   fontFamily: "'Geist Mono', monospace"
                 }}
               >
-                {t.cwd}
+                {term.cwd}
               </div>
             </div>
             <span
@@ -90,10 +92,10 @@ export function TerminalList() {
                 width: 7,
                 height: 7,
                 borderRadius: '50%',
-                background: t.running ? 'var(--ok)' : 'var(--text-faint)',
+                background: term.running ? 'var(--ok)' : 'var(--text-faint)',
                 display: 'inline-block',
                 flexShrink: 0,
-                ...(t.running ? { animation: 'pulse 2s infinite' } : null)
+                ...(term.running ? { animation: 'pulse 2s infinite' } : null)
               }}
             />
           </Hover>

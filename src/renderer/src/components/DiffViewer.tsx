@@ -1,4 +1,5 @@
 import { DiffEditor } from '@monaco-editor/react'
+import { useTranslation } from 'react-i18next'
 import type { editor } from 'monaco-editor'
 import { setupMonaco, languageForPath, MONACO_THEME, defineMonacoTheme } from '../lib/monaco'
 
@@ -14,6 +15,7 @@ interface DiffViewerProps {
 
 /** Side-by-side Monaco diff of one file (base vs working tree). */
 export function DiffViewer({ path, original, modified, onLine }: DiffViewerProps) {
+  const { t } = useTranslation()
   return (
     <DiffEditor
       height="100%"
@@ -29,7 +31,7 @@ export function DiffViewer({ path, original, modified, onLine }: DiffViewerProps
         const mod = ed.getModifiedEditor()
         mod.onDidChangeCursorPosition((e: editor.ICursorPositionChangedEvent) => onLine(e.position.lineNumber))
       }}
-      loading={<div style={{ color: 'var(--text-faint)', fontSize: 12 }}>Loading diff…</div>}
+      loading={<div style={{ color: 'var(--text-faint)', fontSize: 12 }}>{t('diffViewer.loading', 'Loading diff…')}</div>}
       options={{
         readOnly: true,
         renderSideBySide: true,

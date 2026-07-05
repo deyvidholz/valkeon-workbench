@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
 
@@ -53,10 +54,11 @@ export function DialogActions({
   confirmLabel: string
   confirmIcon?: string
 }) {
+  const { t } = useTranslation()
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 9 }}>
       <Hover as="span" onClick={onCancel} style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>
-        Cancel
+        {t('dialog.cancel', 'Cancel')}
       </Hover>
       <Hover as="span" onClick={onConfirm} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>
         {confirmIcon && <Icon name={confirmIcon} size={16} />}

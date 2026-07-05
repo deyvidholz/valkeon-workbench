@@ -4,7 +4,7 @@ import { IpcChannels } from '@shared/ipc'
 import type { ProjectConfig } from '@shared/project'
 import type { GlobalStore } from '../persistence/globalStore'
 import { assertAllowedRepo } from '../security'
-import { addWorktree, initRepo, isGitRepo, listWorktrees, removeWorktree, listBranches, createBranch, mergeBranch, deleteBranch } from './worktrees'
+import { addWorktree, initRepo, isGitRepo, listWorktrees, removeWorktree, listBranches, createBranch, mergeBranch, deleteBranch, worktreeDetails } from './worktrees'
 import { ensureLocalExcludes } from './localExclude'
 import { ensureBuiltinSkills } from '../skills/reader'
 import { loadProjectConfig, saveProjectConfig } from '../persistence/projectConfigStore'
@@ -34,6 +34,10 @@ export function registerGitIpc(globalStore: GlobalStore): void {
   ipcMain.handle(IpcChannels.gitWorktrees, (_e, repoPath: string) =>
     listWorktrees(guard(repoPath))
   )
+  ipcMain.handle(IpcChannels.gitWorktreeDetails, (_e, repoPath: string, dir: string, baseBranch: string) => {
+    const repo = guard(repoPath)
+    return worktreeDetails(assertSafeWorktreeDir(repo, dir), assertSafeBranch(baseBranch || 'main'))
+  })
   ipcMain.handle(IpcChannels.gitWorktreeAdd, async (_e, repoPath: string, branch: string, dir: string) => {
     const repo = guard(repoPath)
     const safeDir = assertSafeWorktreeDir(repo, dir)

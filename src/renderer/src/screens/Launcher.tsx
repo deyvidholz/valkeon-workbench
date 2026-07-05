@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { LogoMark } from '../ui/LogoMark'
@@ -5,6 +6,7 @@ import { Hover } from '../ui/Hover'
 import type { Recent } from '../types'
 
 export function Launcher() {
+  const { t } = useTranslation()
   const recents = useStore((s) => s.recents)
   const openProject = useStore((s) => s.openProject)
   const openClone = useStore((s) => s.openClone)
@@ -67,13 +69,13 @@ export function Launcher() {
               marginBottom: 10
             }}
           >
-            Valkeon Workbench
+            {t('launcher.brand', 'Valkeon Workbench')}
           </div>
           <div style={{ fontSize: 29, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--text)' }}>
-            Open a project
+            {t('launcher.openProject', 'Open a project')}
           </div>
           <div style={{ fontSize: 14, color: 'var(--text-dim)', marginTop: 9 }}>
-            Every AI coding session for your repo, in one window.
+            {t('launcher.tagline', 'Every AI coding session for your repo, in one window.')}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 11, marginTop: 6 }}>
@@ -95,7 +97,7 @@ export function Launcher() {
             hover={{ filter: 'brightness(1.08)' }}
           >
             <Icon name="folder_open" size={18} />
-            Open project folder
+            {t('launcher.openProjectFolder', 'Open project folder')}
           </Hover>
           <Hover
             as="span"
@@ -116,7 +118,7 @@ export function Launcher() {
             hover={{ background: 'var(--surface-2)' }}
           >
             <Icon name="cloud_download" size={18} />
-            Clone from Git
+            {t('launcher.cloneFromGit', 'Clone from Git')}
           </Hover>
         </div>
       </div>
@@ -132,7 +134,7 @@ export function Launcher() {
             marginBottom: 11
           }}
         >
-          RECENT PROJECTS
+          {t('launcher.recentProjects', 'RECENT PROJECTS')}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
           {recents.map((r) => (
@@ -179,7 +181,9 @@ export function Launcher() {
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-                <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{r.sessions} sessions</span>
+                <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                  {t('launcher.nSessions', '{{count}} sessions', { count: r.sessions })}
+                </span>
                 <span
                   style={{
                     display: 'flex',

@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../../store/useStore'
 import { Icon } from '../../ui/Icon'
 import { Hover } from '../../ui/Hover'
 
 export function WorkspaceSwitcher() {
+  const { t } = useTranslation()
   const workspaces = useStore((s) => s.workspaces)
   const activeWorkspaceId = useStore((s) => s.activeWorkspaceId)
   const sessions = useStore((s) => s.sessions)
@@ -44,7 +46,7 @@ export function WorkspaceSwitcher() {
           <Icon name="workspaces" size={16} color="var(--accent,#5b9dd9)" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>WORKSPACE</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>{t('workspaceSwitcher.label', 'WORKSPACE')}</div>
           <div
             style={{
               fontSize: 13,
@@ -59,7 +61,7 @@ export function WorkspaceSwitcher() {
           </div>
         </div>
         {active?.useWorktree && (
-          <Icon name="account_tree" size={15} color="var(--ai)" title="Worktrees enabled" />
+          <Icon name="account_tree" size={15} color="var(--ai)" title={t('workspaceSwitcher.worktreesEnabled', 'Worktrees enabled')} />
         )}
         <Icon name="unfold_more" size={18} color="var(--text-faint)" />
       </Hover>
@@ -116,7 +118,7 @@ export function WorkspaceSwitcher() {
                   >
                     {w.name}
                   </div>
-                  <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{count} sessions</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{t('workspaceSwitcher.nSessions', '{{count}} sessions', { count })}</div>
                 </div>
                 {w.useWorktree && <Icon name="account_tree" size={14} color="var(--ai)" />}
                 {isActive && <Icon name="check" size={16} color="var(--accent,#5b9dd9)" />}
@@ -139,7 +141,7 @@ export function WorkspaceSwitcher() {
             hover={{ background: 'var(--surface-2)' }}
           >
             <Icon name="add" size={17} />
-            New workspace
+            {t('workspaceSwitcher.newWorkspace', 'New workspace')}
           </Hover>
           </div>
         </>

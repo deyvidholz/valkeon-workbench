@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { CSSProperties } from 'react'
 import type { SessionStatus, TranscriptLine, LineType } from '@shared/domain'
 import { Icon } from '../ui/Icon'
@@ -8,6 +9,7 @@ const mono = "'Geist Mono', monospace"
 
 /** Renders a structured session's transcript: agent prose, tool calls, commands, errors. */
 export function AgentTranscript({ lines, status, sessionName }: { lines: TranscriptLine[]; status: SessionStatus; sessionName: string }) {
+  const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' })
@@ -18,7 +20,7 @@ export function AgentTranscript({ lines, status, sessionName }: { lines: Transcr
       {lines.length === 0 && status !== 'running' && (
         <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>
           <Icon name="auto_awesome" size={26} color="#33333a" />
-          <div style={{ marginTop: 8 }}>Send a message to start working with {sessionName}.</div>
+          <div style={{ marginTop: 8 }}>{t('agentTranscript.emptyPrompt', 'Send a message to start working with {{sessionName}}.', { sessionName })}</div>
         </div>
       )}
       {lines.map((line, i) => (
@@ -27,7 +29,7 @@ export function AgentTranscript({ lines, status, sessionName }: { lines: Transcr
       {status === 'running' && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: 12 }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ok)', display: 'inline-block', animation: 'pulse 1.6s infinite' }} />
-          Working…
+          {t('agentTranscript.working', 'Working…')}
         </div>
       )}
       <div ref={endRef} />

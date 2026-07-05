@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -13,20 +14,23 @@ interface AgentComposerProps {
 interface Cmd {
   cmd: string
   hint: string
+  /** i18n key for the hint text. */
+  hintKey: string
   /** Needs an argument → completing it leaves a trailing space, not a send. */
   arg?: boolean
 }
 
 const COMMANDS: Cmd[] = [
-  { cmd: '/model', hint: 'switch model (keeps context)', arg: true },
-  { cmd: '/model opus', hint: 'switch to Opus' },
-  { cmd: '/model sonnet', hint: 'switch to Sonnet' },
-  { cmd: '/model haiku', hint: 'switch to Haiku' },
-  { cmd: '/clear', hint: 'clear context — fresh agent' }
+  { cmd: '/model', hint: 'switch model (keeps context)', hintKey: 'agentComposer.modelSwitch', arg: true },
+  { cmd: '/model opus', hint: 'switch to Opus', hintKey: 'agentComposer.modelOpus' },
+  { cmd: '/model sonnet', hint: 'switch to Sonnet', hintKey: 'agentComposer.modelSonnet' },
+  { cmd: '/model haiku', hint: 'switch to Haiku', hintKey: 'agentComposer.modelHaiku' },
+  { cmd: '/clear', hint: 'clear context — fresh agent', hintKey: 'agentComposer.clear' }
 ]
 
 /** Composer beneath a structured session: sends a turn on Enter, with slash-command autocomplete. */
 export function AgentComposer({ sessionId, placeholder, focusToken }: AgentComposerProps) {
+  const { t } = useTranslation()
   const send = useStore((s) => s.submitToAgent)
   const [value, setValue] = useState('')
   const [sel, setSel] = useState(0)
@@ -84,7 +88,7 @@ export function AgentComposer({ sessionId, placeholder, focusToken }: AgentCompo
               <Icon name="bolt" size={14} color="var(--accent-hi)" />
               <span style={{ fontSize: 12.5, color: 'var(--text)', fontFamily: "'Geist Mono', monospace" }}>{c.cmd}</span>
               <span style={{ flex: 1 }} />
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.hint}</span>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t(c.hintKey, c.hint)}</span>
             </div>
           ))}
         </div>
@@ -118,7 +122,7 @@ export function AgentComposer({ sessionId, placeholder, focusToken }: AgentCompo
           placeholder={placeholder}
           style={{ flex: 1, minWidth: 0, resize: 'none', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 13, lineHeight: '22px', fontFamily: "'Geist Mono', monospace", maxHeight: 140 }}
         />
-        <Hover as="span" onClick={submit} title="Send (Enter)" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: 'var(--accent-soft)', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }} hover={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
+        <Hover as="span" onClick={submit} title={t('agentComposer.send', 'Send (Enter)')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, background: 'var(--accent-soft)', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }} hover={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
           <Icon name="arrow_upward" size={16} />
         </Hover>
       </div>

@@ -1,4 +1,5 @@
 import { useRef, useState, type CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -9,6 +10,7 @@ interface Applier {
   prefix: (p: string) => void
 }
 interface Tool {
+  tkey: string
   title: string
   icon?: string
   text?: string
@@ -16,19 +18,19 @@ interface Tool {
 }
 
 const TOOLS: Tool[] = [
-  { title: 'Heading 1', text: 'H1', run: (a) => a.prefix('# ') },
-  { title: 'Heading 2', text: 'H2', run: (a) => a.prefix('## ') },
-  { title: 'Heading 3', text: 'H3', run: (a) => a.prefix('### ') },
-  { title: 'Bold', icon: 'format_bold', run: (a) => a.wrap('**', '**') },
-  { title: 'Italic', icon: 'format_italic', run: (a) => a.wrap('*', '*') },
-  { title: 'Strikethrough', icon: 'strikethrough_s', run: (a) => a.wrap('~~', '~~') },
-  { title: 'Link', icon: 'link', run: (a) => a.wrap('[', '](https://)') },
-  { title: 'Inline code', icon: 'code', run: (a) => a.wrap('`', '`') },
-  { title: 'Bulleted list', icon: 'format_list_bulleted', run: (a) => a.prefix('- ') },
-  { title: 'Numbered list', icon: 'format_list_numbered', run: (a) => a.prefix('1. ') },
-  { title: 'Checklist', icon: 'checklist', run: (a) => a.prefix('- [ ] ') },
-  { title: 'Quote', icon: 'format_quote', run: (a) => a.wrap('> ', '') },
-  { title: 'Code block', icon: 'data_object', run: (a) => a.wrap('```\n', '\n```') }
+  { tkey: 'markdownEditor.headingOne', title: 'Heading 1', text: 'H1', run: (a) => a.prefix('# ') },
+  { tkey: 'markdownEditor.headingTwo', title: 'Heading 2', text: 'H2', run: (a) => a.prefix('## ') },
+  { tkey: 'markdownEditor.headingThree', title: 'Heading 3', text: 'H3', run: (a) => a.prefix('### ') },
+  { tkey: 'markdownEditor.bold', title: 'Bold', icon: 'format_bold', run: (a) => a.wrap('**', '**') },
+  { tkey: 'markdownEditor.italic', title: 'Italic', icon: 'format_italic', run: (a) => a.wrap('*', '*') },
+  { tkey: 'markdownEditor.strikethrough', title: 'Strikethrough', icon: 'strikethrough_s', run: (a) => a.wrap('~~', '~~') },
+  { tkey: 'markdownEditor.link', title: 'Link', icon: 'link', run: (a) => a.wrap('[', '](https://)') },
+  { tkey: 'markdownEditor.inlineCode', title: 'Inline code', icon: 'code', run: (a) => a.wrap('`', '`') },
+  { tkey: 'markdownEditor.bulletedList', title: 'Bulleted list', icon: 'format_list_bulleted', run: (a) => a.prefix('- ') },
+  { tkey: 'markdownEditor.numberedList', title: 'Numbered list', icon: 'format_list_numbered', run: (a) => a.prefix('1. ') },
+  { tkey: 'markdownEditor.checklist', title: 'Checklist', icon: 'checklist', run: (a) => a.prefix('- [ ] ') },
+  { tkey: 'markdownEditor.quote', title: 'Quote', icon: 'format_quote', run: (a) => a.wrap('> ', '') },
+  { tkey: 'markdownEditor.codeBlock', title: 'Code block', icon: 'data_object', run: (a) => a.wrap('```\n', '\n```') }
 ]
 
 interface MarkdownEditorProps {
@@ -40,6 +42,7 @@ interface MarkdownEditorProps {
 
 /** The shared rich markdown editor: formatting toolbar + Table/Diagram builders + Write/Preview. */
 export function MarkdownEditor({ value, onChange, placeholder, minHeight = 200 }: MarkdownEditorProps) {
+  const { t } = useTranslation()
   const openTable = useStore((s) => s.openTable)
   const openDiag = useStore((s) => s.openDiag)
   const setMdAppend = useStore((s) => s.setMdAppend)
@@ -84,21 +87,21 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 200 }
   return (
     <div>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, padding: '5px 6px', background: 'var(--bg)', border: '1px solid var(--line)', borderBottom: 'none', borderRadius: '9px 9px 0 0' }}>
-        {TOOLS.map((t) => (
-          <Hover key={t.title} as="span" title={t.title} onClick={() => t.run(applier)} style={toolBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
-            {t.icon ? <Icon name={t.icon} size={17} /> : <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Geist Mono', monospace" }}>{t.text}</span>}
+        {TOOLS.map((tool) => (
+          <Hover key={tool.title} as="span" title={t(tool.tkey, tool.title)} onClick={() => tool.run(applier)} style={toolBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
+            {tool.icon ? <Icon name={tool.icon} size={17} /> : <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Geist Mono', monospace" }}>{tool.text}</span>}
           </Hover>
         ))}
-        <Hover as="span" title="Table builder" onClick={() => { registerAppend(); openTable() }} style={toolBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
+        <Hover as="span" title={t('markdownEditor.tableBuilder', 'Table builder')} onClick={() => { registerAppend(); openTable() }} style={toolBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
           <Icon name="table_chart" size={17} />
         </Hover>
-        <Hover as="span" title="Diagram builder" onClick={() => { registerAppend(); openDiag() }} style={toolBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
+        <Hover as="span" title={t('markdownEditor.diagramBuilder', 'Diagram builder')} onClick={() => { registerAppend(); openDiag() }} style={toolBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text)' }}>
           <Icon name="schema" size={17} />
         </Hover>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 7, padding: 2, gap: 2 }}>
-          <span onClick={() => setTab('write')} style={tabStyle(tab === 'write')}>Write</span>
-          <span onClick={() => setTab('preview')} style={tabStyle(tab === 'preview')}>Preview</span>
+          <span onClick={() => setTab('write')} style={tabStyle(tab === 'write')}>{t('markdownEditor.write', 'Write')}</span>
+          <span onClick={() => setTab('preview')} style={tabStyle(tab === 'preview')}>{t('markdownEditor.preview', 'Preview')}</span>
         </div>
       </div>
       {tab === 'write' ? (
@@ -111,7 +114,7 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 200 }
         />
       ) : (
         <div style={{ minHeight, background: 'var(--bg)', border: '1px solid var(--line)', borderTop: 'none', borderRadius: '0 0 9px 9px', padding: 14 }}>
-          {value.trim() ? <Markdown source={value} /> : <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>Nothing to preview yet.</div>}
+          {value.trim() ? <Markdown source={value} /> : <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>{t('markdownEditor.nothingToPreview', 'Nothing to preview yet.')}</div>}
         </div>
       )}
     </div>

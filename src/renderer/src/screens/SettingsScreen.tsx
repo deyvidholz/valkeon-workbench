@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CLAUDE_PROVIDER } from '@shared/agents/providers'
 import { useStore } from '../store/useStore'
 import { ACCENTS } from '../theme/accents'
@@ -6,20 +7,11 @@ import { Toggle } from '../ui/Toggle'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
 
-const SHORTCUTS: { label: string; keys: string }[] = [
-  { label: 'New session', keys: '⌘N' },
-  { label: 'New terminal', keys: '⌘T' },
-  { label: 'Open folder', keys: '⌘O' },
-  { label: 'Command palette', keys: '⌘K' },
-  { label: 'Cycle sessions', keys: '⌃⇥' },
-  { label: 'Toggle layout', keys: '⌘\\' },
-  { label: 'Focus composer', keys: '⌘L' }
-]
-
 const sectionLabel = { fontSize: 11, fontWeight: 600 as const, letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 13 }
 const card = { background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 12, marginBottom: 26 }
 
 export function SettingsScreen() {
+  const { t } = useTranslation()
   const accent = useStore((s) => s.accent)
   const setAccent = useStore((s) => s.setAccent)
   const fontSize = useStore((s) => s.fontSize)
@@ -28,6 +20,8 @@ export function SettingsScreen() {
   const setDefaultModel = useStore((s) => s.setDefaultModel)
   const themePref = useStore((s) => s.themePref)
   const setThemePref = useStore((s) => s.setThemePref)
+  const localePref = useStore((s) => s.localePref)
+  const setLocalePref = useStore((s) => s.setLocalePref)
 
   const [toggles, setToggles] = useState({ restore: true, confirmClose: true, launch: false })
   const [dirty, setDirty] = useState(false)
@@ -71,23 +65,39 @@ export function SettingsScreen() {
   }
 
   const generalRows = [
-    { key: 'restore' as const, label: 'Restore sessions on open', desc: 'Reopen the sessions you had running last time' },
-    { key: 'confirmClose' as const, label: 'Confirm before closing a running session', desc: 'Avoid accidentally killing active work' },
-    { key: 'launch' as const, label: 'Launch at login', desc: 'Start Valkeon when you log in' }
+    { key: 'restore' as const, label: t('settings.restoreLabel', 'Restore sessions on open'), desc: t('settings.restoreDesc', 'Reopen the sessions you had running last time') },
+    { key: 'confirmClose' as const, label: t('settings.confirmCloseLabel', 'Confirm before closing a running session'), desc: t('settings.confirmCloseDesc', 'Avoid accidentally killing active work') },
+    { key: 'launch' as const, label: t('settings.launchLabel', 'Launch at login'), desc: t('settings.launchDesc', 'Start Valkeon when you log in') }
   ]
+
+  const SHORTCUTS: { label: string; keys: string }[] = [
+    { label: t('settings.shortcutNewSession', 'New session'), keys: '⌘N' },
+    { label: t('settings.shortcutNewTerminal', 'New terminal'), keys: '⌘T' },
+    { label: t('settings.shortcutOpenFolder', 'Open folder'), keys: '⌘O' },
+    { label: t('settings.shortcutCommandPalette', 'Command palette'), keys: '⌘K' },
+    { label: t('settings.shortcutCycleSessions', 'Cycle sessions'), keys: '⌃⇥' },
+    { label: t('settings.shortcutToggleLayout', 'Toggle layout'), keys: '⌘\\' },
+    { label: t('settings.shortcutFocusComposer', 'Focus composer'), keys: '⌘L' }
+  ]
+
+  const themeLabels: Record<string, string> = {
+    system: t('settings.themeSystem', 'System'),
+    dark: t('settings.themeDark', 'Dark'),
+    light: t('settings.themeLight', 'Light')
+  }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '34px 32px 60px' }}>
-        <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 26 }}>Settings</div>
+        <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em', marginBottom: 26 }}>{t('settings.title', 'Settings')}</div>
 
-        <div style={sectionLabel}>APPEARANCE</div>
+        <div style={sectionLabel}>{t('settings.appearance', 'APPEARANCE')}</div>
         <div style={{ ...card, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>Theme</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>System follows your OS appearance</div>
+              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t('settings.theme', 'Theme')}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{t('settings.themeDesc', 'System follows your OS appearance')}</div>
             </div>
             <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 9, padding: 3, gap: 2 }}>
               {(['system', 'dark', 'light'] as const).map((t) => {
@@ -95,7 +105,7 @@ export function SettingsScreen() {
                 return (
                   <span key={t} onClick={() => setThemePref(t)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 500, textTransform: 'capitalize', color: on ? 'var(--on-accent)' : 'var(--text-dim)', background: on ? 'var(--accent)' : 'transparent' }}>
                     <Icon name={t === 'system' ? 'brightness_auto' : t === 'dark' ? 'dark_mode' : 'light_mode'} size={15} />
-                    {t}
+                    {themeLabels[t]}
                   </span>
                 )
               })}
@@ -104,8 +114,23 @@ export function SettingsScreen() {
           <div style={{ height: 1, background: 'var(--line)', margin: '15px 0' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>Accent color</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>Used across highlights and actions</div>
+              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t('settings.language', 'Language')}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{t('settings.languageDesc', 'System uses your OS language')}</div>
+            </div>
+            <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 9, padding: 3, gap: 2 }}>
+              {([['system', t('settings.langSystem', 'System')], ['en', 'English'], ['pt-BR', 'Português'], ['es-AR', 'Español']] as const).map(([id, label]) => {
+                const on = id === localePref
+                return (
+                  <span key={id} onClick={() => setLocalePref(id)} style={{ padding: '5px 12px', borderRadius: 7, cursor: 'pointer', fontSize: 12, fontWeight: 500, color: on ? 'var(--on-accent)' : 'var(--text-dim)', background: on ? 'var(--accent)' : 'transparent' }}>{label}</span>
+                )
+              })}
+            </div>
+          </div>
+          <div style={{ height: 1, background: 'var(--line)', margin: '15px 0' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t('settings.accentColor', 'Accent color')}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{t('settings.accentDesc', 'Used across highlights and actions')}</div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               {ACCENTS.map((a) => {
@@ -124,14 +149,14 @@ export function SettingsScreen() {
           <div style={{ height: 1, background: 'var(--line)', margin: '15px 0' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>Terminal font size</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{fontSize}px</div>
+              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t('settings.terminalFontSize', 'Terminal font size')}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{t('settings.fontSizePx', '{{size}}px', { size: fontSize })}</div>
             </div>
             <input type="range" min={11} max={15} step={1} value={fontSize} onChange={(e) => { setFontSize(Number(e.target.value)); setDirty(true) }} style={{ width: 160, accentColor: 'var(--accent)' }} />
           </div>
         </div>
 
-        <div style={sectionLabel}>GENERAL</div>
+        <div style={sectionLabel}>{t('settings.general', 'GENERAL')}</div>
         <div style={{ ...card, padding: '4px 18px' }}>
           {generalRows.map((r, i) => (
             <div key={r.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
@@ -144,12 +169,12 @@ export function SettingsScreen() {
           ))}
         </div>
 
-        <div style={sectionLabel}>MODELS</div>
+        <div style={sectionLabel}>{t('settings.models', 'MODELS')}</div>
         <div style={{ ...card, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>Default model</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>New sessions start with this</div>
+              <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{t('settings.defaultModel', 'Default model')}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>{t('settings.defaultModelDesc', 'New sessions start with this')}</div>
             </div>
             <div style={{ display: 'flex', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 9, padding: 3, gap: 2 }}>
               {CLAUDE_PROVIDER.models.map((m) => {
@@ -162,7 +187,7 @@ export function SettingsScreen() {
           </div>
         </div>
 
-        <div style={sectionLabel}>KEYBOARD</div>
+        <div style={sectionLabel}>{t('settings.keyboard', 'KEYBOARD')}</div>
         <div style={{ ...card, padding: '4px 18px', marginBottom: 0 }}>
           {SHORTCUTS.map((s, i) => (
             <div key={s.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
@@ -175,14 +200,14 @@ export function SettingsScreen() {
       </div>
 
       <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '12px 32px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
-        <span style={{ fontSize: 12, color: dirty ? 'var(--text-dim)' : 'var(--text-faint)' }}>{dirty ? 'Unsaved changes' : 'All changes saved'}</span>
+        <span style={{ fontSize: 12, color: dirty ? 'var(--text-dim)' : 'var(--text-faint)' }}>{dirty ? t('settings.unsavedChanges', 'Unsaved changes') : t('settings.allSaved', 'All changes saved')}</span>
         <Hover
           as="span"
           onClick={() => dirty && save()}
           style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: dirty ? 'pointer' : 'not-allowed', opacity: dirty ? 1 : 0.5 }}
           hover={dirty ? { filter: 'brightness(1.08)' } : {}}
         >
-          <Icon name="check" size={16} />Save settings
+          <Icon name="check" size={16} />{t('settings.save', 'Save settings')}
         </Hover>
       </div>
     </div>

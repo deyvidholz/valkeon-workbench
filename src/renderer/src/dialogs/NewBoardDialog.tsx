@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Modal } from '../ui/Modal'
 import { DialogActions, DialogHeader, eyebrow, inputStyle, segStyle } from './parts'
@@ -6,6 +7,7 @@ import type { BoardScope } from '../types'
 const SCOPES: BoardScope[] = ['feature', 'epic', 'release', 'chore']
 
 export function NewBoardDialog() {
+  const { t } = useTranslation()
   const open = useStore((s) => s.newBoardOpen)
   const form = useStore((s) => s.newBoard)
   const setForm = useStore((s) => s.setNewBoard)
@@ -15,10 +17,10 @@ export function NewBoardDialog() {
 
   return (
     <Modal onClose={close} width={460} zIndex={55} panelStyle={{ padding: 20 }}>
-      <DialogHeader icon="view_kanban" title="New board" subtitle="A board scopes a Kanban to a project, feature, or release." />
-      <div style={eyebrow}>NAME</div>
-      <input value={form.name} onChange={(e) => setForm({ name: e.target.value })} placeholder="e.g. Notifications revamp" style={{ ...inputStyle, marginBottom: 16 }} autoFocus />
-      <div style={eyebrow}>SCOPE</div>
+      <DialogHeader icon="view_kanban" title={t('newBoard.title', 'New board')} subtitle={t('newBoard.subtitle', 'A board scopes a Kanban to a project, feature, or release.')} />
+      <div style={eyebrow}>{t('newBoard.name', 'NAME')}</div>
+      <input value={form.name} onChange={(e) => setForm({ name: e.target.value })} placeholder={t('newBoard.namePlaceholder', 'e.g. Notifications revamp')} style={{ ...inputStyle, marginBottom: 16 }} autoFocus />
+      <div style={eyebrow}>{t('newBoard.scope', 'SCOPE')}</div>
       <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
         {SCOPES.map((s) => (
           <span key={s} onClick={() => setForm({ scope: s })} style={{ ...segStyle(form.scope === s), textTransform: 'capitalize' }}>
@@ -26,7 +28,7 @@ export function NewBoardDialog() {
           </span>
         ))}
       </div>
-      <DialogActions onCancel={close} onConfirm={create} confirmLabel="Create board" confirmIcon="add" />
+      <DialogActions onCancel={close} onConfirm={create} confirmLabel={t('newBoard.create', 'Create board')} confirmIcon="add" />
     </Modal>
   )
 }

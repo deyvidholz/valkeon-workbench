@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getModelMeta } from '@shared/agents/providers'
 import { useStore } from '../../store/useStore'
 import { Icon } from '../../ui/Icon'
@@ -26,6 +27,7 @@ const addBtn = {
 } as const
 
 export function SessionList() {
+  const { t } = useTranslation()
   const sessions = useStore((s) => s.sessions)
   const wsId = useStore((s) => s.activeWorkspaceId)
   const activeSessionId = useStore((s) => s.activeSessionId)
@@ -55,9 +57,9 @@ export function SessionList() {
         }}
       >
         <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)' }}>
-          ACTIVE SESSIONS
+          {t('sessionList.activeSessions', 'ACTIVE SESSIONS')}
         </span>
-        <Hover as="span" title="New session" onClick={openNewSession} style={addBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
+        <Hover as="span" title={t('sessionList.newSession', 'New session')} onClick={openNewSession} style={addBtn} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
           <Icon name="add" size={16} />
         </Hover>
       </div>
@@ -69,9 +71,9 @@ export function SessionList() {
             onContextMenu={(e) => {
               e.preventDefault()
               openContextMenu(e.clientX, e.clientY, [
-                { label: 'Open session', icon: 'open_in_full', onClick: () => openSession(s.id) },
-                { label: 'Close session', icon: 'close', danger: true, onClick: () => askConfirm({ title: 'Close session', message: `Close “${s.name}”? The agent process is terminated.`, confirmLabel: 'Close session', onConfirm: () => endSession(s.id) }) },
-                { label: 'Close all sessions', icon: 'layers_clear', danger: true, onClick: closeAllSessions }
+                { label: t('sessionList.openSession', 'Open session'), icon: 'open_in_full', onClick: () => openSession(s.id) },
+                { label: t('sessionList.closeSession', 'Close session'), icon: 'close', danger: true, onClick: () => askConfirm({ title: t('sessionList.closeSession', 'Close session'), message: t('sessionList.closeSessionQ', 'Close “{{name}}”? The agent process is terminated.', { name: s.name }), confirmLabel: t('sessionList.closeSession', 'Close session'), onConfirm: () => endSession(s.id) }) },
+                { label: t('sessionList.closeAllSessions', 'Close all sessions'), icon: 'layers_clear', danger: true, onClick: closeAllSessions }
               ])
             }}
             style={{

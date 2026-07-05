@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -14,6 +15,7 @@ const LAYOUTS: { id: LayoutMode; icon: string; label: string }[] = [
 ]
 
 export function WorkspaceScreen() {
+  const { t } = useTranslation()
   const wsId = useStore((s) => s.activeWorkspaceId)
   const workspaces = useStore((s) => s.workspaces)
   const sessions = useStore((s) => s.sessions)
@@ -78,7 +80,7 @@ export function WorkspaceScreen() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
           <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{ws?.name}</span>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{activeCount} sessions active</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('workspace.sessionsActive', '{{count}} sessions active', { count: activeCount })}</span>
           {worktreesInUse > 0 && (
             <Hover
               as="span"
@@ -99,7 +101,7 @@ export function WorkspaceScreen() {
               hover={{ background: 'color-mix(in srgb, var(--ai) 18%, transparent)' }}
             >
               <Icon name="account_tree" size={13} />
-              {worktreesInUse} worktrees
+              {t('workspace.worktreesCount', '{{count}} worktrees', { count: worktreesInUse })}
             </Hover>
           )}
         </div>
@@ -111,7 +113,7 @@ export function WorkspaceScreen() {
                 <Hover
                   key={o.id}
                   as="span"
-                  title={o.label}
+                  title={t(`workspace.layout_${o.id}`, o.label)}
                   onClick={() => setLayout(o.id)}
                   style={{
                     display: 'flex',
@@ -128,7 +130,7 @@ export function WorkspaceScreen() {
                   hover={on ? undefined : { color: 'var(--text-2)' }}
                 >
                   <Icon name={o.icon} size={16} />
-                  {o.label}
+                  {t(`workspace.layout_${o.id}`, o.label)}
                 </Hover>
               )
             })}
@@ -151,7 +153,7 @@ export function WorkspaceScreen() {
             hover={{ filter: 'brightness(1.08)' }}
           >
             <Icon name="add" size={16} />
-            New session
+            {t('workspace.newSession', 'New session')}
           </Hover>
         </div>
       </div>
@@ -174,8 +176,8 @@ export function WorkspaceScreen() {
               <Icon name="grid_view" size={24} color="var(--text-faint)" />
             </div>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>No sessions in {ws?.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Start a session to begin working in this workspace.</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>{t('workspace.noSessionsIn', 'No sessions in {{name}}', { name: ws?.name })}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{t('workspace.emptyHint', 'Start a session to begin working in this workspace.')}</div>
             </div>
             <Hover
               as="span"
@@ -184,7 +186,7 @@ export function WorkspaceScreen() {
               hover={{ filter: 'brightness(1.08)' }}
             >
               <Icon name="add" size={16} />
-              New session
+              {t('workspace.newSession', 'New session')}
             </Hover>
           </div>
         ) : layout === 'grid' ? (
@@ -217,7 +219,7 @@ export function WorkspaceScreen() {
                 <SessionCard session={splitRight} />
               ) : (
                 <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 12, color: 'var(--text-faint)', fontSize: 12.5, textAlign: 'center', padding: 20 }}>
-                  Add another session to use Split.
+                  {t('workspace.splitHint', 'Add another session to use Split.')}
                 </div>
               )}
             </div>
@@ -251,7 +253,7 @@ export function WorkspaceScreen() {
                   </span>
                 )
               })}
-              <Hover as="span" onClick={openNewSession} title="New session" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, color: 'var(--accent-hi)', cursor: 'pointer', flexShrink: 0 }} hover={{ background: 'var(--surface)' }}>
+              <Hover as="span" onClick={openNewSession} title={t('workspace.newSession', 'New session')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 8, color: 'var(--accent-hi)', cursor: 'pointer', flexShrink: 0 }} hover={{ background: 'var(--surface)' }}>
                 <Icon name="add" size={17} />
               </Hover>
             </div>

@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
 
 export function ConfirmDialog() {
+  const { t } = useTranslation()
   const confirm = useStore((s) => s.confirm)
   const close = useStore((s) => s.closeConfirm)
   if (!confirm) return null
@@ -20,7 +22,7 @@ export function ConfirmDialog() {
         <div style={{ fontSize: 12.5, color: 'var(--text-dim)', lineHeight: 1.55, marginBottom: 18 }}>{confirm.message}</div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 9 }}>
           <Hover as="span" onClick={close} style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', background: 'var(--surface-2)', border: '1px solid var(--line-2)' }} hover={{ background: 'var(--surface-3)' }}>
-            Cancel
+            {t('confirmDialog.cancel', 'Cancel')}
           </Hover>
           <Hover
             as="span"

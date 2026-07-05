@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../../store/useStore'
 import { Icon } from '../../ui/Icon'
 import { Hover } from '../../ui/Hover'
@@ -9,6 +10,7 @@ const initials = (name: string): string => {
 }
 
 export function AccountRow() {
+  const { t } = useTranslation()
   const go = useStore((s) => s.go)
   const userName = useStore((s) => s.userName)
   const openNameDialog = useStore((s) => s.openNameDialog)
@@ -17,7 +19,7 @@ export function AccountRow() {
     <div style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid var(--line)' }}>
       <Hover
         onClick={openNameDialog}
-        title="Edit your name"
+        title={t('accountRow.editName', 'Edit your name')}
         style={{ flex: 1, minWidth: 0, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
         hover={{ background: 'var(--surface)' }}
       >
@@ -26,12 +28,12 @@ export function AccountRow() {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 12.5, fontWeight: 500, color: userName ? 'var(--text-2)' : 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {userName || 'Set your name'}
+            {userName || t('accountRow.setName', 'Set your name')}
           </div>
           <div style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: "'Geist Mono', monospace" }}>v{__APP_VERSION__}</div>
         </div>
       </Hover>
-      <Hover as="span" onClick={() => go('settings')} title="Settings" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 46, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--text-2)' }}>
+      <Hover as="span" onClick={() => go('settings')} title={t('accountRow.settings', 'Settings')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 46, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--text-2)' }}>
         <Icon name="settings" size={17} />
       </Hover>
     </div>

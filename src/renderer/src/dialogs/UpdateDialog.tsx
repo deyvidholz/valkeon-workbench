@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { UpdaterEvent, UpdateCapability } from '@shared/ipc'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -22,6 +23,7 @@ const INITIAL: State = { phase: 'hidden', version: '', capability: 'manual', per
  * Skip / Later / (Download+install | Get update) per the install's capability.
  */
 export function UpdateDialog() {
+  const { t } = useTranslation()
   const [s, setS] = useState<State>(INITIAL)
 
   useEffect(() => {
@@ -67,14 +69,17 @@ export function UpdateDialog() {
 
   const title =
     s.phase === 'downloaded'
-      ? 'Update ready'
+      ? t('updateDialog.titleReady', 'Update ready')
       : s.phase === 'error'
-        ? "Update didn't finish"
+        ? t('updateDialog.titleFailed', "Update didn't finish")
         : s.phase === 'downloading'
-          ? 'Downloading update…'
-          : 'Update available'
+          ? t('updateDialog.titleDownloading', 'Downloading update…')
+          : t('updateDialog.titleAvailable', 'Update available')
 
-  const primaryLabel = s.capability === 'auto' ? 'Download & install' : 'Get the update'
+  const primaryLabel =
+    s.capability === 'auto'
+      ? t('updateDialog.downloadInstall', 'Download & install')
+      : t('updateDialog.getUpdate', 'Get the update')
 
   return (
     <div
@@ -109,7 +114,9 @@ export function UpdateDialog() {
         </span>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{title}</span>
-          <span style={{ fontSize: 11.5, color: 'var(--text-dim)' }}>Valkeon Workbench {s.version}</span>
+          <span style={{ fontSize: 11.5, color: 'var(--text-dim)' }}>
+            {t('updateDialog.appVersion', 'Valkeon Workbench {{version}}', { version: s.version })}
+          </span>
         </div>
       </div>
 
@@ -158,7 +165,7 @@ export function UpdateDialog() {
               style={{ padding: '7px 11px', borderRadius: 7, color: 'var(--text-dim)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }}
               hover={{ color: 'var(--text-2)' }}
             >
-              Skip this version
+              {t('updateDialog.skipVersion', 'Skip this version')}
             </Hover>
             <Hover
               as="span"
@@ -166,7 +173,7 @@ export function UpdateDialog() {
               style={{ padding: '7px 12px', borderRadius: 7, color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line-2)' }}
               hover={{ background: 'var(--surface-3)' }}
             >
-              Later
+              {t('updateDialog.later', 'Later')}
             </Hover>
             <Hover
               as="span"
@@ -186,7 +193,7 @@ export function UpdateDialog() {
             style={{ padding: '7px 12px', borderRadius: 7, color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line-2)' }}
             hover={{ background: 'var(--surface-3)' }}
           >
-            Hide
+            {t('updateDialog.hide', 'Hide')}
           </Hover>
         )}
 
@@ -198,7 +205,7 @@ export function UpdateDialog() {
               style={{ padding: '7px 12px', borderRadius: 7, color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line-2)' }}
               hover={{ background: 'var(--surface-3)' }}
             >
-              Later
+              {t('updateDialog.later', 'Later')}
             </Hover>
             <Hover
               as="span"
@@ -206,7 +213,7 @@ export function UpdateDialog() {
               style={{ padding: '7px 13px', borderRadius: 7, background: 'var(--accent, #4d7ce0)', color: 'var(--text)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
               hover={{ filter: 'brightness(1.08)' }}
             >
-              Restart & install
+              {t('updateDialog.restartInstall', 'Restart & install')}
             </Hover>
           </>
         )}
@@ -219,7 +226,7 @@ export function UpdateDialog() {
               style={{ padding: '7px 12px', borderRadius: 7, color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer', background: 'var(--surface)', border: '1px solid var(--line-2)' }}
               hover={{ background: 'var(--surface-3)' }}
             >
-              Open Releases
+              {t('updateDialog.openReleases', 'Open Releases')}
             </Hover>
             <Hover
               as="span"
@@ -227,7 +234,7 @@ export function UpdateDialog() {
               style={{ padding: '7px 13px', borderRadius: 7, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
               hover={{ background: 'var(--surface-3)' }}
             >
-              Dismiss
+              {t('updateDialog.dismiss', 'Dismiss')}
             </Hover>
           </>
         )}

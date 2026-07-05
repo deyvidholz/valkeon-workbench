@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from './store/useStore'
 import { applyAccent } from './theme/applyAccent'
 import { applyTheme, resolveTheme } from './theme/applyTheme'
+import { setI18nLanguage, resolveLocale, mapOsLocale } from './i18n'
 import { TitleBar } from './components/TitleBar'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { SearchPalette } from './components/SearchPalette'
@@ -64,6 +65,8 @@ export function App() {
   const accent = useStore((s) => s.accent)
   const themePref = useStore((s) => s.themePref)
   const systemTheme = useStore((s) => s.systemTheme)
+  const localePref = useStore((s) => s.localePref)
+  const systemLocale = useStore((s) => s.systemLocale)
   const setRecents = useStore((s) => s.setRecents)
   const hydrateSettings = useStore((s) => s.hydrateSettings)
   const [maximized, setMaximized] = useState(false)
@@ -81,6 +84,16 @@ export function App() {
   useEffect(() => {
     window.api?.system?.theme().then((t) => useStore.getState().setSystemTheme(t)).catch(() => {})
     return window.api?.system?.onThemeChanged((t) => useStore.getState().setSystemTheme(t))
+  }, [])
+
+  // Resolve the UI language against the OS locale and apply it live.
+  useEffect(() => {
+    setI18nLanguage(resolveLocale(localePref, systemLocale))
+  }, [localePref, systemLocale])
+
+  // Detect the OS locale once on boot.
+  useEffect(() => {
+    window.api?.system?.locale().then((l) => useStore.getState().setSystemLocale(mapOsLocale(l))).catch(() => {})
   }, [])
 
   // Hydrate persisted global state (accent + recent projects) on boot.

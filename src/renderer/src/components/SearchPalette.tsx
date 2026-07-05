@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -13,6 +14,7 @@ interface Result {
 }
 
 export function SearchPalette() {
+  const { t } = useTranslation()
   const open = useStore((s) => s.paletteOpen)
   const query = useStore((s) => s.paletteQuery)
   const setQuery = useStore((s) => s.setPaletteQuery)
@@ -35,22 +37,22 @@ export function SearchPalette() {
       .filter((s) => s.wsId === wsId)
       .forEach((s) => {
         if (has(s.name) || has(s.branch))
-          out.push({ id: `s${s.id}`, icon: 'grid_view', color: '#7cb3e6', title: s.name, sub: `Session · ${s.branch}`, onOpen: () => { openSession(s.id); close() } })
+          out.push({ id: `s${s.id}`, icon: 'grid_view', color: '#7cb3e6', title: s.name, sub: t('searchPalette.sessionSub', 'Session · {{branch}}', { branch: s.branch }), onOpen: () => { openSession(s.id); close() } })
       })
     terminals
-      .filter((t) => t.wsId === wsId)
-      .forEach((t) => {
-        if (has(t.name) || has(t.cwd))
-          out.push({ id: `t${t.id}`, icon: 'terminal', color: '#5cc98a', title: t.name, sub: `Terminal · ${t.cwd}`, onOpen: () => { go('terminals'); close() } })
+      .filter((term) => term.wsId === wsId)
+      .forEach((term) => {
+        if (has(term.name) || has(term.cwd))
+          out.push({ id: `t${term.id}`, icon: 'terminal', color: '#5cc98a', title: term.name, sub: t('searchPalette.terminalSub', 'Terminal · {{cwd}}', { cwd: term.cwd }), onOpen: () => { go('terminals'); close() } })
       })
     boards
       .filter((b) => b.wsId === wsId)
       .forEach((b) => {
         if (has(b.name))
-          out.push({ id: `b${b.id}`, icon: 'view_kanban', color: '#b89cf0', title: b.name, sub: `Board · ${b.scope}`, onOpen: () => { selectBoard(b.id); go('board'); close() } })
+          out.push({ id: `b${b.id}`, icon: 'view_kanban', color: '#b89cf0', title: b.name, sub: t('searchPalette.boardSub', 'Board · {{scope}}', { scope: b.scope }), onOpen: () => { selectBoard(b.id); go('board'); close() } })
         b.cards.forEach((c) => {
           if (has(c.title) || has(`#${c.code}`) || has(c.body))
-            out.push({ id: `c${c.id}`, icon: 'sticky_note_2', color: '#e0b15e', title: c.title, sub: `Card #${c.code} · in board ${b.name}`, onOpen: () => { selectBoard(b.id); go('board'); openCard(c.id); close() } })
+            out.push({ id: `c${c.id}`, icon: 'sticky_note_2', color: '#e0b15e', title: c.title, sub: t('searchPalette.cardSub', 'Card #{{code}} · in board {{board}}', { code: c.code, board: b.name }), onOpen: () => { selectBoard(b.id); go('board'); openCard(c.id); close() } })
         })
       })
     return out.slice(0, 40)
@@ -64,12 +66,12 @@ export function SearchPalette() {
       <div style={{ position: 'relative', width: 560, maxHeight: '70%', background: 'var(--bg)', border: '1px solid var(--line-2)', borderRadius: 13, boxShadow: '0 30px 80px var(--shadow)', animation: 'fadein .15s ease', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 15px', borderBottom: '1px solid var(--line)' }}>
           <Icon name="search" size={17} color="var(--text-muted)" />
-          <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search sessions, terminals, boards, cards…" style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 14 }} />
+          <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('searchPalette.searchPlaceholder', 'Search sessions, terminals, boards, cards…')} style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 14 }} />
           <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10.5, color: 'var(--text-faint)', background: 'var(--surface-2)', padding: '1px 5px', borderRadius: 4 }}>ESC</span>
         </div>
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 6 }}>
           {results.length === 0 ? (
-            <div style={{ padding: '24px 14px', textAlign: 'center', fontSize: 13, color: 'var(--text-faint)' }}>No matches{query ? ` for “${query}”` : ''}.</div>
+            <div style={{ padding: '24px 14px', textAlign: 'center', fontSize: 13, color: 'var(--text-faint)' }}>{query ? t('searchPalette.noMatchesFor', 'No matches for “{{query}}”.', { query }) : t('searchPalette.noMatches', 'No matches.')}</div>
           ) : (
             results.map((r) => (
               <Hover key={r.id} onClick={r.onOpen} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 10px', borderRadius: 8, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>

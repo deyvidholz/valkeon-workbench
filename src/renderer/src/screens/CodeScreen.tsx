@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -19,6 +20,7 @@ const parentOf = (path: string): string => (path.includes('/') ? path.slice(0, p
 
 /** VS Code-style file explorer + read-only Monaco viewer, with create/rename/delete. */
 export function CodeScreen() {
+  const { t } = useTranslation()
   const project = useStore((s) => s.project)
   const activeWorktreePath = useStore((s) => s.activeWorktreePath)
   const openContextMenu = useStore((s) => s.openContextMenu)
@@ -84,10 +86,10 @@ export function CodeScreen() {
 
   const createFileIn = (dir: string): void =>
     askName({
-      title: 'New file',
-      placeholder: 'name.ext',
+      title: t('code.newFile', 'New file'),
+      placeholder: t('code.namePlaceholder', 'name.ext'),
       initial: '',
-      confirmLabel: 'Create',
+      confirmLabel: t('code.create', 'Create'),
       onSubmit: (name) => {
         if (!repoPath || !name) return
         const path = join(dir, name)
@@ -101,10 +103,10 @@ export function CodeScreen() {
 
   const createFolderIn = (dir: string): void =>
     askName({
-      title: 'New folder',
-      placeholder: 'folder-name',
+      title: t('code.newFolder', 'New folder'),
+      placeholder: t('code.folderPlaceholder', 'folder-name'),
       initial: '',
-      confirmLabel: 'Create',
+      confirmLabel: t('code.create', 'Create'),
       onSubmit: (name) => {
         if (!repoPath || !name) return
         const path = join(dir, name)
@@ -117,10 +119,10 @@ export function CodeScreen() {
 
   const renameNode = (node: FileNode): void =>
     askName({
-      title: `Rename ${node.dir ? 'folder' : 'file'}`,
-      placeholder: 'new name',
+      title: node.dir ? t('code.renameFolder', 'Rename folder') : t('code.renameFile', 'Rename file'),
+      placeholder: t('code.newNamePlaceholder', 'new name'),
       initial: node.name,
-      confirmLabel: 'Rename',
+      confirmLabel: t('code.rename', 'Rename'),
       onSubmit: (name) => {
         if (!repoPath || !name || name === node.name) return
         const next = join(parentOf(node.path), name)
@@ -133,9 +135,11 @@ export function CodeScreen() {
 
   const deleteNode = (node: FileNode): void =>
     askConfirm({
-      title: `Delete ${node.dir ? 'folder' : 'file'}`,
-      message: `Delete “${node.name}”?${node.dir ? ' Everything inside it is removed.' : ''} This cannot be undone.`,
-      confirmLabel: 'Delete',
+      title: node.dir ? t('code.deleteFolder', 'Delete folder') : t('code.deleteFile', 'Delete file'),
+      message: node.dir
+        ? t('code.deleteFolderMsg', 'Delete “{{name}}”? Everything inside it is removed. This cannot be undone.', { name: node.name })
+        : t('code.deleteFileMsg', 'Delete “{{name}}”? This cannot be undone.', { name: node.name }),
+      confirmLabel: t('code.delete', 'Delete'),
       onConfirm: () => {
         if (!repoPath) return
         void window.api?.files.remove(repoPath, node.path).then(() => {
@@ -152,10 +156,10 @@ export function CodeScreen() {
     e.preventDefault()
     const dir = node.dir ? node.path : parentOf(node.path)
     openContextMenu(e.clientX, e.clientY, [
-      { label: 'New file', icon: 'note_add', onClick: () => createFileIn(dir) },
-      { label: 'New folder', icon: 'create_new_folder', onClick: () => createFolderIn(dir) },
-      { label: 'Rename', icon: 'edit', onClick: () => renameNode(node) },
-      { label: 'Delete', icon: 'delete_outline', danger: true, onClick: () => deleteNode(node) }
+      { label: t('code.newFile', 'New file'), icon: 'note_add', onClick: () => createFileIn(dir) },
+      { label: t('code.newFolder', 'New folder'), icon: 'create_new_folder', onClick: () => createFolderIn(dir) },
+      { label: t('code.rename', 'Rename'), icon: 'edit', onClick: () => renameNode(node) },
+      { label: t('code.delete', 'Delete'), icon: 'delete_outline', danger: true, onClick: () => deleteNode(node) }
     ])
   }
 
@@ -163,7 +167,7 @@ export function CodeScreen() {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: 'var(--text-muted)' }}>
         <Icon name="code_off" size={26} color="#33333a" />
-        <div style={{ fontSize: 13 }}>Open a project folder to explore its code.</div>
+        <div style={{ fontSize: 13 }}>{t('code.emptyProject', 'Open a project folder to explore its code.')}</div>
       </div>
     )
   }
@@ -173,12 +177,12 @@ export function CodeScreen() {
       <div style={{ width: 264, flexShrink: 0, borderRight: '1px solid var(--line)', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <div style={{ height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px 0 14px', borderBottom: '1px solid var(--line)' }}>
           <Icon name="folder_open" size={16} color="var(--info)" />
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginLeft: 3 }}>{project?.name ?? 'Files'}</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginLeft: 3 }}>{project?.name ?? t('code.files', 'Files')}</span>
           <div style={{ flex: 1 }} />
           {[
-            { icon: 'note_add', title: 'New file', on: () => createFileIn('') },
-            { icon: 'create_new_folder', title: 'New folder', on: () => createFolderIn('') },
-            { icon: 'refresh', title: 'Reload', on: reloadTree }
+            { icon: 'note_add', title: t('code.newFile', 'New file'), on: () => createFileIn('') },
+            { icon: 'create_new_folder', title: t('code.newFolder', 'New folder'), on: () => createFolderIn('') },
+            { icon: 'refresh', title: t('code.reload', 'Reload'), on: reloadTree }
           ].map((b) => (
             <Hover key={b.title} as="span" title={b.title} onClick={b.on} style={{ display: 'flex', width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
               <Icon name={b.icon} size={15} />
@@ -187,9 +191,9 @@ export function CodeScreen() {
         </div>
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '6px 6px 16px' }}>
           {tree === null ? (
-            <div style={{ padding: 12, fontSize: 12, color: 'var(--text-faint)' }}>Loading…</div>
+            <div style={{ padding: 12, fontSize: 12, color: 'var(--text-faint)' }}>{t('code.loading', 'Loading…')}</div>
           ) : tree.length === 0 ? (
-            <div style={{ padding: 12, fontSize: 12, color: 'var(--text-faint)' }}>Empty folder.</div>
+            <div style={{ padding: 12, fontSize: 12, color: 'var(--text-faint)' }}>{t('code.emptyFolder', 'Empty folder.')}</div>
           ) : (
             <FileTree nodes={tree} selected={selected} expanded={expanded} onSelect={openFile} onToggle={toggle} onContext={onContext} />
           )}
@@ -204,11 +208,11 @@ export function CodeScreen() {
         )}
         <div style={{ flex: 1, minHeight: 0 }}>
           {!selected ? (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>Select a file to view it</div>
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>{t('code.selectFile', 'Select a file to view it')}</div>
           ) : state === 'binary' ? (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>Binary or file too large to display.</div>
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>{t('code.binary', 'Binary or file too large to display.')}</div>
           ) : state === 'loading' ? (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>Loading…</div>
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)', fontSize: 12.5 }}>{t('code.loading', 'Loading…')}</div>
           ) : (
             <CodeViewer path={selected} content={content} />
           )}
@@ -233,7 +237,7 @@ export function CodeScreen() {
               style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--line-2)', borderRadius: 8, padding: '9px 11px', color: 'var(--text)', fontSize: 13, fontFamily: "'Geist Mono', monospace" }}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 9, marginTop: 13 }}>
-              <Hover as="span" onClick={() => setPrompt(null)} style={{ padding: '7px 13px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>Cancel</Hover>
+              <Hover as="span" onClick={() => setPrompt(null)} style={{ padding: '7px 13px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>{t('code.cancel', 'Cancel')}</Hover>
               <Hover as="span" onClick={() => { const v = promptValue.trim(); setPrompt(null); if (v) prompt.onSubmit(v) }} style={{ padding: '7px 15px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>{prompt.confirmLabel}</Hover>
             </div>
           </div>

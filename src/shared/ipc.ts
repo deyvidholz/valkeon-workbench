@@ -2,7 +2,7 @@ import type { AgentProviderMeta } from './agents/types'
 import type { AppSettings, RecentProject, WindowBounds } from './persistence/global'
 import type { Board, BoardCard, ProjectData, WorkspaceRecord } from './persistence/types'
 import type { PtyCreateResult, PtyCreateSpec, PtyDataEvent, PtyExitEvent } from './pty'
-import type { WorktreeInfo } from './git'
+import type { WorktreeInfo, WorktreeDetails } from './git'
 import type { Skill, SkillSave } from './skills'
 import type { AgentEvent, AgentSessionSpec } from './agents/types'
 import type { ContextBuildRequest, ContextBuildResult } from './context'
@@ -46,6 +46,7 @@ export const IpcChannels = {
   gitWorktrees: 'git:worktrees',
   gitWorktreeAdd: 'git:worktree-add',
   gitWorktreeRemove: 'git:worktree-remove',
+  gitWorktreeDetails: 'git:worktree-details',
   gitIsRepo: 'git:is-repo',
   gitInit: 'git:init',
   gitClone: 'git:clone',
@@ -175,6 +176,7 @@ export type {
   PtyDataEvent,
   PtyExitEvent,
   WorktreeInfo,
+  WorktreeDetails,
   Skill,
   SkillSave,
   AgentEvent,

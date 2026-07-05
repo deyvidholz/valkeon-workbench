@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getModelMeta, getProviderMeta } from '@shared/agents/providers'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
@@ -21,6 +22,7 @@ const fmtDuration = (ms: number): string => {
 }
 
 export function SessionScreen() {
+  const { t } = useTranslation()
   const sessions = useStore((s) => s.sessions)
   const activeSessionId = useStore((s) => s.activeSessionId)
   const fontSize = useStore((s) => s.fontSize)
@@ -45,7 +47,7 @@ export function SessionScreen() {
   if (!session) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-        No session selected.
+        {t('session.noSelection', 'No session selected.')}
       </div>
     )
   }
@@ -55,9 +57,9 @@ export function SessionScreen() {
   const tokenPct = Math.round((session.tokens.used / session.tokens.limit) * 100)
 
   const confirmStop = (): void =>
-    askConfirm({ title: 'Stop session', message: `Stop “${session.name}”? The agent process is terminated and the session is closed.`, confirmLabel: 'Stop session', onConfirm: () => endSession(id) })
+    askConfirm({ title: t('session.stopTitle', 'Stop session'), message: t('session.stopMessage', 'Stop “{{name}}”? The agent process is terminated and the session is closed.', { name: session.name }), confirmLabel: t('session.stopConfirm', 'Stop session'), onConfirm: () => endSession(id) })
   const confirmRestart = (): void =>
-    askConfirm({ title: 'Restart session', message: `Restart “${session.name}”? The current process is terminated and a fresh one starts.`, confirmLabel: 'Restart', onConfirm: () => restartSession(id) })
+    askConfirm({ title: t('session.restartTitle', 'Restart session'), message: t('session.restartMessage', 'Restart “{{name}}”? The current process is terminated and a fresh one starts.', { name: session.name }), confirmLabel: t('session.restartConfirm', 'Restart'), onConfirm: () => restartSession(id) })
 
   const detailRow = (label: string, value: React.ReactNode): React.ReactNode => (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -87,7 +89,7 @@ export function SessionScreen() {
         <StatusDot status={session.status} />
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', lineHeight: 1, display: 'flex', alignItems: 'center' }}>{session.name}</span>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-          <span onClick={() => setModelMenuOpen((o) => !o)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Change the displayed model">
+          <span onClick={() => setModelMenuOpen((o) => !o)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }} title={t('session.changeModel', 'Change the displayed model')}>
             <ModelChip label={getModelMeta(session.providerId, session.modelId)?.label ?? session.model} />
           </span>
           {modelMenuOpen && (
@@ -104,7 +106,7 @@ export function SessionScreen() {
             </>
           )}
         </div>
-        {session.worktree && <Icon name="account_tree" size={15} color="var(--ai)" title="Uses a git worktree" />}
+        {session.worktree && <Icon name="account_tree" size={15} color="var(--ai)" title={t('session.usesWorktree', 'Uses a git worktree')} />}
         <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontFamily: "'Geist Mono', monospace", fontSize: 10.5, color: 'var(--text-muted)', background: 'var(--surface)', border: '1px solid var(--line-2)', padding: '1px 6px', borderRadius: 5 }}>
           <Icon name="fork_right" size={12} />
           {session.branch}
@@ -112,22 +114,22 @@ export function SessionScreen() {
         <div style={{ flex: 1 }} />
         <Hover as="span" onClick={confirmStop} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>
           <Icon name="stop_circle" size={15} />
-          Stop
+          {t('session.stop', 'Stop')}
         </Hover>
-        <Hover as="span" onClick={() => toggleSessionNotify(id)} title={session.notify === true ? 'Notifications on — click to disable' : 'Notify me when this session needs me'} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, color: session.notify === true ? 'var(--accent-hi)' : 'var(--text-faint)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>
+        <Hover as="span" onClick={() => toggleSessionNotify(id)} title={session.notify === true ? t('session.notifyOn', 'Notifications on — click to disable') : t('session.notifyOff', 'Notify me when this session needs me')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 8, color: session.notify === true ? 'var(--accent-hi)' : 'var(--text-faint)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>
           <Icon name={session.notify === true ? 'notifications_active' : 'notifications_off'} size={18} />
         </Hover>
-        {iconBtn('restart_alt', confirmRestart, 'Restart')}
+        {iconBtn('restart_alt', confirmRestart, t('session.restart', 'Restart'))}
         <div style={{ position: 'relative' }}>
-          {iconBtn('more_horiz', () => setMoreOpen((o) => !o), 'More')}
+          {iconBtn('more_horiz', () => setMoreOpen((o) => !o), t('session.more', 'More'))}
           {moreOpen && (
             <>
               <div onClick={() => setMoreOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 19 }} />
               <div style={{ position: 'absolute', top: 36, right: 0, zIndex: 20, width: 200, background: 'var(--surface)', border: '1px solid var(--line-2)', borderRadius: 10, padding: 6, boxShadow: '0 16px 44px var(--shadow)' }}>
-                {session.worktree && moreItem('folder_open', 'Open worktree folder', () => window.api?.shell.openPath(session.worktree as string))}
-                {moreItem('content_copy', 'Copy branch name', () => navigator.clipboard?.writeText(session.branch))}
-                {moreItem('restart_alt', 'Restart session', confirmRestart)}
-                {moreItem('close', 'Close session', confirmStop, true)}
+                {session.worktree && moreItem('folder_open', t('session.openWorktree', 'Open worktree folder'), () => window.api?.shell.openPath(session.worktree as string))}
+                {moreItem('content_copy', t('session.copyBranch', 'Copy branch name'), () => navigator.clipboard?.writeText(session.branch))}
+                {moreItem('restart_alt', t('session.restartTitle', 'Restart session'), confirmRestart)}
+                {moreItem('close', t('session.closeSession', 'Close session'), confirmStop, true)}
               </div>
             </>
           )}
@@ -141,7 +143,7 @@ export function SessionScreen() {
               <div style={{ flex: 1, minHeight: 0, background: 'var(--bg)', overflow: 'hidden' }}>
                 <AgentTranscript lines={session.lines} status={session.status} sessionName={session.name} />
               </div>
-              <AgentComposer key={id} sessionId={id} placeholder={`Message ${session.name}…  ( /model · /clear · Enter to send )`} focusToken={focusToken} />
+              <AgentComposer key={id} sessionId={id} placeholder={t('session.structuredPlaceholder', 'Message {{name}}…  ( /model · /clear · Enter to send )', { name: session.name })} focusToken={focusToken} />
             </>
           ) : (
             <>
@@ -156,20 +158,20 @@ export function SessionScreen() {
                   }}
                 />
               </div>
-              <PtyComposer key={id} ptyId={ptyId} prompt="›" promptColor="var(--accent)" placeholder={`Reply to ${session.name}, or ask for a change…`} focusToken={focusToken} />
+              <PtyComposer key={id} ptyId={ptyId} prompt="›" promptColor="var(--accent)" placeholder={t('session.interactivePlaceholder', 'Reply to {{name}}, or ask for a change…', { name: session.name })} focusToken={focusToken} />
             </>
           )}
         </div>
 
         <div style={{ width: 300, flexShrink: 0, borderLeft: '1px solid var(--line)', background: 'var(--bg)', overflowY: 'auto', padding: '18px 18px 28px' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 12 }}>DETAILS</div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 12 }}>{t('session.details', 'DETAILS')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-            {detailRow('Status', <span style={{ fontSize: 12, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 6 }}><StatusDot status={session.status} />{STATUS_LABEL[session.status]}</span>)}
-            {detailRow('Model', <ModelChip label={session.model} />)}
-            {detailRow('Branch', <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace" }}>{session.branch}</span>)}
-            {detailRow('Worktree', <span style={{ fontSize: 11.5, color: session.worktree ? 'var(--ai)' : 'var(--text-muted)', fontFamily: "'Geist Mono', monospace", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.worktree ?? 'main checkout'}</span>)}
+            {detailRow(t('session.statusLabel', 'Status'), <span style={{ fontSize: 12, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 6 }}><StatusDot status={session.status} />{STATUS_LABEL[session.status]}</span>)}
+            {detailRow(t('session.modelLabel', 'Model'), <ModelChip label={session.model} />)}
+            {detailRow(t('session.branchLabel', 'Branch'), <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace" }}>{session.branch}</span>)}
+            {detailRow(t('session.worktreeLabel', 'Worktree'), <span style={{ fontSize: 11.5, color: session.worktree ? 'var(--ai)' : 'var(--text-muted)', fontFamily: "'Geist Mono', monospace", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{session.worktree ?? t('session.mainCheckout', 'main checkout')}</span>)}
             {detailRow(
-              session.mode === 'structured' ? 'Active for' : 'Running for',
+              session.mode === 'structured' ? t('session.activeFor', 'Active for') : t('session.runningFor', 'Running for'),
               <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace" }}>
                 {fmtDuration(
                   session.mode === 'structured'
@@ -178,20 +180,20 @@ export function SessionScreen() {
                 )}
               </span>
             )}
-            {detailRow('Mode', <span style={{ fontSize: 11, color: session.mode === 'structured' ? 'var(--accent-hi)' : 'var(--text-dim)', fontWeight: 600, background: session.mode === 'structured' ? 'var(--accent-soft)' : 'var(--surface)', border: `1px solid ${session.mode === 'structured' ? 'var(--accent-line)' : 'var(--line-2)'}`, padding: '2px 8px', borderRadius: 5 }}>{session.mode === 'structured' ? 'Structured' : 'Interactive'}</span>)}
-            {session.mode === 'structured' && session.costUsd != null && detailRow('Cost', <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace" }}>${session.costUsd.toFixed(3)}</span>)}
+            {detailRow(t('session.modeLabel', 'Mode'), <span style={{ fontSize: 11, color: session.mode === 'structured' ? 'var(--accent-hi)' : 'var(--text-dim)', fontWeight: 600, background: session.mode === 'structured' ? 'var(--accent-soft)' : 'var(--surface)', border: `1px solid ${session.mode === 'structured' ? 'var(--accent-line)' : 'var(--line-2)'}`, padding: '2px 8px', borderRadius: 5 }}>{session.mode === 'structured' ? t('session.structured', 'Structured') : t('session.interactive', 'Interactive')}</span>)}
+            {session.mode === 'structured' && session.costUsd != null && detailRow(t('session.costLabel', 'Cost'), <span style={{ fontSize: 11.5, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace" }}>${session.costUsd.toFixed(3)}</span>)}
           </div>
           <div style={{ height: 1, background: 'var(--line)', margin: '16px 0' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)' }}>CONTEXT</span>
+            <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)' }}>{t('session.context', 'CONTEXT')}</span>
             <span style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace" }}>{session.tokens.used}K / {session.tokens.limit}K</span>
           </div>
           <div style={{ height: 5, borderRadius: 4, background: 'var(--surface-2)', overflow: 'hidden', marginBottom: 16 }}>
             <div style={{ width: `${tokenPct}%`, height: '100%', borderRadius: 4, background: 'linear-gradient(90deg,var(--accent),var(--accent-hi))' }} />
           </div>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 10 }}>FILES TOUCHED</div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 10 }}>{t('session.filesTouched', 'FILES TOUCHED')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {session.files.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>No files yet.</div>}
+            {session.files.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{t('session.noFiles', 'No files yet.')}</div>}
             {session.files.map((f, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="description" size={15} color="var(--text-muted)" />
@@ -204,8 +206,8 @@ export function SessionScreen() {
           {session.mode === 'structured' && (
             <>
               <div style={{ height: 1, background: 'var(--line)', margin: '16px 0' }} />
-              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 4 }}>CONTEXT INJECTED</div>
-              <div style={{ fontSize: 10.5, color: 'var(--text-faint)', lineHeight: 1.45, marginBottom: 10 }}>Prepended to your next turn after a fresh start. Off = zero added tokens.</div>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 4 }}>{t('session.contextInjected', 'CONTEXT INJECTED')}</div>
+              <div style={{ fontSize: 10.5, color: 'var(--text-faint)', lineHeight: 1.45, marginBottom: 10 }}>{t('session.contextInjectedHint', 'Prepended to your next turn after a fresh start. Off = zero added tokens.')}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {CONTEXT_SOURCES.map((src) => {
                   const on = (session.contextSources ?? []).includes(src.id)

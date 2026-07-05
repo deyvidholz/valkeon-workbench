@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Modal } from '../ui/Modal'
 import { DialogActions, DialogHeader, eyebrow, inputStyle } from './parts'
 
 export function NameDialog() {
+  const { t } = useTranslation()
   const open = useStore((s) => s.nameDialogOpen)
   const userName = useStore((s) => s.userName)
   const setUserName = useStore((s) => s.setUserName)
@@ -21,7 +23,7 @@ export function NameDialog() {
 
   return (
     <Modal onClose={close} width={440} zIndex={58} panelStyle={{ padding: 20 }}>
-      <DialogHeader icon="account_circle" title={userName ? 'Your name' : 'Welcome to Valkeon'} subtitle="What should we call you? It’s shown in the sidebar." />
+      <DialogHeader icon="account_circle" title={userName ? t('nameDialog.title', 'Your name') : t('nameDialog.welcome', 'Welcome to Valkeon')} subtitle={t('nameDialog.subtitle', 'What should we call you? It’s shown in the sidebar.')} />
       <div style={eyebrow}>NAME</div>
       <input
         value={name}
@@ -29,11 +31,11 @@ export function NameDialog() {
         onKeyDown={(e) => {
           if (e.key === 'Enter') save()
         }}
-        placeholder="e.g. Jordan"
+        placeholder={t('nameDialog.placeholder', 'e.g. Jordan')}
         style={{ ...inputStyle, marginBottom: 18 }}
         autoFocus
       />
-      <DialogActions onCancel={close} onConfirm={save} confirmLabel="Save" confirmIcon="check" />
+      <DialogActions onCancel={close} onConfirm={save} confirmLabel={t('nameDialog.save', 'Save')} confirmIcon="check" />
     </Modal>
   )
 }

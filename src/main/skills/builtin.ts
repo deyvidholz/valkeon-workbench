@@ -12,7 +12,7 @@
  * improvements ship to already-initialized projects. User-authored (non-`vw-`)
  * skills are never touched.
  */
-export const BUILTIN_VERSION = 2
+export const BUILTIN_VERSION = 3
 
 export const BUILTIN_SKILLS: { id: string; content: string }[] = [
   {
@@ -111,6 +111,41 @@ own branch, created so parallel sessions don't collide on the same files.
   directories. Don't modify them from this session.
 - When the task is done, leave the branch ready for review (see **vw-task**).
   Valkeon manages removing the worktree afterwards.
+`
+  },
+  {
+    id: 'vw-worktrees-cleanup',
+    content: `---
+name: Valkeon worktrees cleanup
+description: Use when asked to clean up / reorganize git worktrees, or find "dead" worktrees that are no longer needed. Classifies each worktree so the human can decide what to remove.
+trigger: auto
+---
+
+You are auditing the git worktrees of a Valkeon Workbench project to find ones
+that are safe to remove. For each worktree, decide a verdict:
+
+- **dead** — safe to delete. Any of: no uncommitted changes AND fully merged into
+  the base branch; the branch has no unique commits; the branch was already
+  deleted; the worktree has no linked session and is stale (no commits in a long
+  time).
+- **review** — ambiguous; needs a human look (unmerged commits but stale, or
+  uncommitted changes that look abandoned).
+- **keep** — active work: uncommitted changes, a linked running session, or recent
+  unmerged commits.
+
+Inspect with: \`git worktree list --porcelain\`, and per worktree \`git -C <path>
+status --porcelain\`, \`git -C <path> log --oneline\`, and ahead/behind vs the base
+branch (\`git rev-list --left-right --count <base>...HEAD\`).
+
+Output a JSON array (and nothing else) where each item is:
+\`\`\`json
+{ "path": "…", "branch": "…", "verdict": "dead|review|keep",
+  "oneLine": "one-sentence reason shown in the picker",
+  "analysis": "a short markdown paragraph with the details",
+  "changes": 0, "ahead": 0, "behind": 0, "merged": true }
+\`\`\`
+Never delete anything yourself — only classify. The human decides in Valkeon's
+cleanup dialog.
 `
   }
 ]

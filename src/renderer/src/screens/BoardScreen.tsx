@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -26,6 +27,7 @@ const excerpt = (body: string): string =>
     .slice(0, 140)
 
 export function BoardScreen() {
+  const { t } = useTranslation()
   const boards = useStore((s) => s.boards)
   const wsId = useStore((s) => s.activeWorkspaceId)
   const activeBoardId = useStore((s) => s.activeBoardId)
@@ -55,11 +57,11 @@ export function BoardScreen() {
           <Icon name="view_kanban" size={24} color="var(--text-faint)" />
         </div>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>No boards yet</div>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Create a board to plan work in this workspace.</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>{t('board.noBoards', 'No boards yet')}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{t('board.createBoardHint', 'Create a board to plan work in this workspace.')}</div>
         </div>
         <Hover as="span" onClick={openNewBoard} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ filter: 'brightness(1.08)' }}>
-          <Icon name="add" size={16} />New board
+          <Icon name="add" size={16} />{t('board.newBoard', 'New board')}
         </Hover>
       </div>
     )
@@ -69,10 +71,10 @@ export function BoardScreen() {
 
   const cardAction = (card: Card): { label: string; icon: string; accent?: boolean; onClick: () => void } | null => {
     if (card.column === 'backlog' || card.column === 'todo')
-      return { label: 'Start task', icon: 'rocket_launch', accent: true, onClick: () => startTask(card.id) }
+      return { label: t('board.startTask', 'Start task'), icon: 'rocket_launch', accent: true, onClick: () => startTask(card.id) }
     if (card.column === 'in-progress' && card.sessionId)
-      return { label: 'Open session', icon: 'open_in_full', onClick: () => card.sessionId && openSession(card.sessionId) }
-    if (card.column === 'in-review') return { label: 'Review diff', icon: 'difference', onClick: () => openReview(card.id) }
+      return { label: t('board.openSession', 'Open session'), icon: 'open_in_full', onClick: () => card.sessionId && openSession(card.sessionId) }
+    if (card.column === 'in-review') return { label: t('board.reviewDiff', 'Review diff'), icon: 'difference', onClick: () => openReview(card.id) }
     return null
   }
 
@@ -103,7 +105,7 @@ export function BoardScreen() {
                       <Icon name="view_kanban" size={17} color={on ? 'var(--accent)' : 'var(--text-muted)'} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{b.name}</div>
-                        <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{b.cards.length} cards · {b.scope}</div>
+                        <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{t('board.nCards', '{{count}} cards', { count: b.cards.length })} · {b.scope}</div>
                       </div>
                       {on && <Icon name="check" size={16} color="var(--accent)" />}
                     </Hover>
@@ -111,21 +113,21 @@ export function BoardScreen() {
                 })}
                 <div style={{ height: 1, background: 'var(--line)', margin: '5px 8px' }} />
                 <Hover onClick={openNewBoard} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 10px', borderRadius: 8, cursor: 'pointer', color: 'var(--text-dim)', fontSize: 13 }} hover={{ background: 'var(--surface-2)' }}>
-                  <Icon name="add" size={17} />New board
+                  <Icon name="add" size={17} />{t('board.newBoard', 'New board')}
                 </Hover>
               </div>
             </>
           )}
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            {board.cards.length} cards · base <span style={{ fontFamily: "'Geist Mono', monospace", color: 'var(--text-dim)' }}>{board.baseBranch}</span>
+            {t('board.nCards', '{{count}} cards', { count: board.cards.length })} · {t('board.base', 'base')} <span style={{ fontFamily: "'Geist Mono', monospace", color: 'var(--text-dim)' }}>{board.baseBranch}</span>
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          {headerBtn('label', 'Labels', openLabelMgr)}
+          {headerBtn('label', t('board.labels', 'Labels'), openLabelMgr)}
           <Hover as="span" onClick={openGen} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 13px', borderRadius: 8, background: 'var(--accent-soft)', border: '1px solid var(--accent-line)', color: 'var(--accent-hi)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
-            <Icon name="auto_awesome" size={16} />Generate cards
+            <Icon name="auto_awesome" size={16} />{t('board.generateCards', 'Generate cards')}
           </Hover>
-          {headerBtn('add', 'New card', () => addCardTo('backlog'))}
+          {headerBtn('add', t('board.newCard', 'New card'), () => addCardTo('backlog'))}
         </div>
       </div>
 
@@ -211,7 +213,7 @@ export function BoardScreen() {
                             )}
                             {card.link.worktree && (
                               <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: "'Geist Mono', monospace", fontSize: 10, color: 'var(--ai)', background: 'color-mix(in srgb, var(--ai) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--ai) 22%, transparent)', padding: '2px 6px', borderRadius: 5 }}>
-                                <Icon name="account_tree" size={12} />worktree
+                                <Icon name="account_tree" size={12} />{t('board.worktree', 'worktree')}
                               </span>
                             )}
                           </div>
@@ -222,10 +224,10 @@ export function BoardScreen() {
                           return (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: status ? STATUS_COLOR[status] : 'var(--text-muted)' }}>
                               {status ? <StatusDot status={status} size={6} /> : <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--surface-4)', flexShrink: 0 }} />}
-                              {status ? STATUS_LABEL[status] : 'Session ended'}
+                              {status ? STATUS_LABEL[status] : t('board.sessionEnded', 'Session ended')}
                               <span
                                 onClick={(e) => { e.stopPropagation(); openSession(card.sessionId as string) }}
-                                title="Open session"
+                                title={t('board.openSession', 'Open session')}
                                 style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: 'var(--accent-hi)', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 2 }}
                               >
                                 {shortId(card.sessionId)}
@@ -255,7 +257,7 @@ export function BoardScreen() {
                     )
                   })}
                   {cards.length === 0 && (
-                    <div style={{ fontSize: 11.5, color: '#3f3f47', textAlign: 'center', padding: '16px 0', border: '1px dashed var(--line)', borderRadius: 9 }}>No cards</div>
+                    <div style={{ fontSize: 11.5, color: '#3f3f47', textAlign: 'center', padding: '16px 0', border: '1px dashed var(--line)', borderRadius: 9 }}>{t('board.noCards', 'No cards')}</div>
                   )}
                 </div>
               </div>

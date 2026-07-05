@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
@@ -9,6 +10,7 @@ const TAG_COLOR: Record<string, string> = {
 }
 
 export function SkillsScreen() {
+  const { t } = useTranslation()
   const skills = useStore((s) => s.skills)
   const selectedSkillId = useStore((s) => s.selectedSkillId)
   const selectSkill = useStore((s) => s.selectSkill)
@@ -26,14 +28,14 @@ export function SkillsScreen() {
           <Icon name="auto_awesome" size={24} color="var(--text-faint)" />
         </div>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>No skills yet</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-2)' }}>{t('skills.noSkills', 'No skills yet')}</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, maxWidth: 400, lineHeight: 1.5 }}>
-            Valkeon installs its own <span style={{ fontFamily: "'Geist Mono', monospace" }}>vw-*</span> skills into{' '}
-            <span style={{ fontFamily: "'Geist Mono', monospace" }}>.claude/skills</span> when you open a project. Open a real folder to see them.
+            {t('skills.emptyLead', 'Valkeon installs its own')} <span style={{ fontFamily: "'Geist Mono', monospace" }}>vw-*</span> {t('skills.emptyMid', 'skills into')}{' '}
+            <span style={{ fontFamily: "'Geist Mono', monospace" }}>.claude/skills</span> {t('skills.emptyTail', 'when you open a project. Open a real folder to see them.')}
           </div>
         </div>
         <Hover as="span" onClick={newSkill} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>
-          <Icon name="add" size={16} />New skill
+          <Icon name="add" size={16} />{t('skills.newSkill', 'New skill')}
         </Hover>
       </div>
     )
@@ -57,11 +59,11 @@ export function SkillsScreen() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid var(--line)', flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>Skills</div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 3, fontFamily: "'Geist Mono', monospace" }}>.claude/skills · {enabled} enabled</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.01em' }}>{t('skills.title', 'Skills')}</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 3, fontFamily: "'Geist Mono', monospace" }}>.claude/skills · {t('skills.enabledCount', '{{count}} enabled', { count: enabled })}</div>
           </div>
           <Hover as="span" onClick={newSkill} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>
-            <Icon name="add" size={16} />New skill
+            <Icon name="add" size={16} />{t('skills.newSkill', 'New skill')}
           </Hover>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 18px', minHeight: 0 }}>
@@ -85,7 +87,7 @@ export function SkillsScreen() {
                     {tag(sk.tag)}
                     <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: "'Geist Mono', monospace" }}>{sk.trigger}</span>
                     <div style={{ flex: 1 }} />
-                    <span style={{ fontSize: 10.5, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace" }}>{sk.invocations} runs</span>
+                    <span style={{ fontSize: 10.5, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace" }}>{t('skills.runsCount', '{{count}} runs', { count: sk.invocations })}</span>
                   </div>
                 </Hover>
               )
@@ -104,26 +106,26 @@ export function SkillsScreen() {
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--text-dim)', lineHeight: 1.5, marginTop: 6 }}>{selected.desc}</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, padding: '11px 13px', borderRadius: 9, background: 'var(--surface)', border: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 12.5, color: 'var(--text-2)', fontWeight: 500 }}>{selected.enabled ? 'Enabled' : 'Disabled'}</span>
+            <span style={{ fontSize: 12.5, color: 'var(--text-2)', fontWeight: 500 }}>{selected.enabled ? t('skills.enabled', 'Enabled') : t('skills.disabled', 'Disabled')}</span>
             <Toggle on={selected.enabled} onClick={() => toggleSkill(selected.id)} />
           </div>
           <div style={{ display: 'flex', gap: 18, marginTop: 18 }}>
-            <div><div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>TRIGGER</div><div style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{selected.trigger}</div></div>
-            <div><div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>RUNS</div><div style={{ fontSize: 12.5, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace" }}>{selected.invocations}</div></div>
-            <div><div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>TYPE</div><div style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{selected.tag}</div></div>
+            <div><div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>{t('skills.trigger', 'TRIGGER')}</div><div style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{selected.trigger}</div></div>
+            <div><div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>{t('skills.runs', 'RUNS')}</div><div style={{ fontSize: 12.5, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace" }}>{selected.invocations}</div></div>
+            <div><div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>{t('skills.type', 'TYPE')}</div><div style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{selected.tag}</div></div>
           </div>
-          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', margin: '20px 0 8px' }}>TOUCHES</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', margin: '20px 0 8px' }}>{t('skills.touches', 'TOUCHES')}</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {selected.touches.map((t) => (
               <span key={t} style={{ fontSize: 11, color: 'var(--text-dim)', fontFamily: "'Geist Mono', monospace", background: 'var(--surface)', border: '1px solid var(--line-2)', padding: '3px 8px', borderRadius: 6 }}>{t}</span>
             ))}
           </div>
-          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', margin: '20px 0 8px' }}>INSTRUCTIONS</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', margin: '20px 0 8px' }}>{t('skills.instructions', 'INSTRUCTIONS')}</div>
           <div style={{ fontSize: 11.5, color: 'var(--text-dim)', lineHeight: 1.6, fontFamily: "'Geist Mono', monospace", background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 9, padding: 13 }}>{selected.instructions}</div>
         </div>
         <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '12px 20px', display: 'flex', gap: 9 }}>
-          <Hover as="span" onClick={() => selected.enabled && runSkill(selected.id)} title={selected.enabled ? undefined : 'Enable the skill to run it'} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: selected.enabled ? 'pointer' : 'not-allowed', opacity: selected.enabled ? 1 : 0.45 }} hover={selected.enabled ? { filter: 'brightness(1.08)' } : {}}>Run now</Hover>
-          <Hover as="span" onClick={() => openSkillEditor(selected.id)} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>Edit</Hover>
+          <Hover as="span" onClick={() => selected.enabled && runSkill(selected.id)} title={selected.enabled ? undefined : t('skills.enableToRun', 'Enable the skill to run it')} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: selected.enabled ? 'pointer' : 'not-allowed', opacity: selected.enabled ? 1 : 0.45 }} hover={selected.enabled ? { filter: 'brightness(1.08)' } : {}}>{t('skills.runNow', 'Run now')}</Hover>
+          <Hover as="span" onClick={() => openSkillEditor(selected.id)} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>{t('skills.edit', 'Edit')}</Hover>
         </div>
       </div>
     </div>

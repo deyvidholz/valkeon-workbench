@@ -8,7 +8,7 @@ import type { AgentEvent, AgentCompleteResult } from '@shared/agents/types'
 import type { ContextSourceId } from '@shared/context'
 import type { ProjectConfig } from '@shared/project'
 import { DEFAULT_PROJECT_CONFIG } from '@shared/project'
-import type { ThemePref, ResolvedTheme, LocalePref } from '@shared/persistence/global'
+import type { ThemePref, ResolvedTheme, LocalePref, ResolvedLocale } from '@shared/persistence/global'
 import type { NotificationRecord, NotificationAction, NotificationKind } from '@shared/notifications'
 import type {
   Board,
@@ -31,6 +31,16 @@ import type {
 } from '../types'
 import { DEFAULT_ACCENT } from '../theme/accents'
 import { BOARD_COLUMNS, DEFAULT_LABELS, LABEL_PALETTE } from '../data/seed'
+import { resolveLocale } from '../i18n'
+import { extractJson } from '../lib/json'
+import type { ResolvedLocale as RLocale } from '@shared/persistence/global'
+
+/** Human names for the AI to write generated content in the user's language. */
+const LOCALE_NAMES: Record<RLocale, string> = {
+  en: 'English',
+  'pt-BR': 'Brazilian Portuguese',
+  'es-AR': 'Rioplatense Spanish (Argentina)'
+}
 
 const uid = (prefix: string): string => `${prefix}-${crypto.randomUUID()}`
 const slugify = (s: string): string =>
@@ -81,6 +91,8 @@ interface AppState {
   /** The current OS appearance, pushed from main; used to resolve `system`. */
   systemTheme: ResolvedTheme
   localePref: LocalePref
+  /** The detected OS locale, mapped to a supported one; used to resolve `system`. */
+  systemLocale: ResolvedLocale
   userName: string
   fontSize: number
   defaultProviderId: string
@@ -126,6 +138,10 @@ interface AppState {
   newWs: { name: string; useWorktree: boolean }
   newBoard: { name: string; scope: BoardScope }
   genText: string
+  genColumn: ColumnId
+  genCount: number
+  genLoading: boolean
+  genError: string | null
   newLabel: { name: string; color: string }
   table: { headers: string[]; rows: string[][] }
   diagText: string
@@ -166,6 +182,7 @@ interface AppState {
   setThemePref: (pref: ThemePref) => void
   setSystemTheme: (theme: ResolvedTheme) => void
   setLocalePref: (pref: LocalePref) => void
+  setSystemLocale: (locale: ResolvedLocale) => void
   /** One-shot AI completion using the default provider/model, scoped to the project. */
   aiComplete: (prompt: string, opts?: { system?: string; cwd?: string; modelId?: string; timeoutMs?: number }) => Promise<AgentCompleteResult>
   loadNotifications: () => Promise<void>
@@ -286,7 +303,9 @@ interface AppState {
   openGen: () => void
   closeGen: () => void
   setGenText: (t: string) => void
-  generateCards: () => void
+  setGenColumn: (col: ColumnId) => void
+  setGenCount: (n: number) => void
+  generateCards: () => Promise<void>
 
   // labels
   openLabelMgr: () => void
@@ -750,6 +769,7 @@ export const useStore = create<AppState>((set, get) => {
     themePref: 'system',
     systemTheme: 'dark',
     localePref: 'system',
+    systemLocale: 'en',
     userName: '',
     fontSize: 12,
     defaultProviderId: DEFAULT_PROVIDER_ID,
@@ -792,6 +812,10 @@ export const useStore = create<AppState>((set, get) => {
     newWs: { name: '', useWorktree: false },
     newBoard: { name: '', scope: 'feature' },
     genText: '',
+    genColumn: 'backlog',
+    genCount: 5,
+    genLoading: false,
+    genError: null,
     newLabel: { name: '', color: LABEL_PALETTE[0] },
     table: { headers: ['Column 1', 'Column 2'], rows: [['', ''], ['', '']] },
     diagText: 'flowchart TD\n  A[Start] --> B{Decision}\n  B -->|Yes| C[Do it]\n  B -->|No| D[Skip]',
@@ -1015,18 +1039,24 @@ export const useStore = create<AppState>((set, get) => {
     setPaletteQuery: (q) => set({ paletteQuery: q }),
 
     openNewSession: () =>
-      set((st) => ({
-        newSessionOpen: true,
-        newSession: {
-          name: '',
-          providerId: st.defaultProviderId,
-          modelId: st.defaultModelId,
-          worktree: st.projectConfig.taskStrategy === 'worktree',
-          skipPerms: false,
-          mode: 'structured',
-          notify: false
+      set((st) => {
+        // Default the worktree toggle from the active workspace's opt-in, falling
+        // back to the repo-level task strategy. Only meaningful in a git repo.
+        const ws = st.workspaces.find((w) => w.id === st.activeWorkspaceId)
+        const wantWorktree = ws?.useWorktree ?? st.projectConfig.taskStrategy === 'worktree'
+        return {
+          newSessionOpen: true,
+          newSession: {
+            name: '',
+            providerId: st.defaultProviderId,
+            modelId: st.defaultModelId,
+            worktree: wantWorktree && !!st.project?.isGitRepo,
+            skipPerms: false,
+            mode: 'structured',
+            notify: false
+          }
         }
-      })),
+      }),
     closeNewSession: () => set({ newSessionOpen: false }),
     setNewSession: (patch) => set((st) => ({ newSession: { ...st.newSession, ...patch } })),
     createSession: () => spawnSession(get().newSession),
@@ -1472,6 +1502,15 @@ export const useStore = create<AppState>((set, get) => {
       })
       log({ kind: 'board', icon: 'workspaces', color: 'var(--info-2)', label: `Created workspace ${name}`, detail: '' })
       persistWorkspaces()
+      // Opting a workspace into worktrees should enable the vw-worktrees skill so
+      // the agent actually knows how to use them. Skills are repo-global (a design
+      // tension noted in the plan): we only ever ENABLE on opt-in, never auto-disable.
+      if (st.newWs.useWorktree && st.project?.path) {
+        void window.api?.skills
+          .setEnabled(st.project.path, 'vw-worktrees', true)
+          .then((skills) => set({ skills }))
+          .catch(() => {})
+      }
     },
 
     toggleBoardMenu: (open) => set((st) => ({ boardMenuOpen: open ?? !st.boardMenuOpen })),
@@ -1761,42 +1800,67 @@ export const useStore = create<AppState>((set, get) => {
       get().updateCard(id, { labels })
     },
 
-    openGen: () => set({ genOpen: true, genText: '', boardMenuOpen: false }),
-    closeGen: () => set({ genOpen: false }),
+    openGen: () => set({ genOpen: true, genText: '', genColumn: 'backlog', genCount: 5, genError: null, genLoading: false, boardMenuOpen: false }),
+    closeGen: () => set({ genOpen: false, genLoading: false }),
     setGenText: (t) => set({ genText: t }),
-    generateCards: () => {
+    setGenColumn: (col) => set({ genColumn: col }),
+    setGenCount: (n) => set({ genCount: Math.max(1, Math.min(12, Math.round(n))) }),
+    generateCards: async () => {
       const st = get()
       const board = currentBoard(st)
       if (!board) return
-      const items = st.genText
-        .split(/[\n.;]+/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 6)
-        .slice(0, 6)
-      if (!items.length) {
-        set({ genOpen: false, genText: '' })
+      const intent = st.genText.trim()
+      if (!intent) {
+        set({ genError: 'Describe what you want cards for.' })
         return
       }
+      set({ genLoading: true, genError: null })
+
+      const col = st.genColumn
+      const count = st.genCount
+      const labelList = board.labels.map((l) => l.id).join(', ') || '(none)'
+      const langName = LOCALE_NAMES[resolveLocale(st.localePref, st.systemLocale)]
+      const system = `You plan software work as kanban cards. Reply with ONLY a JSON array (no prose, no code fences).`
+      const prompt = `Given this request, produce up to ${count} kanban cards for a "${board.name}" board.
+Request: """${intent}"""
+
+Each array item must be an object: {"title": string (short, imperative), "body": string (markdown: a few bullet points of scope / acceptance criteria), "labels": string[] (a subset of these existing label ids, or [] — do NOT invent ids: ${labelList})}.
+Write every title and body in ${langName}. Return at most ${count} items. JSON array only.`
+
+      const res = await get().aiComplete(prompt, { system, timeoutMs: 90_000 })
+      if (!res.ok) {
+        set({ genLoading: false, genError: res.error || 'The AI request failed. Try again.' })
+        return
+      }
+      type GenItem = { title?: string; body?: string; labels?: string[] }
+      const parsed = extractJson<GenItem[]>(res.text)
+      const items = Array.isArray(parsed) ? parsed.filter((x) => x && typeof x.title === 'string' && x.title.trim()) : []
+      if (!items.length) {
+        set({ genLoading: false, genError: "Couldn't read cards from the AI response. Try again." })
+        return
+      }
+
+      const validLabels = new Set(board.labels.map((l) => l.id))
+      const trimmed = items.slice(0, count)
       const code = newCardCode(st.boards)
-      const aiLabel = board.labels.find((l) => l.id === 'ai') ? 'ai' : board.labels[0]?.id
-      const orders = generateNKeysBetween(lastOrderInColumn(board, 'backlog'), null, items.length)
-      const created: Card[] = items.map((line, i) => ({
+      const orders = generateNKeysBetween(lastOrderInColumn(board, col), null, trimmed.length)
+      const created: Card[] = trimmed.map((item, i) => ({
         id: `c${code + i}`,
         code: code + i,
-        column: 'backlog',
+        column: col,
         order: orders[i],
-        title: cap(line),
-        body: '',
-        labels: aiLabel ? [aiLabel] : [],
+        title: cap((item.title || '').trim()),
+        body: typeof item.body === 'string' ? item.body.trim() : '',
+        labels: Array.isArray(item.labels) ? item.labels.filter((l) => validLabels.has(l)) : [],
         link: { branch: null, worktree: null },
         attachments: [],
         sessionId: null,
         agent: false,
-        activity: [{ icon: 'auto_awesome', text: 'Drafted by AI', time: 'now', color: 'var(--info-2)' }]
+        activity: [{ icon: 'auto_awesome', text: 'Generated by AI', time: 'now', color: 'var(--info-2)' }]
       }))
       updateActiveBoard((b) => ({ ...b, cards: [...b.cards, ...created] }))
       created.forEach((c) => persistCard(board.id, c))
-      set({ genOpen: false, genText: '', view: 'board' })
+      set({ genOpen: false, genText: '', genLoading: false, genError: null, view: 'board' })
       log({ kind: 'card', icon: 'auto_awesome', color: 'var(--info-2)', label: `Generated ${created.length} cards`, detail: board.name, target: { kind: 'board', id: board.id } })
     },
 
@@ -2007,6 +2071,7 @@ export const useStore = create<AppState>((set, get) => {
       set({ localePref: pref })
       void window.api?.settings.set({ localePref: pref } as never).catch(() => {})
     },
+    setSystemLocale: (locale) => set({ systemLocale: locale }),
     setFontSize: (n) => set({ fontSize: n }),
     setDefaultModel: (id) => set({ defaultModelId: id }),
 

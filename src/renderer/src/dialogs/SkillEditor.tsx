@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Modal } from '../ui/Modal'
 import { Icon } from '../ui/Icon'
@@ -22,6 +23,7 @@ const slugify = (s: string): string =>
     .slice(0, 60)
 
 export function SkillEditor() {
+  const { t } = useTranslation()
   const id = useStore((s) => s.skillEditorId)
   const skills = useStore((s) => s.skills)
   const close = useStore((s) => s.closeSkillEditor)
@@ -68,8 +70,8 @@ export function SkillEditor() {
       <div style={{ padding: '15px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Icon name="auto_awesome" size={19} color="var(--accent)" />
-          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{isNew ? 'New skill' : 'Edit skill'}</span>
-          <span style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace" }}>{targetId || 'skill-id'}</span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{isNew ? t('skillEditor.newTitle', 'New skill') : t('skillEditor.editTitle', 'Edit skill')}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace" }}>{targetId || t('skillEditor.idPlaceholder', 'skill-id')}</span>
         </div>
         <Hover as="span" onClick={close} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ background: 'var(--surface-2)', color: 'var(--text-2)' }}>
           <Icon name="close" size={19} />
@@ -77,23 +79,23 @@ export function SkillEditor() {
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 18 }}>
-        <div style={eyebrow}>NAME</div>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="What the skill is called" style={{ ...inputStyle, marginBottom: 16 }} />
-        <div style={eyebrow}>WHEN TO USE (description)</div>
-        <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="A precise trigger keeps the skill out of context until it's relevant." style={{ ...inputStyle, marginBottom: 16 }} />
-        <div style={eyebrow}>TRIGGER</div>
+        <div style={eyebrow}>{t('skillEditor.nameLabel', 'NAME')}</div>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('skillEditor.namePlaceholder', 'What the skill is called')} style={{ ...inputStyle, marginBottom: 16 }} />
+        <div style={eyebrow}>{t('skillEditor.whenToUseLabel', 'WHEN TO USE (description)')}</div>
+        <input value={desc} onChange={(e) => setDesc(e.target.value)} placeholder={t('skillEditor.descPlaceholder', "A precise trigger keeps the skill out of context until it's relevant.")} style={{ ...inputStyle, marginBottom: 16 }} />
+        <div style={eyebrow}>{t('skillEditor.triggerLabel', 'TRIGGER')}</div>
         <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
-          <span onClick={() => setTrigger('auto')} style={segStyle(trigger === 'auto')}>Auto</span>
-          <span onClick={() => setTrigger('manual')} style={segStyle(trigger === 'manual')}>Manual</span>
+          <span onClick={() => setTrigger('auto')} style={segStyle(trigger === 'auto')}>{t('skillEditor.triggerAuto', 'Auto')}</span>
+          <span onClick={() => setTrigger('manual')} style={segStyle(trigger === 'manual')}>{t('skillEditor.triggerManual', 'Manual')}</span>
         </div>
-        <div style={{ ...eyebrow, marginBottom: 8 }}>INSTRUCTIONS</div>
-        <MarkdownEditor key={id} value={instructions} onChange={setInstructions} minHeight={240} placeholder="Write the skill instructions in markdown…" />
+        <div style={{ ...eyebrow, marginBottom: 8 }}>{t('skillEditor.instructionsLabel', 'INSTRUCTIONS')}</div>
+        <MarkdownEditor key={id} value={instructions} onChange={setInstructions} minHeight={240} placeholder={t('skillEditor.instructionsPlaceholder', 'Write the skill instructions in markdown…')} />
       </div>
 
       <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '13px 18px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 9 }}>
-        <Hover as="span" onClick={close} style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>Cancel</Hover>
+        <Hover as="span" onClick={close} style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>{t('skillEditor.cancel', 'Cancel')}</Hover>
         <Hover as="span" onClick={onSave} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 15px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: canSave ? 'pointer' : 'not-allowed', opacity: canSave ? 1 : 0.5 }} hover={canSave ? { filter: 'brightness(1.08)' } : {}}>
-          <Icon name="check" size={16} />Save skill
+          <Icon name="check" size={16} />{t('skillEditor.save', 'Save skill')}
         </Hover>
       </div>
     </Modal>
