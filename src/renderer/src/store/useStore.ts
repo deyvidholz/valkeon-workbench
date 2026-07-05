@@ -292,6 +292,7 @@ interface AppState {
   updateCard: (id: string, patch: Partial<Card>) => void
   appendToCardBody: (md: string) => void
   deleteCard: (id: string) => void
+  duplicateCard: (id: string) => void
   moveCard: (id: string, col: ColumnId) => void
   moveCardTo: (id: string, col: ColumnId, beforeCardId: string | null) => void
   reorderColumns: (fromId: string, toId: string) => void
@@ -1690,6 +1691,30 @@ export const useStore = create<AppState>((set, get) => {
           if (card) log({ kind: 'card', icon: 'delete_outline', color: 'var(--danger)', label: `Deleted card #${card.code}`, detail: board.name })
         }
       })
+    },
+    duplicateCard: (id) => {
+      const st = get()
+      const board = currentBoard(st)
+      if (!board) return
+      const src = board.cards.find((c) => c.id === id)
+      if (!src) return
+      const code = newCardCode(st.boards)
+      const copy: Card = {
+        ...src,
+        id: `c${code}`,
+        code,
+        column: 'backlog',
+        order: generateKeyBetween(lastOrderInColumn(board, 'backlog'), null),
+        title: `${src.title} (copy)`,
+        link: { branch: null, worktree: null },
+        attachments: [...src.attachments],
+        sessionId: null,
+        agent: false,
+        activity: [{ icon: 'content_copy', text: `Duplicated from #${src.code}`, time: 'now', color: 'var(--text-muted)' }]
+      }
+      updateActiveBoard((b) => ({ ...b, cards: [...b.cards, copy] }))
+      persistCard(board.id, copy)
+      log({ kind: 'card', icon: 'content_copy', color: 'var(--info-2)', label: `Duplicated card #${src.code}`, detail: board.name, target: { kind: 'board', id: board.id } })
     },
     moveCard: (id, col) => {
       const st = get()

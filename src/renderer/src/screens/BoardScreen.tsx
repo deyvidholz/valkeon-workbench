@@ -5,7 +5,7 @@ import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
 import { LabelChip } from '../ui/LabelChip'
 import { StatusDot, STATUS_LABEL, STATUS_COLOR } from '../ui/StatusDot'
-import type { Card, ColumnId } from '../types'
+import type { Card, ColumnId, ContextMenuItem } from '../types'
 
 /** A short, clickable session reference, e.g. #a1b2c3. */
 const shortId = (id: string): string => `#${id.slice(-6)}`
@@ -44,7 +44,11 @@ export function BoardScreen() {
   const openSession = useStore((s) => s.openSession)
   const sessions = useStore((s) => s.sessions)
   const moveCardTo = useStore((s) => s.moveCardTo)
+  const moveCard = useStore((s) => s.moveCard)
   const reorderColumns = useStore((s) => s.reorderColumns)
+  const deleteCard = useStore((s) => s.deleteCard)
+  const duplicateCard = useStore((s) => s.duplicateCard)
+  const openContextMenu = useStore((s) => s.openContextMenu)
   const [drag, setDrag] = useState<{ kind: 'card' | 'column'; id: string } | null>(null)
 
   const wsBoards = useMemo(() => boards.filter((b) => b.wsId === wsId), [boards, wsId])
@@ -76,6 +80,30 @@ export function BoardScreen() {
       return { label: t('board.openSession', 'Open session'), icon: 'open_in_full', onClick: () => card.sessionId && openSession(card.sessionId) }
     if (card.column === 'in-review') return { label: t('board.reviewDiff', 'Review diff'), icon: 'difference', onClick: () => openReview(card.id) }
     return null
+  }
+
+  const openCardMenu = (e: React.MouseEvent, card: Card): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    const action = cardAction(card)
+    const items: ContextMenuItem[] = [
+      { label: t('cardMenu.open', 'Open card'), icon: 'open_in_new', onClick: () => openCard(card.id) },
+      ...(action ? [{ label: action.label, icon: action.icon, onClick: action.onClick }] : []),
+      {
+        label: t('cardMenu.moveTo', 'Move to'),
+        icon: 'moving',
+        submenu: board.columns.map((c) => ({
+          label: c.name,
+          icon: card.column === c.id ? 'check' : 'chevron_right',
+          disabled: card.column === c.id,
+          onClick: () => moveCard(card.id, c.id)
+        }))
+      },
+      { label: t('cardMenu.duplicate', 'Duplicate card'), icon: 'content_copy', onClick: () => duplicateCard(card.id) },
+      { divider: true, label: '', icon: '' },
+      { label: t('cardMenu.delete', 'Delete card'), icon: 'delete', danger: true, onClick: () => deleteCard(card.id) }
+    ]
+    openContextMenu(e.clientX, e.clientY, items)
   }
 
   const headerBtn = (icon: string, label: string, onClick: () => void): React.ReactNode => (
@@ -172,6 +200,7 @@ export function BoardScreen() {
                       <Hover
                         key={card.id}
                         onClick={() => openCard(card.id)}
+                        onContextMenu={(e) => openCardMenu(e, card)}
                         draggable
                         onDragStart={(e) => {
                           e.stopPropagation()

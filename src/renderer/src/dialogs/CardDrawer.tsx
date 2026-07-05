@@ -175,13 +175,8 @@ export function CardDrawer() {
               )}
             </div>
           ) : (
-            <div style={{ marginBottom: 20 }}>
-              <Hover as="span" onClick={() => saved && startTask(card.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: 10, borderRadius: 9, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 13, fontWeight: 600, cursor: saved ? 'pointer' : 'not-allowed', opacity: saved ? 1 : 0.45 }} hover={saved ? { filter: 'brightness(1.08)' } : {}}>
-                <Icon name="rocket_launch" size={17} />{t('cardDrawer.startTask', 'Start task')}
-              </Hover>
-              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 7, textAlign: 'center' }}>
-                {saved ? t('cardDrawer.startTaskHint', 'Creates a branch + worktree and hands the card to the agent') : t('cardDrawer.saveFirstHint', 'Save the card first to start a task')}
-              </div>
+            <div style={{ background: 'var(--surface)', border: '1px dashed var(--line-2)', borderRadius: 10, padding: 12, marginBottom: 20, fontSize: 11.5, color: 'var(--text-faint)', textAlign: 'center' }}>
+              {saved ? t('cardDrawer.startTaskHint', 'Use “Start task” below to create a branch + worktree and hand the card to the agent') : t('cardDrawer.saveFirstHint', 'Save the card first to start a task')}
             </div>
           )}
 
@@ -230,6 +225,15 @@ export function CardDrawer() {
         </div>
 
         <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 11 }}>
+          {session ? (
+            <Hover as="span" onClick={() => openSession(session.id)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--accent-line)', color: 'var(--accent-hi)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }} hover={{ background: 'var(--accent-soft)' }}>
+              <Icon name="terminal" size={16} />{t('cardDrawer.openSession', 'Open session')}
+            </Hover>
+          ) : (
+            <Hover as="span" onClick={() => saved && startTask(card.id)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 8, border: '1px solid var(--accent-line)', color: 'var(--accent-hi)', fontSize: 12.5, fontWeight: 600, cursor: saved ? 'pointer' : 'not-allowed', opacity: saved ? 1 : 0.45 }} hover={saved ? { background: 'var(--accent-soft)' } : {}}>
+              <Icon name="rocket_launch" size={16} />{t('cardDrawer.startTask', 'Start task')}
+            </Hover>
+          )}
           <span style={{ fontSize: 11.5, color: dirty ? 'var(--warn)' : 'var(--ok)' }}>
             {dirty ? t('cardDrawer.unsavedChanges', 'Unsaved changes') : titleOk ? t('cardDrawer.saved', 'Saved') : ''}
           </span>
