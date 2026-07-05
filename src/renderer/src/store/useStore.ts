@@ -251,6 +251,8 @@ interface AppState {
   toggleSessionNotify: (id: string) => void
   cycleSession: () => void
   reorderSessions: (fromId: string, toId: string) => void
+  renameSession: (id: string, name: string) => void
+  renameTerminal: (id: string, name: string) => void
   setActiveSession: (id: string) => void
   setSessionModel: (id: string, modelId: string) => void
   noteSessionData: (ptyId: string) => void
@@ -291,6 +293,7 @@ interface AppState {
   closeNewWs: () => void
   setNewWs: (patch: Partial<{ name: string; useWorktree: boolean }>) => void
   createWorkspace: () => void
+  updateActiveWorkspace: (patch: Partial<Pick<Workspace, 'name' | 'useWorktree'>>) => void
 
   // boards
   toggleBoardMenu: (open?: boolean) => void
@@ -1291,7 +1294,18 @@ export const useStore = create<AppState>((set, get) => {
       const next = scoped[(i + 1) % scoped.length]
       set({ activeSessionId: next.id })
     },
-    reorderSessions: (fromId, toId) => set((st) => ({ sessions: arrayMove(st.sessions, fromId, toId) })),
+    reorderSessions: (fromId, toId) => { set((st) => ({ sessions: arrayMove(st.sessions, fromId, toId) })); persistSessions() },
+    renameSession: (id, name) => {
+      const n = name.trim()
+      if (!n) return
+      set((st) => ({ sessions: st.sessions.map((s) => (s.id === id ? { ...s, name: n } : s)) }))
+      persistSessions()
+    },
+    renameTerminal: (id, name) => {
+      const n = name.trim()
+      if (!n) return
+      set((st) => ({ terminals: st.terminals.map((t) => (t.id === id ? { ...t, name: n } : t)) }))
+    },
     setActiveSession: (id) => set({ activeSessionId: id }),
     setSessionModel: (id, modelId) =>
       set((st) => ({
@@ -1519,6 +1533,17 @@ export const useStore = create<AppState>((set, get) => {
     openNewWs: () => set({ newWsOpen: true, newWs: { name: '', useWorktree: false }, wsMenuOpen: false }),
     closeNewWs: () => set({ newWsOpen: false }),
     setNewWs: (patch) => set((st) => ({ newWs: { ...st.newWs, ...patch } })),
+    updateActiveWorkspace: (patch) => {
+      const st = get()
+      const id = st.activeWorkspaceId
+      if (!id) return
+      set({ workspaces: st.workspaces.map((w) => (w.id === id ? { ...w, ...patch } : w)) })
+      persistWorkspaces()
+      // Enable the vw-worktrees skill when a workspace opts in (enable-only; repo-global).
+      if (patch.useWorktree && st.project?.path) {
+        void window.api?.skills.setEnabled(st.project.path, 'vw-worktrees', true).then((skills) => set({ skills })).catch(() => {})
+      }
+    },
     createWorkspace: () => {
       const st = get()
       const name = st.newWs.name.trim()

@@ -67,8 +67,10 @@ export function SkillsScreen() {
           </Hover>
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 18px', minHeight: 0 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignContent: 'start' }}>
-            {skills.map((sk) => {
+          {(() => {
+            const vw = skills.filter((sk) => sk.builtin)
+            const others = skills.filter((sk) => !sk.builtin)
+            const cardFor = (sk: (typeof skills)[number]): React.ReactNode => {
               const on = sk.id === selected.id
               return (
                 <Hover key={sk.id} onClick={() => selectSkill(sk.id)} style={{ background: 'var(--bg)', border: `1px solid ${on ? 'var(--accent-line)' : 'var(--line)'}`, borderRadius: 11, padding: 14, cursor: 'pointer' }} hover={{ border: '1px solid var(--line-2)' }}>
@@ -76,7 +78,11 @@ export function SkillsScreen() {
                     <div style={{ width: 34, height: 34, borderRadius: 9, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name={sk.icon} size={19} color="var(--accent)" />
                     </div>
-                    <Toggle on={sk.enabled} onClick={() => toggleSkill(sk.id)} />
+                    {sk.builtin ? (
+                      <Toggle on={sk.enabled} onClick={() => toggleSkill(sk.id)} />
+                    ) : (
+                      <Icon name="lock" size={15} color="var(--text-faint)" title={t('skills.readOnly', 'Managed outside Valkeon')} />
+                    )}
                   </div>
                   <div style={{ marginTop: 11 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)' }}>{sk.name}</div>
@@ -91,8 +97,21 @@ export function SkillsScreen() {
                   </div>
                 </Hover>
               )
-            })}
-          </div>
+            }
+            const sectionLabel = { fontSize: 11, fontWeight: 600 as const, letterSpacing: '0.08em', color: 'var(--text-muted)', margin: '2px 2px 10px' }
+            return (
+              <>
+                <div style={sectionLabel}>{t('skills.valkeonSection', 'VALKEON SKILLS')}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignContent: 'start' }}>{vw.map(cardFor)}</div>
+                {others.length > 0 && (
+                  <>
+                    <div style={{ ...sectionLabel, marginTop: 22 }}>{t('skills.projectSection', 'PROJECT SKILLS · READ-ONLY')}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignContent: 'start' }}>{others.map(cardFor)}</div>
+                  </>
+                )}
+              </>
+            )
+          })()}
         </div>
       </div>
       <div style={{ width: 344, flexShrink: 0, borderLeft: '1px solid var(--line)', background: 'var(--bg)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -107,7 +126,11 @@ export function SkillsScreen() {
           <div style={{ fontSize: 12.5, color: 'var(--text-dim)', lineHeight: 1.5, marginTop: 6 }}>{selected.desc}</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, padding: '11px 13px', borderRadius: 9, background: 'var(--surface)', border: '1px solid var(--line)' }}>
             <span style={{ fontSize: 12.5, color: 'var(--text-2)', fontWeight: 500 }}>{selected.enabled ? t('skills.enabled', 'Enabled') : t('skills.disabled', 'Disabled')}</span>
-            <Toggle on={selected.enabled} onClick={() => toggleSkill(selected.id)} />
+            {selected.builtin ? (
+              <Toggle on={selected.enabled} onClick={() => toggleSkill(selected.id)} />
+            ) : (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-faint)' }}><Icon name="lock" size={13} />{t('skills.readOnly', 'Managed outside Valkeon')}</span>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 18, marginTop: 18 }}>
             <div><div style={{ fontSize: 10.5, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>{t('skills.trigger', 'TRIGGER')}</div><div style={{ fontSize: 12.5, color: 'var(--text-2)' }}>{selected.trigger}</div></div>
@@ -125,7 +148,9 @@ export function SkillsScreen() {
         </div>
         <div style={{ flexShrink: 0, borderTop: '1px solid var(--line)', background: 'var(--bg)', padding: '12px 20px', display: 'flex', gap: 9 }}>
           <Hover as="span" onClick={() => selected.enabled && runSkill(selected.id)} title={selected.enabled ? undefined : t('skills.enableToRun', 'Enable the skill to run it')} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 12.5, fontWeight: 600, cursor: selected.enabled ? 'pointer' : 'not-allowed', opacity: selected.enabled ? 1 : 0.45 }} hover={selected.enabled ? { filter: 'brightness(1.08)' } : {}}>{t('skills.runNow', 'Run now')}</Hover>
-          <Hover as="span" onClick={() => openSkillEditor(selected.id)} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>{t('skills.edit', 'Edit')}</Hover>
+          {selected.builtin && (
+            <Hover as="span" onClick={() => openSkillEditor(selected.id)} style={{ flex: 1, textAlign: 'center', padding: 9, borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface-2)' }}>{t('skills.edit', 'Edit')}</Hover>
+          )}
         </div>
       </div>
     </div>

@@ -31,6 +31,8 @@ export type ViewId =
   | 'history'
   | 'skills'
   | 'settings'
+  | 'sessions-all'
+  | 'terminals-all'
 
 export type LayoutMode = 'grid' | 'tabs' | 'split'
 

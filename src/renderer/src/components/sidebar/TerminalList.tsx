@@ -44,7 +44,7 @@ export function TerminalList() {
         </Hover>
       </div>
       <div style={{ padding: '0 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {scoped.map((term) => (
+        {scoped.slice(0, 4).map((term) => (
           <Hover
             key={term.id}
             onClick={() => go('terminals')}
@@ -100,6 +100,11 @@ export function TerminalList() {
             />
           </Hover>
         ))}
+        {scoped.length > 4 && (
+          <Hover as="span" onClick={() => go('terminals-all')} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 9px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface)', color: 'var(--text-2)' }}>
+            <Icon name="expand_more" size={15} />{t('terminalList.viewAll', 'View all {{count}}', { count: scoped.length })}
+          </Hover>
+        )}
       </div>
     </>
   )

@@ -37,6 +37,7 @@ export function SessionList() {
   const closeAllSessions = useStore((s) => s.closeAllSessions)
   const askConfirm = useStore((s) => s.askConfirm)
   const openContextMenu = useStore((s) => s.openContextMenu)
+  const go = useStore((s) => s.go)
   const scoped = useMemo(() => sessions.filter((s) => s.wsId === wsId), [sessions, wsId])
   // Re-render once a second so the elapsed time stays live.
   const [, setTick] = useState(0)
@@ -64,7 +65,7 @@ export function SessionList() {
         </Hover>
       </div>
       <div style={{ padding: '0 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {scoped.map((s) => (
+        {scoped.slice(0, 4).map((s) => (
           <Hover
             key={s.id}
             onClick={() => openSession(s.id)}
@@ -130,6 +131,11 @@ export function SessionList() {
             </span>
           </Hover>
         ))}
+        {scoped.length > 4 && (
+          <Hover as="span" onClick={() => go('sessions-all')} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 9px', borderRadius: 8, color: 'var(--text-dim)', fontSize: 11.5, fontWeight: 500, cursor: 'pointer' }} hover={{ background: 'var(--surface)', color: 'var(--text-2)' }}>
+            <Icon name="expand_more" size={15} />{t('sessionList.viewAll', 'View all {{count}}', { count: scoped.length })}
+          </Hover>
+        )}
       </div>
     </>
   )

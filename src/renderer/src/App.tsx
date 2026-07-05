@@ -19,6 +19,8 @@ import { CodeScreen } from './screens/CodeScreen'
 import { HistoryScreen } from './screens/HistoryScreen'
 import { SkillsScreen } from './screens/SkillsScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
+import { AllSessionsScreen } from './screens/AllSessionsScreen'
+import { AllTerminalsScreen } from './screens/AllTerminalsScreen'
 import { ConfirmDialog } from './dialogs/ConfirmDialog'
 import { UpdateDialog } from './dialogs/UpdateDialog'
 import { NewSessionDialog } from './dialogs/NewSessionDialog'
@@ -58,6 +60,10 @@ function MainView({ view }: { view: ViewId }) {
       return <SkillsScreen />
     case 'settings':
       return <SettingsScreen />
+    case 'sessions-all':
+      return <AllSessionsScreen />
+    case 'terminals-all':
+      return <AllTerminalsScreen />
     default:
       return <WorkspaceScreen />
   }
