@@ -72,11 +72,34 @@ export const IpcChannels = {
   fileDelete: 'files:delete',
   gitDiff: 'git:diff',
   menuAction: 'menu:action',
-  menuOpenedProject: 'menu:opened-project'
+  menuOpenedProject: 'menu:opened-project',
+  updaterCheck: 'updater:check',
+  updaterDownload: 'updater:download',
+  updaterInstall: 'updater:install',
+  updaterSkip: 'updater:skip',
+  updaterOpenReleases: 'updater:open-releases',
+  updaterEvent: 'updater:event'
 } as const
 
 /** Actions the OS menu sends to the renderer. */
 export type MenuAction = 'new-session' | 'new-terminal' | 'close-project'
+
+/**
+ * How an update can be applied on the current install:
+ * - `auto`   — electron-updater downloads + installs in place (Windows NSIS,
+ *   Linux AppImage).
+ * - `manual` — we can only detect it; the user installs by hand (unsigned macOS,
+ *   Linux `.deb`, WSL). We open the Releases page instead of downloading.
+ */
+export type UpdateCapability = 'auto' | 'manual'
+
+/** One update-lifecycle event pushed from main to the renderer. */
+export type UpdaterEvent =
+  | { kind: 'available'; version: string; notes?: string; capability: UpdateCapability; releasesUrl: string }
+  | { kind: 'progress'; percent: number }
+  | { kind: 'downloaded'; version: string }
+  | { kind: 'none' }
+  | { kind: 'error'; message: string }
 
 /** Result of the "open project folder" dialog. */
 export interface OpenedProject {

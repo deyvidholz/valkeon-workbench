@@ -24,7 +24,8 @@ export class GlobalStore {
       this.state = {
         settings: { ...DEFAULT_SETTINGS, ...(raw.settings ?? {}) },
         recents: raw.recents ?? [],
-        windowBounds: raw.windowBounds
+        windowBounds: raw.windowBounds,
+        skippedUpdateVersion: raw.skippedUpdateVersion
       }
     } catch {
       // First run — keep defaults.
@@ -67,6 +68,15 @@ export class GlobalStore {
     )
     await this.persist()
     return this.state.recents
+  }
+
+  getSkippedUpdateVersion(): string | undefined {
+    return this.state.skippedUpdateVersion
+  }
+
+  async setSkippedUpdateVersion(version: string | undefined): Promise<void> {
+    this.state.skippedUpdateVersion = version
+    await this.persist()
   }
 
   getBounds(): WindowBounds | undefined {

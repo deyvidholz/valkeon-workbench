@@ -41,4 +41,6 @@ export interface GlobalState {
   settings: AppSettings
   recents: RecentProject[]
   windowBounds?: WindowBounds
+  /** An update version the user chose to skip; we won't prompt for it again. */
+  skippedUpdateVersion?: string
 }

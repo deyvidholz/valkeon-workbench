@@ -18,6 +18,7 @@ import { HistoryScreen } from './screens/HistoryScreen'
 import { SkillsScreen } from './screens/SkillsScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { ConfirmDialog } from './dialogs/ConfirmDialog'
+import { UpdateDialog } from './dialogs/UpdateDialog'
 import { NewSessionDialog } from './dialogs/NewSessionDialog'
 import { NewWorkspaceDialog } from './dialogs/NewWorkspaceDialog'
 import { NewBoardDialog } from './dialogs/NewBoardDialog'
@@ -219,6 +220,7 @@ export function App() {
       <SkillEditor />
       <NameDialog />
       <ConfirmDialog />
+      <UpdateDialog />
       <ContextMenu />
     </div>
   )

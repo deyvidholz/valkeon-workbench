@@ -187,6 +187,29 @@ valkeon ~/work/api   # open a specific project
 
 The wrapper auto-detects an installed app (`/Applications/Valkeon Workbench.app` on macOS, the `valkeon-workbench` binary on Linux). To target a specific or unpackaged build, export **`VALKEON_BIN`** (a `.app` on macOS, or the executable on Linux) before running `valkeon`.
 
+### Updating
+
+Valkeon checks for a new version a few seconds after launch and shows a prompt with **Skip this version**, **Later**, and an update action:
+
+- **Windows** (installer) and **Linux AppImage** — it downloads and installs the update in place, then offers to restart.
+- **macOS**, **Linux `.deb`**, and **WSL** — it can only *detect* the update (unsigned macOS and `.deb`/WSL installs can't self-update), so the prompt opens the **Releases** page to download the new version and reinstall.
+
+> The very first release (`v0.1.0`) predates this feature, so if you're on it you won't get the prompt — uninstall (below) and install the newer version once. From then on, updates are automatic where supported.
+
+### Uninstalling
+
+Replace `<version>` as needed. App settings/state live in Electron's `userData` dir (noted per-OS); delete it only if you want a clean wipe.
+
+- **Windows** — uninstall **Valkeon Workbench** from *Settings → Apps* (or run the uninstaller in the install folder). Clean wipe: delete `%APPDATA%\Valkeon Workbench`.
+- **macOS** — drag **Valkeon Workbench** from Applications to the Trash. Clean wipe: `rm -rf ~/Library/Application\ Support/Valkeon\ Workbench`. Remove the CLI if you linked it: `sudo rm -f /usr/local/bin/valkeon`.
+- **Linux `.deb` / WSL** —
+  ```bash
+  sudo apt remove valkeon-workbench      # or: sudo dpkg -r valkeon-workbench
+  sudo rm -f /usr/local/bin/valkeon      # the CLI wrapper, if installed
+  rm -rf ~/.config/Valkeon\ Workbench    # optional: settings/state
+  ```
+- **Linux AppImage** — just delete the `.AppImage` file (and `~/.config/Valkeon\ Workbench` for a clean wipe).
+
 ---
 
 ## Development

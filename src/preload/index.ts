@@ -28,7 +28,8 @@ import {
   type FileContent,
   type DiffFile,
   type ProjectConfig,
-  type MergeResult
+  type MergeResult,
+  type UpdaterEvent
 } from '@shared/ipc'
 
 const api = {
@@ -57,6 +58,18 @@ const api = {
     // Any project passed as `valkeon <path>`, consumed once on startup.
     pendingProject: (): Promise<OpenedProject | null> =>
       ipcRenderer.invoke(IpcChannels.cliPendingProject)
+  },
+  updater: {
+    check: (): Promise<void> => ipcRenderer.invoke(IpcChannels.updaterCheck),
+    download: (): Promise<void> => ipcRenderer.invoke(IpcChannels.updaterDownload),
+    install: (): Promise<void> => ipcRenderer.invoke(IpcChannels.updaterInstall),
+    skip: (version: string): Promise<void> => ipcRenderer.invoke(IpcChannels.updaterSkip, version),
+    openReleases: (): Promise<void> => ipcRenderer.invoke(IpcChannels.updaterOpenReleases),
+    onEvent: (cb: (e: UpdaterEvent) => void): (() => void) => {
+      const listener = (_e: unknown, event: UpdaterEvent): void => cb(event)
+      ipcRenderer.on(IpcChannels.updaterEvent, listener)
+      return () => ipcRenderer.removeListener(IpcChannels.updaterEvent, listener)
+    }
   },
   agents: {
     list: (): Promise<ProviderStatus[]> => ipcRenderer.invoke(IpcChannels.agentsList)

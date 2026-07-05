@@ -16,6 +16,7 @@ import { registerGitIpc } from './git/ipc'
 import { cloneRepo, isGitRepo } from './git/worktrees'
 import { registerSkillsIpc } from './skills/ipc'
 import { registerFilesIpc } from './files/ipc'
+import { registerUpdater } from './updater'
 import { buildAppMenu } from './menu'
 
 // Name the app (dock, menu bar) before anything reads it. Note: in dev the
@@ -336,6 +337,7 @@ app.whenReady().then(async () => {
   registerGitIpc(globalStore)
   registerSkillsIpc(globalStore)
   registerFilesIpc(globalStore)
+  const updater = registerUpdater(globalStore, webContentsFor)
   createWindow()
 
   buildAppMenu({
@@ -345,6 +347,9 @@ app.whenReady().then(async () => {
       if (project) mainWindow?.webContents.send(IpcChannels.menuOpenedProject, project)
     }
   })
+
+  // Check for updates a few seconds after launch, once startup has settled.
+  setTimeout(() => updater.checkForUpdates(), 4000)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
