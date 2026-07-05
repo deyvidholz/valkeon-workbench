@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useStore } from '../store/useStore'
 import { Icon } from '../ui/Icon'
 import { Hover } from '../ui/Hover'
+import { VirtualList } from '../ui/VirtualList'
 import type { HistoryEntry, HistoryKind } from '../types'
 
 const FILTERS: { id: 'all' | HistoryKind; label: string }[] = [
@@ -74,9 +75,9 @@ export function HistoryScreen() {
           })}
         </div>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 24px 28px', minHeight: 0 }}>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {items.length === 0 ? (
-          <div style={{ minHeight: '60%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, textAlign: 'center' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, textAlign: 'center' }}>
             <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--surface)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Icon name="history" size={24} color="var(--text-faint)" />
             </div>
@@ -84,19 +85,25 @@ export function HistoryScreen() {
           </div>
         ) : (
           <>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', padding: '4px 12px 4px' }}>{t('history.recentActivity', 'RECENT ACTIVITY')}</div>
-            {items.map((h) => (
-              <Hover key={h.id} onClick={() => open(h)} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: 12, borderRadius: 9, cursor: h.target ? 'pointer' : 'default' }} hover={{ background: 'var(--surface)' }}>
-                <span style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon name={h.icon} size={16} color={h.color ?? 'var(--text-dim)'} />
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.label}</div>
-                  {h.detail && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Geist Mono', monospace", marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.detail}</div>}
-                </div>
-                <span style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>{rel(h.ts, t)}</span>
-              </Hover>
-            ))}
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', padding: '14px 36px 6px' }}>{t('history.recentActivity', 'RECENT ACTIVITY')}</div>
+            <VirtualList
+              items={items}
+              rowHeight={58}
+              itemKey={(h) => h.id}
+              style={{ flex: 1, padding: '0 24px 28px' }}
+              renderRow={(h) => (
+                <Hover onClick={() => open(h)} style={{ display: 'flex', alignItems: 'center', gap: 13, padding: 12, borderRadius: 9, cursor: h.target ? 'pointer' : 'default' }} hover={{ background: 'var(--surface)' }}>
+                  <span style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon name={h.icon} size={16} color={h.color ?? 'var(--text-dim)'} />
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-2)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.label}</div>
+                    {h.detail && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Geist Mono', monospace", marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.detail}</div>}
+                  </div>
+                  <span style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace", flexShrink: 0 }}>{rel(h.ts, t)}</span>
+                </Hover>
+              )}
+            />
           </>
         )}
       </div>

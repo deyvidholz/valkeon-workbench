@@ -33,6 +33,7 @@ import { TableBuilder } from './dialogs/TableBuilder'
 import { DiagramBuilder } from './dialogs/DiagramBuilder'
 import { NameDialog } from './dialogs/NameDialog'
 import { SkillEditor } from './dialogs/SkillEditor'
+import { NotificationsDialog } from './dialogs/NotificationsDialog'
 import type { ViewId } from './types'
 
 function MainView({ view }: { view: ViewId }) {
@@ -253,6 +254,7 @@ export function App() {
       <NameDialog />
       <ConfirmDialog />
       <UpdateDialog />
+      <NotificationsDialog />
       <ContextMenu />
     </div>
   )

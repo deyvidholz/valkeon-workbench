@@ -1,5 +1,6 @@
 {
   "accountRow.editName": "Editar tu nombre",
+  "accountRow.notifications": "Notificaciones",
   "accountRow.setName": "Poné tu nombre",
   "accountRow.settings": "Configuración",
   "agentComposer.clear": "limpiar contexto — agente nuevo",
@@ -204,6 +205,10 @@
   "newWorktree.namePlaceholder": "feature/search",
   "newWorktree.subtitle": "Un checkout aislado en su propia branch, para que las sesiones trabajen en paralelo.",
   "newWorktree.title": "Nueva worktree",
+  "notifications.clear": "Limpiar todo",
+  "notifications.empty": "Todavía no hay notificaciones.",
+  "notifications.markAll": "Marcar todas como vistas",
+  "notifications.title": "Notificaciones",
   "projectSettings.baseBranch": "BRANCH BASE",
   "projectSettings.baseBranchHint": "El trabajo terminado hace merge en esta branch (desde la vista de Worktrees).",
   "projectSettings.defaultTaskStrategy": "ESTRATEGIA DE TAREA POR DEFECTO",

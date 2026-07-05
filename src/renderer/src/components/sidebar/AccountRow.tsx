@@ -14,6 +14,10 @@ export function AccountRow() {
   const go = useStore((s) => s.go)
   const userName = useStore((s) => s.userName)
   const openNameDialog = useStore((s) => s.openNameDialog)
+  const openNotifications = useStore((s) => s.openNotifications)
+  const wsId = useStore((s) => s.activeWorkspaceId)
+  const unviewed = useStore((s) => s.notifications.filter((n) => !n.viewed && (n.wsId === null || n.wsId === wsId)).length)
+  const badge = unviewed > 9 ? '9+' : String(unviewed)
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', borderTop: '1px solid var(--line)' }}>
@@ -32,6 +36,12 @@ export function AccountRow() {
           </div>
           <div style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: "'Geist Mono', monospace" }}>v{__APP_VERSION__}</div>
         </div>
+      </Hover>
+      <Hover as="span" onClick={openNotifications} title={t('accountRow.notifications', 'Notifications')} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 46, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--text-2)' }}>
+        <Icon name="notifications" size={17} />
+        {unviewed > 0 && (
+          <span style={{ position: 'absolute', top: 9, right: 5, minWidth: 15, height: 15, padding: '0 4px', borderRadius: 8, background: 'var(--accent)', color: 'var(--on-accent)', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>{badge}</span>
+        )}
       </Hover>
       <Hover as="span" onClick={() => go('settings')} title={t('accountRow.settings', 'Settings')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 46, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--text-2)' }}>
         <Icon name="settings" size={17} />
