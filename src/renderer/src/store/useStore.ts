@@ -34,7 +34,7 @@ import type {
 } from '../types'
 import { DEFAULT_ACCENT } from '../theme/accents'
 import { BOARD_COLUMNS, DEFAULT_LABELS, LABEL_PALETTE } from '../data/seed'
-import { resolveLocale } from '../i18n'
+import i18n, { resolveLocale } from '../i18n'
 import { extractJson } from '../lib/json'
 import type { ResolvedLocale as RLocale } from '@shared/persistence/global'
 
@@ -1344,9 +1344,9 @@ export const useStore = create<AppState>((set, get) => {
       const scoped = st.sessions.filter((s) => s.wsId === st.activeWorkspaceId)
       if (!scoped.length) return
       st.askConfirm({
-        title: 'Close all sessions',
-        message: `Close all ${scoped.length} session${scoped.length > 1 ? 's' : ''} in this workspace? Their agent processes are terminated.`,
-        confirmLabel: 'Close all',
+        title: i18n.t('store.closeAllSessions', 'Close all sessions'),
+        message: i18n.t('store.closeAllSessionsMsg', 'Close all {{count}} sessions in this workspace? Their agent processes are terminated.', { count: scoped.length }),
+        confirmLabel: i18n.t('store.closeAll', 'Close all'),
         onConfirm: () => scoped.forEach((s) => get().endSession(s.id))
       })
     },
@@ -1363,9 +1363,9 @@ export const useStore = create<AppState>((set, get) => {
     closeTerminal: (id) => {
       const t = get().terminals.find((x) => x.id === id)
       get().askConfirm({
-        title: 'Close terminal',
-        message: `Close “${t?.name ?? 'terminal'}”? Any running process is terminated.`,
-        confirmLabel: 'Close terminal',
+        title: i18n.t('store.closeTerminal', 'Close terminal'),
+        message: i18n.t('store.closeTerminalMsg', 'Close “{{name}}”? Any running process is terminated.', { name: t?.name ?? 'terminal' }),
+        confirmLabel: i18n.t('store.closeTerminal', 'Close terminal'),
         onConfirm: () => get().endTerminal(id)
       })
     },
@@ -1381,9 +1381,9 @@ export const useStore = create<AppState>((set, get) => {
       const scoped = st.terminals.filter((t) => t.wsId === st.activeWorkspaceId)
       if (!scoped.length) return
       st.askConfirm({
-        title: 'Close all terminals',
-        message: `Close all ${scoped.length} terminal${scoped.length > 1 ? 's' : ''}? Any running processes are terminated.`,
-        confirmLabel: 'Close all',
+        title: i18n.t('store.closeAllTerminals', 'Close all terminals'),
+        message: i18n.t('store.closeAllTerminalsMsg', 'Close all {{count}} terminals? Any running processes are terminated.', { count: scoped.length }),
+        confirmLabel: i18n.t('store.closeAll', 'Close all'),
         onConfirm: () => scoped.forEach((t) => get().endTerminal(t.id))
       })
     },
@@ -1486,9 +1486,9 @@ export const useStore = create<AppState>((set, get) => {
       const path = realPath()
       if (!path || !branch || branch === get().projectConfig.baseBranch) return
       get().askConfirm({
-        title: 'Delete branch',
-        message: `Delete branch “${branch}”? Unmerged commits on it are lost. This cannot be undone.`,
-        confirmLabel: 'Delete branch',
+        title: i18n.t('store.deleteBranch', 'Delete branch'),
+        message: i18n.t('store.deleteBranchMsg', 'Delete branch “{{branch}}”? Unmerged commits on it are lost. This cannot be undone.', { branch }),
+        confirmLabel: i18n.t('store.deleteBranch', 'Delete branch'),
         onConfirm: () => {
           void window.api?.git.deleteBranch(path, branch).then((b) => set({ branches: b })).catch(() => {})
           log({ kind: 'worktree', icon: 'delete_outline', color: 'var(--danger)', label: `Deleted branch ${branch}`, detail: '' })
@@ -1501,9 +1501,9 @@ export const useStore = create<AppState>((set, get) => {
       if (!path || !branch) return
       if (branch === target) return
       get().askConfirm({
-        title: `Merge into ${target}`,
-        message: `Merge branch “${branch}” into ${target}? Any uncommitted work on it is committed first.`,
-        confirmLabel: 'Merge',
+        title: i18n.t('store.mergeInto', 'Merge into {{target}}', { target }),
+        message: i18n.t('store.mergeMsg', 'Merge branch “{{branch}}” into {{target}}? Any uncommitted work on it is committed first.', { branch, target }),
+        confirmLabel: i18n.t('store.merge', 'Merge'),
         onConfirm: () => {
           void window.api?.git
             .mergeBranch(path, branch, target)
@@ -1515,7 +1515,7 @@ export const useStore = create<AppState>((set, get) => {
                 else set((s) => ({ worktreesVersion: s.worktreesVersion + 1 }))
                 void window.api?.git.branches(path).then((b) => set({ branches: b })).catch(() => {})
               } else {
-                get().askConfirm({ title: 'Merge failed', message: res?.error ?? 'Could not merge.', confirmLabel: 'OK', onConfirm: () => {} })
+                get().askConfirm({ title: i18n.t('store.mergeFailed', 'Merge failed'), message: res?.error ?? i18n.t('store.couldNotMerge', 'Could not merge.'), confirmLabel: i18n.t('store.ok', 'OK'), onConfirm: () => {} })
               }
             })
             .catch(() => {})
@@ -1737,9 +1737,9 @@ export const useStore = create<AppState>((set, get) => {
       if (!board) return
       const card = board.cards.find((c) => c.id === id)
       get().askConfirm({
-        title: 'Delete card',
-        message: 'Delete this card? This cannot be undone.',
-        confirmLabel: 'Delete card',
+        title: i18n.t('store.deleteCard', 'Delete card'),
+        message: i18n.t('store.deleteCardMsg', 'Delete this card? This cannot be undone.'),
+        confirmLabel: i18n.t('store.deleteCard', 'Delete card'),
         onConfirm: () => {
           updateActiveBoard((b) => ({ ...b, cards: b.cards.filter((c) => c.id !== id) }))
           set({ drawerCardId: null })
@@ -1961,9 +1961,9 @@ Write every title and body in ${langName}. Return at most ${count} items. JSON a
     },
     deleteBoardLabel: (labelId) => {
       get().askConfirm({
-        title: 'Delete label',
-        message: 'Delete this label? It will be removed from all cards.',
-        confirmLabel: 'Delete label',
+        title: i18n.t('store.deleteLabel', 'Delete label'),
+        message: i18n.t('store.deleteLabelMsg', 'Delete this label? It will be removed from all cards.'),
+        confirmLabel: i18n.t('store.deleteLabel', 'Delete label'),
         onConfirm: () =>
           updateActiveBoard((b) => ({
             ...b,
@@ -2222,8 +2222,8 @@ Write every title and body in ${langName}. Return at most ${count} items. JSON a
       const review = verdicts.filter((v) => v.verdict === 'review').length
       get().pushNotification({
         kind: 'worktree-cleanup',
-        title: 'Worktree cleanup ready',
-        body: `${dead} dead, ${review} to review across ${verdicts.length} worktree(s).`,
+        title: i18n.t('store.cleanupReady', 'Worktree cleanup ready'),
+        body: i18n.t('store.cleanupBody', '{{dead}} dead, {{review}} to review across {{total}} worktree(s).', { dead, review, total: verdicts.length }),
         action: { type: 'open-worktree-cleanup', runId: run.id }
       })
       log({ kind: 'worktree', icon: 'cleaning_services', color: 'var(--info-2)', label: `Analyzed ${verdicts.length} worktrees`, detail: `${dead} dead` })

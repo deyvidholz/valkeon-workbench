@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useStore } from './store/useStore'
 import { applyAccent } from './theme/applyAccent'
 import { applyTheme, resolveTheme } from './theme/applyTheme'
-import { setI18nLanguage, resolveLocale, mapOsLocale } from './i18n'
+import i18n, { setI18nLanguage, resolveLocale, mapOsLocale } from './i18n'
 import { TitleBar } from './components/TitleBar'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { SearchPalette } from './components/SearchPalette'
@@ -159,15 +159,15 @@ export function App() {
       window.api?.window.onCloseRequested(() => {
         const st = useStore.getState()
         const parts = [
-          st.sessions.length ? `${st.sessions.length} AI session${st.sessions.length > 1 ? 's' : ''}` : '',
-          st.terminals.length ? `${st.terminals.length} terminal${st.terminals.length > 1 ? 's' : ''}` : ''
+          st.sessions.length ? i18n.t('app.nSessions', '{{count}} AI sessions', { count: st.sessions.length }) : '',
+          st.terminals.length ? i18n.t('app.nTerminals', '{{count}} terminals', { count: st.terminals.length }) : ''
         ]
           .filter(Boolean)
-          .join(' and ')
+          .join(i18n.t('app.and', ' and '))
         st.askConfirm({
-          title: 'Quit Valkeon Workbench',
-          message: parts ? `You have ${parts} open — they will be terminated. Quit anyway?` : 'Quit Valkeon Workbench?',
-          confirmLabel: 'Quit',
+          title: i18n.t('app.quitTitle', 'Quit Valkeon Workbench'),
+          message: parts ? i18n.t('app.quitMsg', 'You have {{parts}} open — they will be terminated. Quit anyway?', { parts }) : i18n.t('app.quitPlain', 'Quit Valkeon Workbench?'),
+          confirmLabel: i18n.t('app.quit', 'Quit'),
           onConfirm: () => void window.api?.window.confirmClose()
         })
       }),
@@ -181,7 +181,7 @@ export function App() {
       if (action === 'new-session' && st.project) st.openNewSession()
       else if (action === 'new-terminal' && st.project) st.newTerminal()
       else if (action === 'close-project' && st.project)
-        st.askConfirm({ title: 'Close project', message: 'Go back to the home screen? Running sessions and terminals will be closed.', confirmLabel: 'Close project', onConfirm: st.closeProject })
+        st.askConfirm({ title: i18n.t('app.closeProject', 'Close project'), message: i18n.t('app.closeProjectMsg', 'Go back to the home screen? Running sessions and terminals will be closed.'), confirmLabel: i18n.t('app.closeProject', 'Close project'), onConfirm: st.closeProject })
     })
     const offOpened = window.api?.menu.onOpenedProject((p) => useStore.getState().openProject(p))
     // Open a project passed on the command line (`valkeon <path>`), if any.
