@@ -15,6 +15,9 @@ import type {
   BoardScope,
   Card,
   ColumnId,
+  CleanupAction,
+  CleanupRun,
+  WorktreeVerdict,
   ConfirmConfig,
   ContextMenuItem,
   HistoryEntry,
@@ -168,6 +171,11 @@ interface AppState {
   worktrees: WorktreeInfo[]
   notifications: NotificationRecord[]
   notificationsOpen: boolean
+  cleanupRun: CleanupRun | null
+  cleanupOpen: boolean
+  cleanupLoading: boolean
+  /** Path of the worktree whose details dialog is open (null = closed). */
+  worktreeDetailPath: string | null
 
   /** Append callback registered by the currently-focused markdown editor (for the Table/Diagram builders). */
   mdAppend: ((md: string) => void) | null
@@ -202,8 +210,15 @@ interface AppState {
   openNotifications: () => void
   closeNotifications: () => void
   runNotificationAction: (id: string) => void
-  /** Open the worktree-cleanup decide dialog for a run (fleshed out in the worktrees milestone). */
+  /** Run the worktree-cleanup analysis (git facts + one-shot AI), then notify + open the dialog. */
+  runWorktreeCleanup: () => Promise<void>
+  /** Open the worktree-cleanup decide dialog for a run (from a notification click). */
   openCleanupRun: (runId: string) => void
+  closeCleanup: () => void
+  /** Apply a cleanup decision to a set of worktree paths (delete / merge+delete / keep). */
+  applyCleanupDecisions: (paths: string[], action: CleanupAction) => Promise<void>
+  openWorktreeDetail: (path: string) => void
+  closeWorktreeDetail: () => void
   setUserName: (name: string) => void
   openNameDialog: () => void
   closeNameDialog: () => void
@@ -846,6 +861,10 @@ export const useStore = create<AppState>((set, get) => {
     worktrees: [],
     notifications: [],
     notificationsOpen: false,
+    cleanupRun: null,
+    cleanupOpen: false,
+    cleanupLoading: false,
+    worktreeDetailPath: null,
     mdAppend: null,
 
     go: (view) => set({ view, wsMenuOpen: false, boardMenuOpen: false, projectMenuOpen: false, drawerCardId: null }),
@@ -2102,8 +2121,122 @@ Write every title and body in ${langName}. Return at most ${count} items. JSON a
       if (n.action.type === 'open-session') get().openSession(n.action.sessionId)
       else if (n.action.type === 'open-worktree-cleanup') get().openCleanupRun(n.action.runId)
     },
-    // Placeholder until the worktrees-cleanup milestone wires the decide dialog.
-    openCleanupRun: (runId) => set({ cleanupRunId: runId, cleanupOpen: true } as never),
+    runWorktreeCleanup: async () => {
+      const st = get()
+      const path = st.project?.path
+      if (!path || st.cleanupLoading) return
+      set({ cleanupLoading: true, cleanupOpen: true })
+      const base = st.projectConfig.baseBranch || st.project?.branch || 'main'
+
+      // Fresh worktree list + rich git facts per non-main tree.
+      const trees = (await window.api?.git.worktrees(path).catch(() => [])) ?? st.worktrees
+      const linked = new Set(st.sessions.map((s) => s.worktree).filter(Boolean) as string[])
+      const facts = [] as { path: string; branch: string; changes: number; ahead: number; behind: number; merged: boolean; last: string; linkedSession: boolean }[]
+      for (const w of trees.filter((t) => !t.isMain)) {
+        const d = await window.api?.git.worktreeDetails(path, w.path, base).catch(() => null)
+        facts.push({
+          path: w.path,
+          branch: w.branch || d?.branch || '',
+          changes: d?.dirtyFiles.length ?? 0,
+          ahead: d?.ahead ?? 0,
+          behind: d?.behind ?? 0,
+          merged: d?.mergedIntoBase ?? false,
+          last: d?.lastCommitRelative ?? 'unknown',
+          linkedSession: linked.has(w.path)
+        })
+      }
+
+      // Heuristic verdict — always available, even if the AI call fails.
+      const heuristic = (f: (typeof facts)[number]): WorktreeVerdict => {
+        let verdict: 'dead' | 'review' | 'keep' = 'review'
+        if (f.changes > 0 || f.linkedSession) verdict = 'keep'
+        else if (f.merged || f.ahead === 0) verdict = 'dead'
+        return {
+          path: f.path,
+          branch: f.branch,
+          verdict,
+          oneLine:
+            verdict === 'dead'
+              ? 'Clean and merged into the base branch — safe to remove.'
+              : verdict === 'keep'
+                ? 'Has active work (uncommitted changes or a linked session).'
+                : 'Unmerged commits — review before removing.',
+          analysis: `Branch \`${f.branch}\`: ${f.changes} uncommitted file(s), ${f.ahead} ahead / ${f.behind} behind base, merged: ${f.merged}, last commit ${f.last}, linked session: ${f.linkedSession}.`,
+          changes: f.changes,
+          ahead: f.ahead,
+          behind: f.behind,
+          merged: f.merged
+        }
+      }
+      let verdicts: WorktreeVerdict[] = facts.map(heuristic)
+
+      // Enrich with the AI (one-shot JSON) when available.
+      if (facts.length) {
+        const langName = LOCALE_NAMES[resolveLocale(st.localePref, st.systemLocale)]
+        const digest = facts
+          .map((f) => `- path: ${f.path}\n  branch: ${f.branch}\n  uncommittedFiles: ${f.changes}\n  ahead: ${f.ahead}\n  behind: ${f.behind}\n  mergedIntoBase: ${f.merged}\n  lastCommit: ${f.last}\n  linkedSession: ${f.linkedSession}`)
+          .join('\n')
+        const prompt = `You audit git worktrees to find "dead" ones safe to remove. Base branch: ${base}. Worktrees:\n${digest}\n\nReturn ONLY a JSON array. Each item: {"path": string, "branch": string, "verdict": "dead"|"review"|"keep", "oneLine": string (one sentence, in ${langName}), "analysis": string (short markdown, in ${langName}), "changes": number, "ahead": number, "behind": number, "merged": boolean}. dead = no uncommitted changes AND fully merged (or no unique commits); keep = uncommitted changes or a linked session or recent unmerged work; review = ambiguous.`
+        const res = await get().aiComplete(prompt, { system: 'Return only a JSON array.', timeoutMs: 120_000 })
+        const parsed = res.ok ? extractJson<WorktreeVerdict[]>(res.text) : null
+        if (Array.isArray(parsed) && parsed.length) {
+          const byPath = new Map(parsed.filter((p) => p && p.path).map((p) => [p.path, p]))
+          verdicts = facts.map((f) => {
+            const ai = byPath.get(f.path)
+            const h = heuristic(f)
+            return ai
+              ? { ...h, verdict: ai.verdict ?? h.verdict, oneLine: ai.oneLine || h.oneLine, analysis: ai.analysis || h.analysis }
+              : h
+          })
+        }
+      }
+
+      const run: CleanupRun = { id: `clr${Date.now().toString(36)}`, wsId: st.activeWorkspaceId, createdAt: Date.now(), verdicts }
+      set({ cleanupRun: run, cleanupLoading: false, cleanupOpen: true })
+      const dead = verdicts.filter((v) => v.verdict === 'dead').length
+      const review = verdicts.filter((v) => v.verdict === 'review').length
+      get().pushNotification({
+        kind: 'worktree-cleanup',
+        title: 'Worktree cleanup ready',
+        body: `${dead} dead, ${review} to review across ${verdicts.length} worktree(s).`,
+        action: { type: 'open-worktree-cleanup', runId: run.id }
+      })
+      log({ kind: 'worktree', icon: 'cleaning_services', color: 'var(--info-2)', label: `Analyzed ${verdicts.length} worktrees`, detail: `${dead} dead` })
+    },
+    openCleanupRun: (runId) => {
+      const st = get()
+      if (st.cleanupRun && st.cleanupRun.id === runId) set({ cleanupOpen: true, view: 'worktrees' })
+      else void get().runWorktreeCleanup()
+    },
+    closeCleanup: () => set({ cleanupOpen: false }),
+    openWorktreeDetail: (path) => set({ worktreeDetailPath: path }),
+    closeWorktreeDetail: () => set({ worktreeDetailPath: null }),
+    applyCleanupDecisions: async (paths, action) => {
+      const st = get()
+      const path = st.project?.path
+      if (!path || action === 'keep' || !paths.length) {
+        // "Keep" just drops them from the pending run.
+        if (st.cleanupRun) set({ cleanupRun: { ...st.cleanupRun, verdicts: st.cleanupRun.verdicts.filter((v) => !paths.includes(v.path)) } })
+        return
+      }
+      const base = st.projectConfig.baseBranch || st.project?.branch || 'main'
+      const run = st.cleanupRun
+      for (const p of paths) {
+        const v = run?.verdicts.find((x) => x.path === p)
+        try {
+          if (action === 'merge-delete' && v?.branch) await window.api?.git.mergeBranch(path, v.branch, base).catch(() => {})
+          await window.api?.git.removeWorktree(path, p).catch(() => {})
+          if (action === 'delete-worktree-branch' && v?.branch) await window.api?.git.deleteBranch(path, v.branch).catch(() => {})
+        } catch {
+          /* best-effort per worktree */
+        }
+      }
+      // Drop the handled worktrees from the run and refresh the view.
+      if (run) set({ cleanupRun: { ...run, verdicts: run.verdicts.filter((v) => !paths.includes(v.path)) } })
+      get().loadWorktrees()
+      set((s) => ({ worktreesVersion: (s.worktreesVersion ?? 0) + 1 }))
+      log({ kind: 'worktree', icon: 'cleaning_services', color: 'var(--info-2)', label: `Cleaned up ${paths.length} worktree(s)`, detail: action })
+    },
     setLocalePref: (pref) => {
       set({ localePref: pref })
       void window.api?.settings.set({ localePref: pref } as never).catch(() => {})

@@ -145,6 +145,31 @@ export interface ConfirmConfig {
   onConfirm: () => void
 }
 
+/** One worktree's verdict from the cleanup analysis. */
+export interface WorktreeVerdict {
+  path: string
+  branch: string
+  verdict: 'dead' | 'review' | 'keep'
+  /** One-sentence summary shown in the decide dialog. */
+  oneLine: string
+  /** Full markdown analysis shown in the detail sub-dialog. */
+  analysis: string
+  changes: number
+  ahead: number
+  behind: number
+  merged: boolean
+}
+
+export interface CleanupRun {
+  id: string
+  wsId: string | null
+  createdAt: number
+  verdicts: WorktreeVerdict[]
+}
+
+/** What to do with the selected worktrees in the cleanup dialog. */
+export type CleanupAction = 'keep' | 'delete-worktree' | 'delete-worktree-branch' | 'merge-delete'
+
 export interface ContextMenuItem {
   label: string
   icon: string

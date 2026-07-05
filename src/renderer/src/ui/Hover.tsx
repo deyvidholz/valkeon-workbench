@@ -5,7 +5,7 @@ interface HoverProps {
   style?: CSSProperties
   hover?: CSSProperties
   children?: ReactNode
-  onClick?: () => void
+  onClick?: (e: MouseEvent<HTMLElement>) => void
   onContextMenu?: (e: MouseEvent<HTMLElement>) => void
   title?: string
   className?: string

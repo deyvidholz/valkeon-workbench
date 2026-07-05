@@ -34,6 +34,8 @@ import { DiagramBuilder } from './dialogs/DiagramBuilder'
 import { NameDialog } from './dialogs/NameDialog'
 import { SkillEditor } from './dialogs/SkillEditor'
 import { NotificationsDialog } from './dialogs/NotificationsDialog'
+import { WorktreeCleanupDialog } from './dialogs/WorktreeCleanupDialog'
+import { WorktreeDetailsDialog } from './dialogs/WorktreeDetailsDialog'
 import type { ViewId } from './types'
 
 function MainView({ view }: { view: ViewId }) {
@@ -255,6 +257,8 @@ export function App() {
       <ConfirmDialog />
       <UpdateDialog />
       <NotificationsDialog />
+      <WorktreeCleanupDialog />
+      <WorktreeDetailsDialog />
       <ContextMenu />
     </div>
   )

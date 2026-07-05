@@ -7,10 +7,10 @@ import { StatusDot } from '../ui/StatusDot'
 import type { WorktreeInfo, WorktreeStatus } from '@shared/git'
 
 const STATUS_COLOR: Record<WorktreeStatus, string> = {
-  clean: '#5cc98a',
-  dirty: '#e0b15e',
-  ahead: '#5b9dd9',
-  unknown: '#6b6b74'
+  clean: 'var(--ok)',
+  dirty: 'var(--warn)',
+  ahead: 'var(--info)',
+  unknown: 'var(--text-muted)'
 }
 
 interface Row {
@@ -38,6 +38,12 @@ export function WorktreesScreen() {
   const branches = useStore((s) => s.branches)
   const openProjectSettings = useStore((s) => s.openProjectSettings)
   const worktreesVersion = useStore((s) => s.worktreesVersion)
+  const runCleanup = useStore((s) => s.runWorktreeCleanup)
+  const cleanupLoading = useStore((s) => s.cleanupLoading)
+  const openWorktreeDetail = useStore((s) => s.openWorktreeDetail)
+  const openContextMenu = useStore((s) => s.openContextMenu)
+  const setActiveWorktree = useStore((s) => s.setActiveWorktree)
+  const go = useStore((s) => s.go)
   const [gitTrees, setGitTrees] = useState<WorktreeInfo[] | null>(null)
   const [isRepo, setIsRepo] = useState<boolean | null>(null)
   const [initializing, setInitializing] = useState(false)
@@ -120,9 +126,16 @@ export function WorktreesScreen() {
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 4 }}>{t('worktrees.subtitle', 'Isolated checkouts so sessions can work in parallel without colliding')}</div>
         </div>
-        <Hover as="span" onClick={() => realRepo && openNewWorktree(`feature/${rows.length + 1}`)} title={realRepo ? t('worktrees.createWorktree', 'Create a worktree') : t('worktrees.initGitFirst', 'Initialize git first')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: realRepo ? 'pointer' : 'default', opacity: realRepo ? 1 : 0.5 }} hover={realRepo ? { background: 'var(--surface-2)' } : undefined}>
-          <Icon name="add" size={16} />{t('worktrees.newWorktree', 'New worktree')}
-        </Hover>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {realRepo && rows.length > 0 && (
+            <Hover as="span" onClick={() => !cleanupLoading && runCleanup()} title={t('worktrees.cleanupHint', 'Analyze worktrees and find dead ones')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 8, background: 'var(--accent-soft)', border: '1px solid var(--accent-line)', color: 'var(--accent-hi)', fontSize: 12.5, fontWeight: 600, cursor: cleanupLoading ? 'wait' : 'pointer' }} hover={{ background: 'var(--accent)', color: 'var(--on-accent)' }}>
+              <Icon name="cleaning_services" size={16} />{cleanupLoading ? t('worktrees.analyzing2', 'Analyzing…') : t('worktrees.cleanup', 'Analyze & clean up')}
+            </Hover>
+          )}
+          <Hover as="span" onClick={() => realRepo && openNewWorktree(`feature/${rows.length + 1}`)} title={realRepo ? t('worktrees.createWorktree', 'Create a worktree') : t('worktrees.initGitFirst', 'Initialize git first')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 8, background: 'var(--surface)', border: '1px solid var(--line-2)', color: 'var(--text-2)', fontSize: 12.5, fontWeight: 500, cursor: realRepo ? 'pointer' : 'default', opacity: realRepo ? 1 : 0.5 }} hover={realRepo ? { background: 'var(--surface-2)' } : undefined}>
+            <Icon name="add" size={16} />{t('worktrees.newWorktree', 'New worktree')}
+          </Hover>
+        </div>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px 28px', minHeight: 0 }}>
         {realPath && isRepo === false ? (
@@ -165,7 +178,25 @@ export function WorktreesScreen() {
         </div>
         {rows.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)', padding: '14px 4px' }}>{t('worktrees.noLinked', 'No linked worktrees. New sessions can create one.')}</div>}
         {rows.map((w, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 12px', borderRadius: 9 }}>
+          <Hover
+            key={i}
+            onClick={() => realRepo && openWorktreeDetail(w.path)}
+            onContextMenu={(e) => {
+              if (!realRepo) return
+              e.preventDefault()
+              openContextMenu(e.clientX, e.clientY, [
+                { label: t('worktreeMenu.details', 'Details'), icon: 'info', onClick: () => openWorktreeDetail(w.path) },
+                { label: t('worktreeMenu.openExplore', 'Open in Explore'), icon: 'code', onClick: () => { setActiveWorktree(w.path); go('code') } },
+                { label: t('worktrees.openFolder', 'Open folder'), icon: 'folder_open', onClick: () => window.api?.shell.openPath(w.path) },
+                { label: t('worktreeMenu.copyPath', 'Copy path'), icon: 'content_copy', onClick: () => void navigator.clipboard?.writeText(w.path).catch(() => {}) },
+                ...(w.branch !== baseBranch && w.branch !== '(detached)' ? [{ label: t('worktrees.mergeInto', 'Merge into {{branch}}', { branch: baseBranch }), icon: 'merge', onClick: () => mergeBranchToBase(w.branch, w.path) }] : []),
+                { divider: true, label: '', icon: '' },
+                { label: t('worktrees.removeWorktree', 'Remove worktree'), icon: 'delete_outline', danger: true, onClick: () => removeWorktree(w.path, w.branch) }
+              ])
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 12px', borderRadius: 9, cursor: realRepo ? 'pointer' : 'default' }}
+            hover={{ background: 'var(--surface)' }}
+          >
             <Icon name="account_tree" size={18} color="var(--accent)" />
             <div style={{ width: 184, flexShrink: 0 }}>
               <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-2)', fontFamily: "'Geist Mono', monospace", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{w.branch}</div>
@@ -173,7 +204,7 @@ export function WorktreesScreen() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               {w.sessionName && w.sessionStatus ? (
-                <Hover as="span" onClick={() => { const s = scoped.find((x) => x.name === w.sessionName); if (s) openSession(s.id) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--text-dim)', cursor: 'pointer' }} hover={{ color: 'var(--text-2)' }}>
+                <Hover as="span" onClick={(e) => { e.stopPropagation(); const s = scoped.find((x) => x.name === w.sessionName); if (s) openSession(s.id) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--text-dim)', cursor: 'pointer' }} hover={{ color: 'var(--text-2)' }}>
                   <StatusDot status={w.sessionStatus} />{w.sessionName}
                 </Hover>
               ) : (
@@ -183,11 +214,11 @@ export function WorktreesScreen() {
             <span style={{ fontSize: 11, fontFamily: "'Geist Mono', monospace", color: STATUS_COLOR[w.status], width: 92, textAlign: 'right' }}>{w.status}</span>
             <span style={{ fontSize: 11, color: 'var(--text-faint)', fontFamily: "'Geist Mono', monospace", width: 38, textAlign: 'right' }}>{w.last}</span>
             {w.branch !== baseBranch && w.branch !== '(detached)' && (
-              <Hover as="span" title={t('worktrees.mergeIntoFull', 'Merge into {{branch}} (commits work, then removes the worktree)', { branch: baseBranch })} onClick={() => mergeBranchToBase(w.branch, w.path)} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--ok)' }}>merge</Hover>
+              <Hover as="span" title={t('worktrees.mergeIntoFull', 'Merge into {{branch}} (commits work, then removes the worktree)', { branch: baseBranch })} onClick={(e) => { e.stopPropagation(); mergeBranchToBase(w.branch, w.path) }} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--ok)' }}>merge</Hover>
             )}
-            <Hover as="span" title={t('worktrees.openFolder', 'Open folder')} onClick={() => window.api?.shell.openPath(w.path)} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--text-2)' }}>folder_open</Hover>
-            <Hover as="span" title={t('worktrees.removeWorktree', 'Remove worktree')} onClick={() => removeWorktree(w.path, w.branch)} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--danger)' }}>delete_outline</Hover>
-          </div>
+            <Hover as="span" title={t('worktrees.openFolder', 'Open folder')} onClick={(e) => { e.stopPropagation(); window.api?.shell.openPath(w.path) }} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--text-2)' }}>folder_open</Hover>
+            <Hover as="span" title={t('worktrees.removeWorktree', 'Remove worktree')} onClick={(e) => { e.stopPropagation(); removeWorktree(w.path, w.branch) }} style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 17, color: 'var(--text-muted)', cursor: 'pointer' }} hover={{ color: 'var(--danger)' }}>delete_outline</Hover>
+          </Hover>
         ))}
 
         {(() => {
